@@ -14,6 +14,7 @@ Esse comando combina:
 - `./tools/check-sources`;
 - `./tools/check-storage-contract`;
 - `./tools/check-term-seeds`;
+- `./tools/check-editorial-drafts`;
 - `./tools/lab-term-draft`;
 - `./tools/check-google-search-appearance`;
 - `./tools/check-mechanical-content`;
@@ -31,6 +32,8 @@ O gate `./tools/check-performance-budget` deve reprovar HTML publico pesado, `<s
 `./tools/check-cpu-budget` vale para runtime publico/producao. Ele nao proibe testes, build, laboratorio ou auditorias mais pesadas quando forem necessarias para provar qualidade; ele impede que caminhos de atendimento publico gastem CPU com execucao externa, rede, sleeps ou loops sem limite.
 
 `./tools/lab-term-draft` usa seeds juridicas aprovadas pelo contrato de `term_seeds` para criar rascunho temporario em `/tmp`. O rascunho deve ser `draft/noindex`, nao pode escrever em `content/pages.json`, nao pode entrar em sitemap e nao pode receber CTA.
+
+`./tools/persist-term-drafts` e ferramenta de ciclo para gravar rascunho validado na camada `editorial_drafts`; `./tools/check-editorial-drafts` e o gate permanente no laboratorio para garantir que o draft persistido continua fora da publicacao.
 
 ## Politica
 

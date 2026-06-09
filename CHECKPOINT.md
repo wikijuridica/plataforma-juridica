@@ -251,3 +251,24 @@
 - plano de continuidade: continuar P0 no ciclo 13; criar append validado de `editorial_drafts` para persistir rascunho aprovado pelo laboratorio, mantendo `noindex` e sem rota publica; depois validar fluxo seed -> draft -> quality -> editorial state.
 - proximo ciclo: P0 persistencia de rascunho editorial em `data/editorial/drafts.jsonl`, sem publicacao.
 - riscos: texto de laboratorio ainda e rascunho generico; antes de conteudo publico real, precisa pesquisa de fonte especifica, autoria/revisao e ajuste humano natural por tema.
+
+## 2026-06-09 — Ciclo 13 — P0 persistencia de rascunho editorial sem publicacao
+
+- data/hora local conferida antes do commit: `2026-06-09 09:30:04 -03`.
+- ciclo: 13
+- prioridade: P0
+- objetivo: continuar sem parada; persistir rascunho validado em `data/editorial/drafts.jsonl`, mantendo `draft/noindex`, sem URL publica, sem sitemap, sem CTA e sem marcar `/goal` como completo.
+- natureza do checkpoint: rastreabilidade operacional para continuar; nenhum ciclo e final e parada; nao e aceite final, nao e ordem de parada.
+- continuidade: continuar P0; proximo ciclo deve transformar o fluxo seed -> draft em fila editorial revisavel, ainda sem pagina publica.
+- entregas registradas no ciclo: regra anti-finalizacao do `/goal` reforcada em `AGENTS.md`, `GOAL.md`, `docs/DECISIONS.md` e `continuity_test.go`; `internal/editorialdrafts`; teste `internal/contract/editorial_draft_store_test.go`; comando `cmd/persist-term-drafts`; ferramentas `./tools/persist-term-drafts` e `./tools/check-editorial-drafts`; draft `responsabilidade-civil` persistido em `data/editorial/drafts.jsonl`.
+- arquivos alterados: `AGENTS.md`, `GOAL.md`, `CHECKPOINT.md`, `cmd/persist-term-drafts/`, `data/editorial/drafts.jsonl`, `docs/CONTENT_QUALITY.md`, `docs/DATA_SOURCES.md`, `docs/DECISIONS.md`, `docs/LAB_VALIDATION.md`, `internal/architecture/architecture.go`, `internal/checks/checks.go`, `internal/contract/continuity_test.go`, `internal/contract/editorial_draft_store_test.go`, `internal/editorialdrafts/`, `tools/check-editorial-drafts`, `tools/persist-term-drafts`, `tools/lab-cycle`.
+- decisoes: `/goal` nao pode ser marcado completo por ciclo parcial; conclusao exige no minimo 10 mil paginas publicas aprovadas e verificadas; rascunho persistido continua separado de `published_manifest` e nao e publicacao.
+- comandos executados: `env GOCACHE=/tmp/wiki-go-build-cache go test -count=1 ./internal/contract`; `env GOCACHE=/tmp/wiki-go-build-cache go test -count=1 ./internal/editorialdrafts`; `./tools/persist-term-drafts`; `./tools/check-editorial-drafts`; `./tools/lab-cycle`; `git diff -- content/pages.json public/sitemap.xml public/sitemaps/pages-0001.xml`; `date '+%Y-%m-%d %H:%M:%S %Z'`.
+- resultados: `./tools/lab-cycle` passou; `editorial-drafts: pass`; `persisted=responsabilidade-civil status=draft index=noindex source=lexml`; diff publico de `content/pages.json`, `public/sitemap.xml` e `public/sitemaps/pages-0001.xml` sem output; build continuou `generated_pages=3 indexable_pages=1 output_dir=public`.
+- falhas: RED inicial apontou ausencia de `internal/editorialdrafts`; tentativa anterior de finalizar goal foi corrigida por contrato, teste e objetivo ativo confirmado.
+- correcoes: `Append`, `AppendIfMissing`, `Validate` e `ValidateRecord` implementados; ferramenta de persistencia ficou idempotente; check semantico garante `draft/noindex`, `public_path` vazio, fonte e qualidade textual.
+- provas: `editorial_draft_store_test.go` persiste fixture e exige `status=draft`, `index_policy=noindex`, `public_path=""` e fonte; `continuity_test.go` exige nao marcar `/goal` como completo ate 10 mil paginas publicas verificadas; `lab-cycle` prova que draft persistido nao entrou no build publico.
+- commit: este ciclo deve ser persistido em Git apos validacao final desta entrada.
+- plano de continuidade: continuar P0 no ciclo 14; criar fila editorial revisavel com estados e historico de revisao/autoria para drafts persistidos, ainda sem publicar; depois preparar contrato de promocao de draft para `needs_review`.
+- proximo ciclo: P0 fila editorial e historico de revisao para drafts, sem publicacao.
+- riscos: ha apenas um draft persistido e ele ainda e generico; nao satisfaz meta publica, nao autoriza goal completo e nao deve sair do laboratorio sem pesquisa/revisao especifica.

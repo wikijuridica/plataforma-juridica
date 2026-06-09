@@ -28,3 +28,5 @@ Ingestao de termos juridicos pode iniciar a producao de conteudo apenas como ras
 O contrato de armazenamento fica em `content/storage_contract.json` e e validado por `./tools/check-storage-contract`. Nenhuma fonte auditada, termo juridico ou snapshot autorizado pode ser tratado como conteudo publico pronto. O caminho correto e: termo com proveniencia -> rascunho editorial proprio -> revisao -> qualidade -> SEO -> publicacao.
 
 As sementes iniciais ficam em `data/terms/legal_terms.jsonl` e sao validadas por `./tools/check-term-seeds`. Isso permite iniciar laboratorio editorial por termos sem gerar paginas para Googlebot.
+
+Rascunhos persistidos ficam em `data/editorial/drafts.jsonl`, separados de snapshots oficiais e de paginas publicas. Eles devem permanecer `draft/noindex` ate fonte, revisao, qualidade e decisao editorial completa.

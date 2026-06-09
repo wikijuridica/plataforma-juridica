@@ -65,6 +65,10 @@ func TestContractsRequireContinuationBeyondCheckpoints(t *testing.T) {
 		requireContains(t, text, "separar ingestão de termos")
 		requireContains(t, text, "não misturar fonte bruta, auditoria de fonte, rascunho editorial e conteúdo publicado")
 		requireContains(t, text, "draft_only")
+		requireContains(t, text, "Nenhum ciclo é final e parada")
+		requireContains(t, text, "não marcar `/goal` como completo")
+		requireContains(t, text, "10 mil páginas públicas")
+		requireContains(t, text, "somente quando a meta pública mínima estiver verificada")
 	}
 }
 

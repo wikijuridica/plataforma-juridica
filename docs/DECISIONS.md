@@ -221,3 +221,25 @@ Motivos:
 - preserva baixo CPU e HTML leve em producao, deixando o experimento no laboratorio.
 
 Consequencia: `internal/draftlab` gera rascunho proprio em PT-BR e roda `quality.AnalyzeText`. O rascunho nao recebe URL publica, nao entra em sitemap, nao recebe CTA e nao altera `content/pages.json`.
+
+## 2026-06-09 — Goal nao termina em ciclo parcial
+
+Decisao: nenhum ciclo e final e parada. `/goal` nao pode ser marcado como completo por checkpoint, commit, laboratorio verde, P0 parcial, seed ou rascunho.
+
+Motivos:
+- o objetivo contratado inclui plataforma grande e minimo de 10 mil paginas publicas juridicas aprovadas;
+- o projeto ainda esta em P0/laboratorio e nao saiu para publicacao em escala;
+- marcar goal como completo em ciclo parcial distorce a missao e causa parada indevida.
+
+Consequencia: `AGENTS.md`, `GOAL.md` e testes de contrato exigem nao marcar `/goal` como completo ate a meta publica minima estar verificada: no minimo 10 mil paginas publicas aprovadas, indexaveis, com fonte, revisao, qualidade, CTA quando cabivel, sitemap/canonical/robots corretos e validacao completa.
+
+## 2026-06-09 — Draft editorial persistido ainda nao e publicacao
+
+Decisao: rascunho validado pode ser persistido em `data/editorial/drafts.jsonl`, mas continua `draft/noindex`, sem rota publica, sem sitemap e sem CTA.
+
+Motivos:
+- persistir rascunho reduz perda de contexto entre ciclos sem expor conteudo incompleto;
+- separar `editorial_drafts` de `published_manifest` impede que laboratorio seja confundido com pagina publica;
+- validacao de qualidade deve acompanhar a persistencia, nao ficar apenas no texto temporario.
+
+Consequencia: `internal/editorialdrafts`, `./tools/persist-term-drafts` e `./tools/check-editorial-drafts` controlam a camada editorial. O fluxo atual e seed -> draft temporario -> draft persistido; ainda nao existe publicacao indexavel desse conteudo.

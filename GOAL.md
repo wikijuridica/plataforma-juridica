@@ -36,6 +36,8 @@ Regra literal de continuidade: o agente não deve parar. Sempre planejar o próx
 
 Regra específica de `/goal`: se o Codex estiver em modo /goal, não é para parar enquanto existir trabalho no escopo. O próximo passo planejado deve ficar nos documentos persistentes e no checkpoint, e deve ser executado sem aguardar nova cobrança do usuário.
 
+Regra de conclusão do `/goal`: Nenhum ciclo é final e parada. Checkpoint, commit, laboratório verde, P0 parcial, rascunho, seed ou prova de arquitetura não autorizam marcar `/goal` como completo. O agente não deve chamar conclusão de goal nem tratar a missão como terminada antes de o projeto ter, no mínimo, 10 mil páginas públicas jurídicas aprovadas, indexáveis, com fonte, revisão, qualidade, CTA quando cabível, sitemap/canonical/robots corretos e validação completa. Regra literal: não marcar `/goal` como completo até o objetivo real estar comprovado; somente quando a meta pública mínima estiver verificada.
+
 Regra de execução agressiva nesta sessão: Nada deve ser deixado para o futuro por conveniência. Tudo que estiver no escopo é para esta sessão. Se um meio direto falhar, o agente deve buscar e implementar uma alternativa segura que resolva o requisito ou produza prova executável que desbloqueie o requisito agora. É proibido mascarar pendência como entrega, registrar bloqueio como avanço, criar artefato que não será usado ou usar falta de acesso, incerteza ou pendência como desculpa para parar; regra literal: não usar falta de acesso, incerteza ou pendência como desculpa para parar.
 
 Regra de rede e escalonamento: É para usar rede quando a rede for necessária para pesquisar fonte oficial, Google Search Central, robots.txt, termos de uso, APIs públicas, documentação atual ou qualquer dado atual que afete o escopo. Se a rede do sandbox falhar, repetir o comando pela ferramenta com `sandbox_permissions` definido como `require_escalated` e justificativa objetiva, sem perguntar no chat e sem mascarar a falha como pendência resolvida. Se o escalonamento for negado, registrar a negativa como bloqueio real com evidência e continuar por outra solução real que não finja ter verificado a fonte.
@@ -386,6 +388,7 @@ Criar aliases ou scripts equivalentes:
 - `./tools/check-sources`
 - `./tools/check-storage-contract`
 - `./tools/check-term-seeds`
+- `./tools/check-editorial-drafts`
 - `./tools/check-sitemaps`
 - `./tools/check-canonicals`
 - `./tools/check-no-duplicate-content`
@@ -394,6 +397,8 @@ Criar aliases ou scripts equivalentes:
 - `./tools/check-cpu-budget`
 - `./tools/check-performance-budget`
 - `./tools/lab-content-quality`
+- `./tools/lab-term-draft`
+- `./tools/persist-term-drafts`
 
 Todo ciclo deve rodar validações relevantes.
 
