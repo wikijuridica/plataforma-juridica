@@ -15,6 +15,11 @@ import (
 	"portaljuridico/internal/sources"
 )
 
+const (
+	maxHTMLBytes        int64 = 50000
+	maxInlineStyleBytes int64 = 8000
+)
+
 var Names = []string{
 	"architecture",
 	"content-quality",
@@ -255,23 +260,110 @@ func checkPerformanceBudget(root string) []string {
 
 	errors := make([]string, 0)
 	filepath.Walk(out, func(path string, info os.FileInfo, err error) error {
-		if err != nil || info == nil || info.IsDir() || !strings.HasSuffix(path, ".html") {
+		if err != nil || info == nil || info.IsDir() {
 			return nil
 		}
-		if info.Size() > 50000 {
-			errors = append(errors, fmt.Sprintf("%s:html_size_over_budget=%d", path, info.Size()))
+		if generatedHeavyAsset(path) {
+			errors = append(errors, path+":heavy_public_asset_not_allowed")
+			return nil
+		}
+		if !strings.HasSuffix(path, ".html") {
+			return nil
 		}
 		data, err := os.ReadFile(path)
 		if err != nil {
 			errors = append(errors, err.Error())
 			return nil
 		}
-		if strings.Contains(strings.ToLower(string(data)), "<script") {
-			errors = append(errors, path+":script_not_allowed")
-		}
+		errors = append(errors, htmlPerformanceIssues(path, data, info.Size())...)
 		return nil
 	})
 	return errors
+}
+
+func htmlPerformanceIssues(path string, data []byte, size int64) []string {
+	text := strings.ToLower(string(data))
+	errors := make([]string, 0)
+	if size > maxHTMLBytes {
+		errors = append(errors, fmt.Sprintf("%s:html_size_over_budget=%d", path, size))
+	}
+	if strings.Contains(text, "<script") {
+		errors = append(errors, path+":script_not_allowed")
+	}
+	if inlineStyleBytes(text) > maxInlineStyleBytes {
+		errors = append(errors, fmt.Sprintf("%s:inline_style_over_budget=%d", path, inlineStyleBytes(text)))
+	}
+	for marker, code := range frontendRuntimeMarkers() {
+		if strings.Contains(text, marker) {
+			errors = append(errors, path+":frontend_runtime_marker_not_allowed="+code)
+		}
+	}
+	for _, reference := range []string{".js", ".mjs", ".wasm"} {
+		if containsRuntimeAssetReference(text, reference) {
+			errors = append(errors, path+":runtime_asset_reference_not_allowed="+reference)
+		}
+	}
+	return errors
+}
+
+func inlineStyleBytes(text string) int64 {
+	var total int64
+	cursor := 0
+	for {
+		start := strings.Index(text[cursor:], "<style")
+		if start == -1 {
+			return total
+		}
+		start += cursor
+		openEnd := strings.Index(text[start:], ">")
+		if openEnd == -1 {
+			total += int64(len(text) - start)
+			return total
+		}
+		contentStart := start + openEnd + 1
+		closeStart := strings.Index(text[contentStart:], "</style>")
+		if closeStart == -1 {
+			total += int64(len(text) - contentStart)
+			return total
+		}
+		total += int64(closeStart)
+		cursor = contentStart + closeStart + len("</style>")
+	}
+}
+
+func frontendRuntimeMarkers() map[string]string {
+	return map[string]string{
+		"__next_data__":  "__next_data__",
+		"astro-island":   "astro-island",
+		"client:load":    "client:load",
+		"client:visible": "client:visible",
+		"data-hydrate":   "data-hydrate",
+		"data-reactroot": "data-reactroot",
+		"data-svelte-h":  "data-svelte-h",
+		"importmap":      "importmap",
+		"modulepreload":  "modulepreload",
+		"ng-version":     "ng-version",
+		"vite":           "vite",
+		"webpack":        "webpack",
+	}
+}
+
+func containsRuntimeAssetReference(text string, reference string) bool {
+	for _, suffix := range []string{`"` + reference, `'` + reference, reference + `"`, reference + `'`, reference + "?", reference + "#"} {
+		if strings.Contains(text, suffix) {
+			return true
+		}
+	}
+	return false
+}
+
+func generatedHeavyAsset(path string) bool {
+	for _, suffix := range []string{".js", ".mjs", ".wasm", ".map"} {
+		if strings.HasSuffix(path, suffix) {
+			return true
+		}
+	}
+	return false
 }
 
 func buildTemp(root string) (string, func(), error) {

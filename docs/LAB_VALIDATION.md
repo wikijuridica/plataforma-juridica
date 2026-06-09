@@ -17,6 +17,8 @@ Esse comando combina:
 - `git diff --check`;
 - busca por residuos `.py` e `.pyc`.
 
+O gate `./tools/check-performance-budget` deve reprovar HTML publico pesado, `<script>`, runtime cliente, bundle JavaScript, WebAssembly, mapas, `modulepreload`, import map, marcadores de hidratacao e CSS inline excessivo. Leveza e parte da prova de indexacao para Googlebot e bots valiosos.
+
 ## Politica
 
 Nenhum script isolado e prova suficiente para mudanca P0/P1. Use o laboratorio como conjunto minimo e inspecione os artefatos quando a mudanca afetar HTML, sitemap, robots, canonical, indexacao, qualidade ou conteudo.
@@ -38,3 +40,5 @@ O agente nao deve parar ao registrar checkpoint. Todo ciclo deve terminar com pr
 ## Commit por ciclo
 
 Depois de validacoes relevantes passarem, fazer commit do checkpoint e dos artefatos do ciclo. O projeto nao deve depender de chat, contexto compactado ou memoria externa para continuidade.
+
+Antes do commit, executar `date`, conferir a hora local e registrar o ciclo numerado no checkpoint. Isso mantem a ordem de auditoria mesmo apos compactacao de contexto.

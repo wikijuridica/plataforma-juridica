@@ -1,33 +1,35 @@
 # CONTENT_QUALITY.md
 
-Toda pagina indexavel passa por `internal/quality`.
+Toda página indexável passa por `internal/quality`.
 
 Gates implementados no ciclo P0/P1:
-- URL limpa, minuscula, sem parametros e com barra final quando aplicavel;
-- canonical HTTPS absoluto apontando para a propria rota;
-- `unique_intent_id`, titulo e meta description obrigatorios;
-- titulo, meta description, canonical e intencao sem duplicidade entre paginas indexaveis;
-- hash normalizado de conteudo;
+- URL limpa, minúscula, sem parâmetros e com barra final quando aplicável;
+- canonical HTTPS absoluto apontando para a própria rota;
+- `unique_intent_id`, título e meta description obrigatórios;
+- título, meta description, canonical e intenção sem duplicidade entre páginas indexáveis;
+- hash normalizado de conteúdo;
 - similaridade por shingles;
-- minimo textual para paginas indexaveis;
-- minimo de links internos uteis;
-- conteudo juridico indexavel com fonte, revisao e aviso informativo;
-- motivo de publicacao.
+- mínimo textual para páginas indexáveis;
+- mínimo de links internos úteis;
+- conteúdo jurídico indexável com fonte, revisão e aviso informativo;
+- motivo de publicação.
 
-Conteudo que falha permanece `draft`, `needs_review`, `noindex` ou `archived`, e nao entra em sitemap.
+Conteúdo que falha permanece `draft`, `needs_review`, `noindex` ou `archived`, e não entra em sitemap.
 
-CTA comercial por WhatsApp e subordinado a este gate. Pagina sem fonte, sem revisao, sem intencao unica ou sem valor informativo nao pode usar CTA como justificativa para indexacao.
+CTA comercial por WhatsApp é subordinado a este gate. Página sem fonte, sem revisão, sem intenção única ou sem valor informativo não pode usar CTA como justificativa para indexação.
 
 ## Escrita natural
 
-Antes de criar conteudo juridico, pesquisar a fonte correta e documentar a proveniencia. A redacao deve ser natural, clara e util para humanos. E proibido publicar texto mecanico, permutacao de termos, paginas quase iguais ou conteudo criado apenas para atrair busca.
+Conteúdo visível ao público deve ser escrito em PT-BR, com grafia correta, acentuação correta, pontuação clara e linguagem natural. Rascunho técnico interno pode ficar sem polimento, mas texto público não.
 
-Fonte oficial nao e alvo para scraping, clone ou espelho. A fonte e referencia/proveniencia para produzir conteudo proprio, natural e unico. O texto nao deve copiar estrutura, massa de dados ou conteudo oficial de forma mecanica.
+Antes de criar conteúdo jurídico, pesquisar a fonte correta e documentar a proveniência. A redação deve ser natural, clara e útil para humanos. É proibido publicar texto mecânico, permutação de termos, páginas quase iguais ou conteúdo criado apenas para atrair busca.
 
-Roteiro minimo antes de qualquer pagina juridica:
+Fonte oficial não é alvo para scraping, clone ou espelho. A fonte é referência/proveniência para produzir conteúdo próprio, natural e único. O texto não deve copiar estrutura, massa de dados ou conteúdo oficial de forma mecânica.
+
+Roteiro mínimo antes de qualquer página jurídica:
 - identificar a fonte oficial correta;
-- documentar URL, data, limites, riscos e estrategia de proveniencia;
-- escrever resumo e comentario em linguagem humana;
-- separar texto oficial, explicacao informativa e opiniao;
+- documentar URL, data, limites, riscos e estratégia de proveniência;
+- escrever resumo e comentário em linguagem humana;
+- separar texto oficial, explicação informativa e opinião;
 - validar com gates de qualidade, SEO e duplicidade;
-- revisar antes de liberar indexacao.
+- revisar antes de liberar indexação.

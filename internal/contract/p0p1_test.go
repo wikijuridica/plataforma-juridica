@@ -34,7 +34,7 @@ func TestStaticBuildOutputsCompleteHTMLAndIndexingAssets(t *testing.T) {
 	requireContains(t, indexHTML, "<main")
 	requireContains(t, indexHTML, `rel="canonical"`)
 	requireContains(t, indexHTML, `name="robots" content="index,follow"`)
-	requireContains(t, indexHTML, "<h1>Portal Juridico Brasileiro</h1>")
+	requireContains(t, indexHTML, "<h1>Portal Jurídico Brasileiro</h1>")
 	requireContains(t, indexHTML, `<a href="/fontes/planalto/">`)
 	requireNotContains(t, strings.ToLower(indexHTML), "<script")
 
@@ -191,7 +191,7 @@ func TestOwnOnDemandGeneratorRendersAndCachesWithoutNext(t *testing.T) {
 	if first.FromCache {
 		t.Fatal("first render came from cache, want generated on demand")
 	}
-	requireContains(t, first.HTML, `<h1>Portal Juridico Brasileiro</h1>`)
+	requireContains(t, first.HTML, `<h1>Portal Jurídico Brasileiro</h1>`)
 	requireContains(t, first.HTML, `rel="canonical"`)
 	requireFile(t, cacheFile)
 

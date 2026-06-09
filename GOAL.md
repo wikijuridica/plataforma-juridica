@@ -36,6 +36,14 @@ Trabalhe em laboratório: antes de mudanças relevantes, escreva ou atualize scr
 
 Sempre revisar e validar. Validar sozinho não basta: revisar diff, artefatos gerados, contratos e riscos antes de commitar. Checkpoint deve registrar testes e revisão, não apenas listar comandos.
 
+## Algoritmos e autoconsciência operacional
+
+O projeto exige algoritmos inteligentes, auditáveis e explicáveis. Se um algoritmo estiver burro, ingênuo, caro, opaco, permissivo demais ou agressivo demais, o agente deve melhorar o algoritmo, adicionar teste que prove a falha e registrar a decisão.
+
+Regra literal: o código deve explicar suas próprias decisões por meio de nomes claros, contratos, mensagens de reprovação específicas, diagnósticos e provas. Gates de qualidade, SEO, crawl, performance, fontes, CTA e conteúdo não podem retornar apenas "falhou": precisam indicar o motivo rastreável para correção.
+
+Heurísticas simples são permitidas somente como etapa inicial comprovada. Quando houver falso positivo, falso negativo, custo excessivo ou sinal melhor disponível, a heurística deve evoluir para regra mais inteligente, sem depender de SaaS, dependência externa ou scraping cego.
+
 ## Prioridades
 
 ### P0 — Inviolável
@@ -46,6 +54,8 @@ Sempre revisar e validar. Validar sozinho não basta: revisar diff, artefatos ge
 - O projeto deve gerar páginas on demand com mecanismo próprio, em código do repositório, sem depender de Next.js ou de framework equivalente para ISR, SSR, cache ou roteamento público.
 - Não usar frameworks frontend pesados em páginas públicas.
 - Não usar React/Vue/Svelte/Astro/Nuxt nas páginas públicas.
+- Não produzir HTML público pesado. Toda página pública deve ser leve para Googlebot, OAI-SearchBot e demais bots valiosos, sem runtime frontend, sem hidratação, sem bundle JavaScript, sem `modulepreload`, sem payload de framework e sem CSS inline excessivo.
+- Qualquer código, ferramenta ou renderização que torne o HTML público pesado deve reprovar em `./tools/check-performance-budget` e no ciclo de laboratório.
 - Não usar dependências externas por conveniência.
 - Não usar código copiado de terceiros.
 - Não usar serviços SaaS externos como requisito do produto.
@@ -74,6 +84,7 @@ Sempre revisar e validar. Validar sozinho não basta: revisar diff, artefatos ge
 ### P2 — Conteúdo e dados
 
 - Meta mínima futura: no mínimo 10 mil páginas jurídicas informativas aprovadas, cada uma com intenção única, fonte e revisão.
+- Conteúdo visível ao público deve ser escrito em PT-BR, com grafia correta, acentuação correta, pontuação clara e linguagem natural. Rascunho técnico interno pode ficar sem polimento, mas texto público não.
 - Antes de criar conteúdo, pesquisar a fonte correta, documentar a fonte e escrever de forma natural, com linguagem humana, sem moldes mecânicos.
 - Cada URL indexável deve ter intenção única.
 - Cada página deve ter `unique_intent_id`.
@@ -85,8 +96,10 @@ Sempre revisar e validar. Validar sozinho não basta: revisar diff, artefatos ge
 ### P3 — Performance e escala
 
 - Páginas públicas devem ser leves.
+- Leveza é requisito de indexação, não acabamento visual. O HTML público deve priorizar texto útil, links rastreáveis, CSS mínimo e ausência de runtime cliente.
 - Não hidratar página inteira.
 - Não exigir JavaScript para ler conteúdo.
+- Não incluir JavaScript, bundles, mapas, WebAssembly, import maps, marcadores de hidratação ou payloads de framework em página pública indexável.
 - Preferir renderização server-side/static-first e geração on demand própria com cache local controlado pelo projeto.
 - Cachear conteúdo estável.
 - Preparar geração para milhões de URLs sem criar URLs infinitas.
@@ -374,6 +387,7 @@ Ao fim de cada ciclo, atualizar `CHECKPOINT.md` com:
 Checkpoint não é entrega final, aceite, nem definição de pronto. Checkpoint é rastreabilidade operacional para continuar o trabalho com contexto verificável. O campo `entregas` deve registrar artefatos, avanços e evidências do ciclo, sem transformar o checkpoint em encerramento do projeto ou substituto da validação de pronto.
 Checkpoint não é ordem de parada. Todo checkpoint deve conter plano de continuidade explícito para o próximo ciclo e o agente deve continuar executando esse plano quando não houver bloqueio P0 real.
 Todo ciclo deve terminar com commit depois das validações relevantes, salvo bloqueio Git real e comprovado. O commit deve incluir o checkpoint e os artefatos do ciclo, para que a continuidade não dependa de chat, contexto compactado ou memória externa.
+Antes de cada commit, verificar a hora local com `date`, registrar ciclo numerado no checkpoint e manter a sequência temporal clara.
 
 - data/hora;
 - ciclo;

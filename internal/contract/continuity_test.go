@@ -30,6 +30,11 @@ func TestContractsRequireContinuationBeyondCheckpoints(t *testing.T) {
 		requireContains(t, text, "engenheiro sênior, arquiteto e criador de conteúdo jurídico")
 		requireContains(t, text, "deve continuar até terminar")
 		requireContains(t, text, "corrigir sem pedir aprovação")
+		requireContains(t, text, "algoritmos inteligentes, auditáveis e explicáveis")
+		requireContains(t, text, "Se um algoritmo estiver burro")
+		requireContains(t, text, "o código deve explicar suas próprias decisões")
+		requireContains(t, text, "Conteúdo visível ao público deve ser escrito em PT-BR")
+		requireContains(t, text, "grafia correta")
 	}
 }
 

@@ -48,6 +48,7 @@ Consequencia: `CHECKPOINT.md` deve registrar plano de continuidade explicito e n
 Adendo operacional: sempre planejar o proximo passo e continuar executando. Uma resposta no thread ou um checkpoint nao encerram a missao.
 
 Adendo de persistencia: cada ciclo deve ser commitado apos validacao, incluindo `CHECKPOINT.md`, para preservar continuidade em Git.
+Antes do commit, registrar hora local e numero do ciclo no checkpoint.
 
 Adendo de autonomia: Codex atua como engenheiro senior, arquiteto e criador de conteudo juridico. Se houver trabalho no escopo ou bug identificado, deve continuar e corrigir sem pedir aprovacao para decisao normal de engenharia.
 
@@ -83,3 +84,36 @@ Motivos:
 - conteudo juridico precisa ser natural, humano e contextualizado.
 
 Consequencia: qualquer uso de fonte oficial exige pesquisa critica, registro de proveniencia e redacao propria. Ingestao automatica permanece bloqueada em P0.
+
+## 2026-06-09 — HTML publico leve para bots valiosos
+
+Decisao: pagina publica deve permanecer leve por contrato, com HTML textual completo, CSS minimo e sem runtime cliente.
+
+Motivos:
+- Googlebot, OAI-SearchBot e bots valiosos precisam rastrear conteudo textual com baixo custo;
+- escala massiva amplifica qualquer excesso de bytes, bundle ou hidratacao;
+- framework frontend, payload JavaScript e ferramenta pesada no HTML publico contrariam P0/P1.
+
+Consequencia: `./tools/check-performance-budget` reprova HTML acima do orcamento, `<script>`, referencias a `.js/.mjs/.wasm`, assets pesados, `modulepreload`, import map, marcadores de hidratacao e sinais de runtime/framework. UI publica deve ser resolvida com HTML semantico e CSS minimo.
+
+## 2026-06-09 — Algoritmos auditaveis e explicaveis
+
+Decisao: gates e algoritmos do projeto devem ser inteligentes, auditaveis e explicaveis.
+
+Motivos:
+- escala massiva torna heuristica burra perigosa e cara;
+- qualidade juridica depende de decisoes rastreaveis, nao de aprovacoes opacas;
+- falsos positivos e falsos negativos precisam virar melhoria de algoritmo, nao excecao manual permanente.
+
+Consequencia: quando um algoritmo estiver ingenuo, caro, opaco, permissivo demais ou agressivo demais, o agente deve escrever teste que reproduza a falha, melhorar a regra, manter mensagens especificas de reprovação e registrar a decisao. Heuristicas simples sao permitidas como etapa inicial, mas devem evoluir quando houver sinal melhor disponivel.
+
+## 2026-06-09 — Conteudo publico em PT-BR correto
+
+Decisao: todo conteudo visivel ao publico deve ser escrito em PT-BR com grafia correta, acentuacao correta, pontuacao clara e linguagem natural.
+
+Motivos:
+- o portal serve primeiro a humanos no Brasil;
+- texto publico sem acento ou com grafia tecnica empobrece confianca editorial;
+- qualidade juridica depende de clareza, naturalidade e revisao humana.
+
+Consequencia: rascunhos tecnicos internos podem usar texto operacional sem polimento, mas paginas, metadados visiveis, CTA, navegacao e rodape publicos devem ser PT-BR correto. O algoritmo de normalizacao de qualidade deve preservar letras acentuadas para nao degradar os gates em portugues.

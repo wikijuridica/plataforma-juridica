@@ -32,6 +32,12 @@ Rotas publicas devem poder ser geradas sob demanda por `internal/ondemand`, sem 
 
 O build estatico continua permitido como artefato operacional, mas nao substitui o requisito de geracao on demand propria.
 
+## HTML publico leve
+
+Leveza e requisito de indexacao. O renderizador deve entregar HTML textual completo, com CSS minimo e sem JavaScript, bundle, WebAssembly, import map, `modulepreload`, payload de framework ou marcador de hidratacao. Isso protege Googlebot, OAI-SearchBot e outros bots valiosos, alem de reduzir custo operacional em escala massiva.
+
+`internal/checks` reprova HTML publico acima do orcamento, CSS inline excessivo, referencias a runtime cliente e marcadores de Next.js, React, Vue/Svelte/Astro/Angular, Vite ou Webpack. Qualquer excecao exigiria ADR de dependencia e continuaria bloqueada para pagina publica indexavel enquanto P0 estiver ativo.
+
 ## Escala antes de conteudo
 
 Durante P0, a plataforma deve preparar escala, nao fabricar paginas juridicas. `content/scale_plan.json` define blueprints finitos para pelo menos 10 mil paginas planejadas e `published_pages_during_p0` deve permanecer zero. O desbloqueio de conteudo exige P2: fonte oficial documentada, proveniencia, autoria, revisao, intencao unica, qualidade e indexacao coerente.

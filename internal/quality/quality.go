@@ -4,8 +4,8 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"regexp"
 	"strings"
+	"unicode"
 
 	"portaljuridico/internal/content"
 	"portaljuridico/internal/editorial"
@@ -17,8 +17,6 @@ import (
 const minIndexableWords = 90
 const minInternalLinks = 2
 const nearDuplicateThreshold = 0.82
-
-var nonText = regexp.MustCompile(`[^a-z0-9 ]+`)
 
 type Issue struct {
 	PagePath string
@@ -193,8 +191,15 @@ func checkField(indexable []content.Page, issues *[]Issue, code string, message 
 
 func normalizeText(value string) string {
 	lower := strings.ToLower(value)
-	clean := nonText.ReplaceAllString(lower, " ")
-	return strings.Join(strings.Fields(clean), " ")
+	var clean strings.Builder
+	for _, r := range lower {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			clean.WriteRune(r)
+			continue
+		}
+		clean.WriteByte(' ')
+	}
+	return strings.Join(strings.Fields(clean.String()), " ")
 }
 
 func normalizedHash(value string) string {
