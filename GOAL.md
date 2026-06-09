@@ -6,6 +6,8 @@ Este repositório é um novo projeto de site jurídico brasileiro de alta escala
 
 O produto deve servir primeiro a humanos: advogados, estudantes, pesquisadores, jornalistas, empresas e cidadãos. Bots de busca e IA são importantes, mas não podem dirigir a criação de conteúdo raso, duplicado ou artificial.
 
+Meta de produto: crescer até no mínimo 10 mil páginas de conteúdo jurídico informativo, com intenção comercial legítima e CTA para contratação de advogado via WhatsApp quando a página for adequada. Essa meta não autoriza publicar conteúdo jurídico antes de P0/P1/P2 estarem comprovados. Antes de publicar conteúdo jurídico em escala, a arquitetura, fontes, proveniência, revisão editorial, qualidade e indexação precisam estar validadas.
+
 ## Postura obrigatória do agente
 
 Trabalhe com autonomia agressiva e responsabilidade técnica.
@@ -24,11 +26,20 @@ Não seja passivo. Se uma decisão puder ser tomada com base nos requisitos, tom
 
 Só peça intervenção humana quando houver bloqueio P0 real.
 
+Não pare em checkpoint. Checkpoint não é ordem de parada. Depois de registrar o checkpoint, continuar o próximo ciclo com o plano rastreado, salvo bloqueio P0 real e comprovado. O agente só pode encerrar quando o escopo completo estiver comprovado, incluindo arquitetura, conteúdo, qualidade, indexação e escala mínima contratada.
+
+Regra literal de continuidade: o agente não deve parar. Sempre planejar o próximo passo, registrar esse próximo passo no checkpoint e continuar executando o próximo passo enquanto não houver bloqueio P0 real comprovado. Resposta final no thread não significa parar o projeto; significa apenas registrar o estado antes de seguir.
+
+Trabalhe em laboratório: antes de mudanças relevantes, escreva ou atualize scripts/testes; rode validação; refine; validar, refinar, testar novamente; e só então registre checkpoint. Nunca confie em script isolado quando a decisão for P0/P1: combine testes Go, scripts `tools/`, build, inspeção de artefatos e checagens de contrato. Nada de mudar no chute.
+
 ## Prioridades
 
 ### P0 — Inviolável
 
+- Enquanto P0 não estiver maduro, continuar promovendo arquitetura antes de qualquer publicação de conteúdo jurídico em escala.
+- É obrigatório não criar 10 mil páginas como spam para Google. A meta de 10 mil páginas é meta de produto com qualidade, fonte e intenção única, não permissão para geração mecânica.
 - Não usar Next.js.
+- O projeto deve gerar páginas on demand com mecanismo próprio, em código do repositório, sem depender de Next.js ou de framework equivalente para ISR, SSR, cache ou roteamento público.
 - Não usar frameworks frontend pesados em páginas públicas.
 - Não usar React/Vue/Svelte/Astro/Nuxt nas páginas públicas.
 - Não usar dependências externas por conveniência.
@@ -36,12 +47,16 @@ Só peça intervenção humana quando houver bloqueio P0 real.
 - Não usar serviços SaaS externos como requisito do produto.
 - Não publicar conteúdo jurídico sem fonte, data, autoria/revisão e aviso informativo.
 - Não criar páginas rasas, duplicadas, parecidas ou feitas só para manipular busca.
+- Não publicar conteúdo mecânico, permutacional ou escrito para bot. Conteúdo jurídico deve ter escrita natural, utilidade humana e fonte correta pesquisada antes da redação.
+- É obrigatório não considerar fontes oficiais como alvo de scraping, clonagem ou reprodução mecânica. Fontes oficiais servem como referência, lastro e proveniência; o portal deve produzir conteúdo próprio, natural e único, e não criar clone, espelho ou spam.
 - Não fazer scraping cego.
 - Não ignorar robots.txt, termos de uso, sigilo processual, privacidade ou LGPD.
 - Não avançar com validação P0 falhando.
+- Não tratar checkpoint, build verde ou P0 parcial como autorização para parar.
 
 ### P1 — Plataforma indexável
 
+- Gerador on demand próprio deve entregar HTML textual completo no primeiro response para rotas públicas aprovadas.
 - HTML textual completo no primeiro response.
 - Links internos rastreáveis com `<a href>`.
 - Canonical em toda página indexável.
@@ -54,6 +69,8 @@ Só peça intervenção humana quando houver bloqueio P0 real.
 
 ### P2 — Conteúdo e dados
 
+- Meta mínima futura: no mínimo 10 mil páginas jurídicas informativas aprovadas, cada uma com intenção única, fonte e revisão.
+- Antes de criar conteúdo, pesquisar a fonte correta, documentar a fonte e escrever de forma natural, com linguagem humana, sem moldes mecânicos.
 - Cada URL indexável deve ter intenção única.
 - Cada página deve ter `unique_intent_id`.
 - Cada página deve ter `canonical_url`.
@@ -66,9 +83,10 @@ Só peça intervenção humana quando houver bloqueio P0 real.
 - Páginas públicas devem ser leves.
 - Não hidratar página inteira.
 - Não exigir JavaScript para ler conteúdo.
-- Preferir renderização server-side/static-first.
+- Preferir renderização server-side/static-first e geração on demand própria com cache local controlado pelo projeto.
 - Cachear conteúdo estável.
 - Preparar geração para milhões de URLs sem criar URLs infinitas.
+- Planejar escala por blueprints finitos, auditáveis e bloqueados para publicação até aprovação editorial.
 
 ### P4 — Operação editorial
 
@@ -79,6 +97,7 @@ Só peça intervenção humana quando houver bloqueio P0 real.
 
 ### P5 — Evolução
 
+- CTAs comerciais e WhatsApp de contratação devem ser próprios, configuráveis, auditáveis e subordinados à qualidade jurídica.
 - Busca interna própria.
 - Grafo jurídico.
 - Recomendações internas.
@@ -134,9 +153,13 @@ A arquitetura deve seguir estes módulos conceituais:
 
 - `render`: renderização HTML própria.
 - `router`: roteamento canônico.
+- `ondemand`: geração própria sob demanda, cache e entrega HTTP sem Next.js.
+- `scale`: planejamento de pelo menos 10 mil páginas sem criar URLs infinitas nem publicar antes dos gates.
+- `cta`: política própria de CTA/WhatsApp subordinada à aprovação editorial e proveniência.
 - `content`: modelos de conteúdo.
 - `legal`: entidades jurídicas.
 - `sources`: fontes oficiais e proveniência.
+- `provenance`: contrato de proveniência por payload, hash, robots, termos e finalidade de uso.
 - `quality`: verificadores antispam, duplicidade e conteúdo raso.
 - `seo`: canonical, meta, robots, sitemap, index/noindex.
 - `crawl`: políticas de bots e crawlability.
@@ -318,17 +341,21 @@ Prioridade:
 
 Criar aliases ou scripts equivalentes:
 
+- `./tools/lab-cycle`
 - `./tools/check-all`
 - `./tools/check-architecture`
 - `./tools/check-content-quality`
 - `./tools/check-seo`
 - `./tools/check-crawlability`
+- `./tools/check-sources`
 - `./tools/check-sitemaps`
 - `./tools/check-canonicals`
 - `./tools/check-no-duplicate-content`
 - `./tools/check-performance-budget`
 
 Todo ciclo deve rodar validações relevantes.
+
+Para mudanças P0/P1, `./tools/lab-cycle` deve rodar antes do checkpoint sempre que possível. Ele deve combinar múltiplas provas e não substituir análise humana dos artefatos gerados.
 
 Se uma validação falhar:
 1. Pare o avanço.
@@ -339,6 +366,10 @@ Se uma validação falhar:
 ## Checkpoint obrigatório
 
 Ao fim de cada ciclo, atualizar `CHECKPOINT.md` com:
+
+Checkpoint não é entrega final, aceite, nem definição de pronto. Checkpoint é rastreabilidade operacional para continuar o trabalho com contexto verificável. O campo `entregas` deve registrar artefatos, avanços e evidências do ciclo, sem transformar o checkpoint em encerramento do projeto ou substituto da validação de pronto.
+Checkpoint não é ordem de parada. Todo checkpoint deve conter plano de continuidade explícito para o próximo ciclo e o agente deve continuar executando esse plano quando não houver bloqueio P0 real.
+Todo ciclo deve terminar com commit depois das validações relevantes, salvo bloqueio Git real e comprovado. O commit deve incluir o checkpoint e os artefatos do ciclo, para que a continuidade não dependa de chat, contexto compactado ou memória externa.
 
 - data/hora;
 - ciclo;
@@ -352,6 +383,7 @@ Ao fim de cada ciclo, atualizar `CHECKPOINT.md` com:
 - falhas;
 - correções;
 - provas;
+- commit;
 - próximo ciclo;
 - riscos.
 
@@ -373,6 +405,7 @@ Manter:
 - `docs/CONTENT_QUALITY.md`
 - `docs/SEO_CRAWL_INDEXING.md`
 - `docs/DATA_SOURCES.md`
+- `docs/LAB_VALIDATION.md`
 - `docs/ROADMAP_P0_P5.md`
 - `docs/DECISIONS.md`
 - `docs/adr/`

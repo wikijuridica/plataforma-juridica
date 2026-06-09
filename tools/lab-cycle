@@ -1,0 +1,12 @@
+#!/bin/sh
+set -eu
+
+export GOCACHE="${GOCACHE:-/tmp/opt-wiki-go-cache}"
+
+go test -count=1 ./...
+./tools/check-all
+./tools/check-sources
+go run ./cmd/build public
+go list -m all
+git diff --check
+find . -name '*.py' -o -name '*.pyc'

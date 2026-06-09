@@ -1,0 +1,92 @@
+[
+  {
+    "path": "/",
+    "page_type": "home",
+    "status": "published",
+    "index_policy": "index",
+    "unique_intent_id": "home:portal-juridico-brasileiro",
+    "canonical_url": "https://portal-juridico.example/",
+    "title": "Portal Juridico Brasileiro",
+    "meta_description": "Portal juridico brasileiro com arquitetura propria, conteudo revisado, politica de fontes e indexacao controlada.",
+    "heading": "Portal Juridico Brasileiro",
+    "summary": "Plataforma propria para organizar conhecimento juridico brasileiro com prioridade para leitores humanos, fontes oficiais e governanca editorial antes de escala.",
+    "body_sections": [
+      {
+        "title": "Missao editorial",
+        "body": "O portal nasce para publicar conhecimento juridico com utilidade real para advogados, estudantes, pesquisadores, jornalistas, empresas e cidadaos. A plataforma separa paginas institucionais, fontes oficiais documentadas, conteudo juridico revisado e superficies internas que devem permanecer fora do indice. A primeira entrega nao publica tese juridica, decisao, ementa ou trecho legal inventado; ela estabelece o contrato tecnico para que somente conteudo com intencao unica, proveniencia, revisao e aviso informativo possa entrar em sitemap."
+      },
+      {
+        "title": "Contrato de escala",
+        "body": "A arquitetura usa codigo proprio, Go e biblioteca padrao. O HTML publico e gerado antes da entrega ao usuario, sem hidratacao de pagina inteira, sem framework frontend pesado e sem dependencia externa. Cada rota canonica tem caminho limpo, canonical absoluto, meta robots coerente e links internos rastreaveis. Busca interna, parametros, filtros e combinacoes infinitas permanecem noindex por padrao para proteger o indice e evitar paginas rasas."
+      }
+    ],
+    "internal_links": ["/fontes/planalto/", "/buscar/"],
+    "publication_date": "2026-06-09",
+    "reviewed_at": "2026-06-09",
+    "author": "Equipe tecnica do projeto",
+    "reviewer": "Revisao tecnica inicial",
+    "source_provenance": [],
+    "legal_notice": "",
+    "publication_purpose": "Materializar a home indexavel inicial com contrato P0/P1, sem publicar conteudo juridico substantivo."
+  },
+  {
+    "path": "/fontes/planalto/",
+    "page_type": "fonte-oficial",
+    "status": "needs_review",
+    "index_policy": "noindex",
+    "unique_intent_id": "fonte:planalto",
+    "canonical_url": "https://portal-juridico.example/fontes/planalto/",
+    "title": "Fonte oficial: Planalto",
+    "meta_description": "Registro preliminar da fonte Planalto antes de ingestao ou publicacao indexavel.",
+    "heading": "Fonte oficial: Planalto",
+    "summary": "Registro preliminar da fonte Planalto. A fonte ainda nao esta autorizada para ingestao automatica neste projeto.",
+    "body_sections": [
+      {
+        "title": "Estado da fonte",
+        "body": "Esta pagina documenta a existencia da fonte e permanece noindex enquanto robots.txt, termos, limites, campos, cache, proveniencia e deduplicacao sao auditados."
+      }
+    ],
+    "internal_links": ["/"],
+    "publication_date": "2026-06-09",
+    "reviewed_at": "",
+    "author": "Equipe tecnica do projeto",
+    "reviewer": "",
+    "source_provenance": [
+      {
+        "source_id": "planalto",
+        "source_name": "Planalto",
+        "source_url": "https://www.planalto.gov.br/",
+        "checked_at": "2026-06-09",
+        "license_note": "Fonte oficial governamental; termos pendentes de auditoria antes de qualquer ingestao."
+      }
+    ],
+    "legal_notice": "",
+    "publication_purpose": "Registrar fonte inicial sem liberar ingestao nem indexacao."
+  },
+  {
+    "path": "/buscar/",
+    "page_type": "busca-interna",
+    "status": "noindex",
+    "index_policy": "noindex",
+    "unique_intent_id": "internal:buscar",
+    "canonical_url": "https://portal-juridico.example/buscar/",
+    "title": "Busca interna",
+    "meta_description": "Busca interna do portal juridico, mantida fora do indice publico.",
+    "heading": "Busca interna",
+    "summary": "Superficie interna para consulta do acervo. Resultados, filtros, ordenacoes e parametros ficam noindex.",
+    "body_sections": [
+      {
+        "title": "Politica",
+        "body": "A busca interna nao gera pagina canonica indexavel. O objetivo e navegacao humana dentro do acervo aprovado."
+      }
+    ],
+    "internal_links": ["/"],
+    "publication_date": "2026-06-09",
+    "reviewed_at": "2026-06-09",
+    "author": "Equipe tecnica do projeto",
+    "reviewer": "Revisao tecnica inicial",
+    "source_provenance": [],
+    "legal_notice": "",
+    "publication_purpose": "Materializar rota interna noindex exigida pela politica P1."
+  }
+]
