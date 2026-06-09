@@ -45,6 +45,8 @@ Termos juridicos podem ser usados para iniciar pauta e rascunho, mas nao podem v
 
 `./tools/promote-term-candidates` promove um lote pequeno de candidatos para `term_seeds` apenas como `draft_only`. `./tools/check-promoted-term-seeds` exige `candidate_id`, evidencia de demanda, modo `digital_only`, CTA WhatsApp alto e publicacao bloqueada. O algoritmo de ranking deve ser refinado: nao confiar em um unico sinal, penalizar fonte nao oficial, penalizar fluxo presencial e manter diversidade de areas para evitar tunel de um unico nicho.
 
+Rascunho editorial tambem deve preservar grafia natural em PT-BR. Mesmo em laboratorio, termos como `divorcio online`, `auxilio doenca negado` e `negativa cobertura plano saude` devem virar texto natural com acentuacao e conectivos corretos antes de qualquer persistencia editorial. O script `./tools/refresh-editorial-drafts` atualiza drafts persistidos quando o algoritmo de escrita e refinado.
+
 `./tools/lab-term-draft` transforma seed valida em rascunho temporario dentro de `/tmp`, com estado `draft/noindex`, fonte citada e aviso informativo. Esse laboratorio prova linguagem natural sem escrever em `content/pages.json` e sem expor a seed ao Googlebot.
 
 `./tools/persist-term-drafts` persiste rascunhos validados em `data/editorial/drafts.jsonl` de forma idempotente. `./tools/check-editorial-drafts` reprova qualquer draft que tenha rota publica, indexacao, fonte ausente ou qualidade textual insuficiente.

@@ -52,6 +52,8 @@ Os caminhos seguros de pesquisa de demanda ficam em `docs/data-sources/search-de
 
 Promocao de candidato para seed deve passar por ranking refinavel, nao por lista fixa. O score deve considerar area, risco, fonte oficial, adequacao digital, CTA WhatsApp e penalidades para fluxo presencial ou evidencia fraca. Quando falso positivo ou falso negativo aparecer, escrever teste e ajustar o algoritmo antes de continuar.
 
+Se a inspeção mostrar grafia mecanica ou sem acento em rascunho PT-BR, tratar como falha de laboratorio. Refinar `internal/draftlab`, regenerar `data/editorial/drafts.jsonl`, atualizar `data/editorial/review_queue.jsonl` e rodar novamente os checks antes do commit.
+
 ## Politica
 
 Nenhum script isolado e prova suficiente para mudanca P0/P1. Use o laboratorio como conjunto minimo e inspecione os artefatos quando a mudanca afetar HTML, sitemap, robots, canonical, indexacao, qualidade ou conteudo.

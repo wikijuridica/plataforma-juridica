@@ -76,6 +76,32 @@ func AppendIfMissing(root string, draft draftlab.Draft) (bool, error) {
 	return true, Append(root, draft)
 }
 
+func UpsertAll(root string, drafts []draftlab.Draft) error {
+	records, report := LoadRecords(root)
+	if !report.Passed() {
+		return fmt.Errorf("load_editorial_drafts_failed=%s", strings.Join(report.Messages(), " | "))
+	}
+	byID := make(map[string]Record)
+	order := make([]string, 0)
+	for _, record := range records {
+		if _, exists := byID[record.TermID]; !exists {
+			order = append(order, record.TermID)
+		}
+		byID[record.TermID] = record
+	}
+	for _, draft := range drafts {
+		record := recordFromDraft(draft)
+		if report := ValidateRecord(record); !report.Passed() {
+			return fmt.Errorf("invalid_editorial_draft=%s", strings.Join(report.Messages(), " | "))
+		}
+		if _, exists := byID[record.TermID]; !exists {
+			order = append(order, record.TermID)
+		}
+		byID[record.TermID] = record
+	}
+	return rewriteRecords(root, order, byID)
+}
+
 func Validate(root string) Report {
 	records, report := LoadRecords(root)
 	if !report.Passed() {
@@ -89,6 +115,46 @@ func Validate(root string) Report {
 		}
 	}
 	return Report{Issues: issues}
+}
+
+func recordFromDraft(draft draftlab.Draft) Record {
+	return Record{
+		TermID:      draft.TermID,
+		Term:        draft.Term,
+		Status:      draft.Status,
+		IndexPolicy: draft.IndexPolicy,
+		PublicPath:  draft.PublicPath,
+		SourceID:    draft.SourceID,
+		SourceURL:   draft.SourceURL,
+		Text:        draft.Text,
+	}
+}
+
+func rewriteRecords(root string, order []string, byID map[string]Record) error {
+	projectRoot, err := findProjectRoot(root)
+	if err != nil {
+		return err
+	}
+	path := filepath.Join(projectRoot, "data", "editorial", "drafts.jsonl")
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	for _, termID := range order {
+		record, ok := byID[termID]
+		if !ok {
+			continue
+		}
+		data, err := json.Marshal(record)
+		if err != nil {
+			return err
+		}
+		if _, err := file.Write(append(data, '\n')); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func LoadRecords(root string) ([]Record, Report) {

@@ -319,3 +319,14 @@ Motivos:
 - concentrar todos os termos em uma area reduz aprendizado e escala.
 
 Consequencia: `internal/termpromotion` pontua candidatos, penaliza fonte nao oficial e modo presencial, exige diversidade de areas e preserva evidencia de demanda na seed. `./tools/promote-term-candidates` e `./tools/check-promoted-term-seeds` mantem seeds como `draft_only`, sem URL publica e sem CTA publico.
+
+## 2026-06-09 — Rascunho PT-BR natural tambem no laboratorio
+
+Decisao: rascunhos editoriais persistidos devem usar grafia natural em PT-BR, mesmo antes de publicacao.
+
+Motivos:
+- laboratorio e onde erro mecanico deve aparecer, nao no Googlebot;
+- texto sem acento ou sem conectivos naturais e sinal de algoritmo burro;
+- persistir rascunho ruim aumenta risco de promover conteudo fraco depois.
+
+Consequencia: `internal/draftlab` aplica termo de exibicao natural; `./tools/refresh-editorial-drafts` regenera drafts persistidos apos refinamento; fila de revisao atualiza registros existentes sem liberar publicacao.

@@ -29,6 +29,7 @@ O projeto usa Go e biblioteca padrao como base tecnica. A escolha privilegia bin
 - `internal/storage`: banco leve proprio em JSONL para termos juridicos, auditorias, snapshots, rascunhos e manifesto publicado.
 - `internal/termintents`: candidatos de termos juridicos com demanda humana, fonte oficial e adequacao a contratacao 100% digital.
 - `internal/termpromotion`: ranking e promocao controlada de candidatos para seeds `draft_only`, com diversidade de areas e penalizacao de sinais fracos.
+- `cmd/refresh-editorial-drafts`: regeneracao segura de rascunhos persistidos quando o algoritmo de escrita e refinado.
 - `internal/provenance`: contrato de proveniencia por payload antes de qualquer conteudo.
 - `internal/architecture`: validacao de estrutura e proibicoes P0.
 - `tools`: scripts locais obrigatorios.

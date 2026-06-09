@@ -55,11 +55,6 @@ func EnqueueDraft(root string, draft draftlab.Draft, metadata Metadata) (bool, e
 	if !report.Passed() {
 		return false, fmt.Errorf("load_review_queue_failed=%s", strings.Join(report.Messages(), " | "))
 	}
-	for _, record := range records {
-		if record.TermID == draft.TermID {
-			return false, nil
-		}
-	}
 	record := Record{
 		TermID:             draft.TermID,
 		Term:               draft.Term,
@@ -80,7 +75,21 @@ func EnqueueDraft(root string, draft draftlab.Draft, metadata Metadata) (bool, e
 	if report := ValidateRecord(record); !report.Passed() {
 		return false, fmt.Errorf("invalid_review_record=%s", strings.Join(report.Messages(), " | "))
 	}
+	for i, existing := range records {
+		if existing.TermID == draft.TermID {
+			record.History = mergeHistory(existing.History, record.History)
+			records[i] = record
+			return false, rewriteRecords(root, records)
+		}
+	}
 	return true, storage.AppendJSONL(root, "review_queue", record)
+}
+
+func mergeHistory(existing []Event, next []Event) []Event {
+	if len(existing) == 0 {
+		return next
+	}
+	return existing
 }
 
 func Validate(root string) Report {
@@ -129,6 +138,32 @@ func LoadRecords(root string) ([]Record, Report) {
 		issues = append(issues, Issue{Code: "review_queue_scan_failed", Message: err.Error()})
 	}
 	return records, Report{Issues: issues}
+}
+
+func rewriteRecords(root string, records []Record) error {
+	projectRoot, err := findProjectRoot(root)
+	if err != nil {
+		return err
+	}
+	path := filepath.Join(projectRoot, "data", "editorial", "review_queue.jsonl")
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_TRUNC, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	for _, record := range records {
+		if report := ValidateRecord(record); !report.Passed() {
+			return fmt.Errorf("invalid_review_record=%s", strings.Join(report.Messages(), " | "))
+		}
+		data, err := json.Marshal(record)
+		if err != nil {
+			return err
+		}
+		if _, err := file.Write(append(data, '\n')); err != nil {
+			return err
+		}
+	}
+	return nil
 }
 
 func ValidateRecord(record Record) Report {
