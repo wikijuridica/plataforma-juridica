@@ -689,3 +689,26 @@
 - plano de continuidade: continuar P0 no ciclo 33; criar revisão jurídico-editorial bloqueada por candidato selecionado, conectando `batch_candidate_gates` a fonte específica, CTA contextual, base URL configurável e motivo de bloqueio restante.
 - proximo ciclo: P0 revisão jurídico-editorial de candidatos de lote, ainda sem publicação, com validação de fonte por intenção selecionada e preparação de pré-publicação somente bloqueada.
 - riscos: os candidatos foram escolhidos por amostra inicial de cada família, não por ranking completo de demanda; o próximo ciclo deve melhorar scoring de seleção sem afrouxar gates. A URL oficial continua não travada e qualquer promoção deve continuar usando base configurável.
+
+## 2026-06-09 — Ciclo 33 — P0 contrato anti-finalização indevida do /goal
+
+- data/hora local conferida antes do commit: `2026-06-09 13:41:47 -03`.
+- ciclo: 33
+- prioridade: P0
+- objetivo: reforçar `AGENTS.md` e contratos executáveis para impedir finalização indevida do `/goal` enquanto o projeto ainda está em P0/laboratório e sem 10 mil páginas públicas jurídicas aprovadas.
+- natureza do checkpoint: rastreabilidade operacional para continuar; nenhum ciclo e final e parada; nao e aceite final, nao e ordem de parada.
+- continuidade: continuar P0; este commit nao conclui `/goal`, nao publica páginas, nao libera sitemap, nao autoriza render publico e nao autoriza parar.
+- hipótese do ciclo: embora o contrato já proibisse tratar checkpoint como fim, faltava proibição operacional explícita contra chamar `update_goal status=complete`; isso poderia encerrar a continuidade contra a meta real.
+- entregas registradas no ciclo: primeira linha de `AGENTS.md` e `GOAL.md` reforçada com proibição de `update_goal status=complete`; regra de conclusão do `/goal` atualizada para bloquear completion enquanto P0/laboratório não tiver 10 mil páginas públicas jurídicas aprovadas; decisão registrada em `docs/DECISIONS.md`; teste de continuidade tornou a regra executável.
+- arquivos alterados: `AGENTS.md`, `GOAL.md`, `CHECKPOINT.md`, `docs/DECISIONS.md`, `internal/contract/continuity_test.go`.
+- decisões: ferramenta de goal não pode ser marcada como completa por commit, resposta final, laboratório verde, checkpoint, rascunho, arquivo permanente ou gate bloqueado. Completion só pode ocorrer com evidência atual de no mínimo 10 mil páginas públicas jurídicas aprovadas, indexáveis, com fonte, revisão, qualidade, CTA quando cabível, sitemap/canonical/robots corretos e validação completa.
+- comandos executados: `get_goal`; `env GOCACHE=/tmp/wiki-go-build-cache go test -count=1 ./internal/contract -run 'TestAgentsFirstLineForGoalModeDoesNotAllowStopping|TestContractsRequireContinuationBeyondCheckpoints'` como RED; `date '+%Y-%m-%d %H:%M:%S %Z'`; `env GOCACHE=/tmp/wiki-go-build-cache go test -count=1 ./internal/contract -run 'TestAgentsFirstLineForGoalModeDoesNotAllowStopping|TestContractsRequireContinuationBeyondCheckpoints'` como GREEN.
+- resultados: `get_goal` confirmou status `active`; RED falhou porque `AGENTS.md` não explicitava `update_goal status=complete` na primeira linha e AGENTS/GOAL não continham a frase operacional com backticks; após atualização, o teste focado passou em `ok portaljuridico/internal/contract 0.006s`.
+- falhas: a resposta anterior poderia ser lida como encerramento operacional, mesmo sem goal completo; o contrato textual ainda não citava explicitamente a chamada `update_goal` como proibida em P0.
+- correções: primeira linha de `AGENTS.md` e `GOAL.md` agora proíbe `update_goal status=complete`; regra de conclusão do `/goal` proíbe `update_goal` com `status=complete` enquanto ainda estiver em P0/laboratório; `continuity_test.go` reprova remoção dessa regra.
+- provas: `internal/contract/continuity_test.go` exige primeira linha com proibição operacional, AGENTS/GOAL com `proibido chamar update_goal com status=complete`, menção a P0/laboratório e 10 mil páginas públicas jurídicas aprovadas; `get_goal` mostrou o goal ativo, não completo.
+- autocrítica pré-commit: este ciclo corrige uma falha real de contrato e ferramenta, mas ainda é guardrail; não avança conteúdo público, revisão jurídico-editorial nem publicação. Não há pendência mascarada: o próximo ciclo técnico continua sendo revisão jurídico-editorial bloqueada por candidato de lote. O commit não conclui `/goal`, não entrega 10 mil páginas públicas e não autoriza parar.
+- commit: este ciclo deve ser persistido em Git apos validação final desta entrada.
+- plano de continuidade: continuar P0 no ciclo 34; criar revisão jurídico-editorial bloqueada por candidato selecionado, conectando `batch_candidate_gates` a fonte específica, CTA contextual, base URL configurável e motivo de bloqueio restante.
+- proximo ciclo: P0 revisão jurídico-editorial de candidatos de lote, ainda sem publicação, com validação de fonte por intenção selecionada e preparação de pré-publicação somente bloqueada.
+- riscos: regra de continuidade não substitui execução técnica; o próximo ciclo precisa voltar ao pipeline de candidatos sem pular fonte, revisão, SEO/crawl ou publicação bloqueada. Goal permanece ativo.

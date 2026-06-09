@@ -17,6 +17,9 @@ func TestAgentsFirstLineForGoalModeDoesNotAllowStopping(t *testing.T) {
 	if !strings.Contains(firstLine, want) {
 		t.Fatalf("AGENTS.md first line = %q, want it to contain %q", firstLine, want)
 	}
+	if !strings.Contains(firstLine, "proibido chamar update_goal status=complete") {
+		t.Fatalf("AGENTS.md first line must explicitly ban update_goal complete before the public target, got %q", firstLine)
+	}
 }
 
 func TestContractsRequireContinuationBeyondCheckpoints(t *testing.T) {
@@ -67,6 +70,9 @@ func TestContractsRequireContinuationBeyondCheckpoints(t *testing.T) {
 		requireContains(t, text, "draft_only")
 		requireContains(t, text, "Nenhum ciclo é final e parada")
 		requireContains(t, text, "não marcar `/goal` como completo")
+		requireContains(t, text, "proibido chamar `update_goal` com `status=complete`")
+		requireContains(t, text, "10 mil páginas públicas jurídicas aprovadas")
+		requireContains(t, text, "enquanto ainda estiver em P0/laboratório")
 		requireContains(t, text, "10 mil páginas públicas")
 		requireContains(t, text, "somente quando a meta pública mínima estiver verificada")
 	}

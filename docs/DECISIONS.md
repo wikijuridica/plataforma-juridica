@@ -235,6 +235,17 @@ Motivos:
 
 Consequencia: `AGENTS.md`, `GOAL.md` e testes de contrato exigem nao marcar `/goal` como completo ate a meta publica minima estar verificada: no minimo 10 mil paginas publicas aprovadas, indexaveis, com fonte, revisao, qualidade, CTA quando cabivel, sitemap/canonical/robots corretos e validacao completa.
 
+## 2026-06-09 — Proibido finalizar goal por ferramenta em P0
+
+Decisao: o agente nao pode chamar `update_goal` com `status=complete` enquanto o projeto estiver em P0/laboratório ou antes de 10 mil paginas publicas juridicas aprovadas e verificadas.
+
+Motivos:
+- o goal ativo e a meta publica minima sao maiores que qualquer checkpoint de laboratorio;
+- resposta final no thread, commit, check verde ou arquivo persistido nao provam o objetivo real;
+- marcar completion por ferramenta encerraria a continuidade operacional contra o contrato.
+
+Consequencia: a primeira linha de `AGENTS.md` e `GOAL.md` explicita a proibicao operacional. `internal/contract/continuity_test.go` reprova se a regra sumir dos contratos. O agente deve deixar o goal ativo, registrar o proximo ciclo e continuar trabalhando enquanto nao houver bloqueio P0 real comprovado.
+
 ## 2026-06-09 — Draft editorial persistido ainda nao e publicacao
 
 Decisao: rascunho validado pode ser persistido em `data/editorial/drafts.jsonl`, mas continua `draft/noindex`, sem rota publica, sem sitemap e sem CTA.
