@@ -33,7 +33,7 @@ func TestStaticBuildOutputsCompleteHTMLAndIndexingAssets(t *testing.T) {
 	indexHTML := readFile(t, filepath.Join(out, "index.html"))
 	requireContains(t, indexHTML, "<main")
 	requireContains(t, indexHTML, `rel="canonical"`)
-	requireContains(t, indexHTML, `name="robots" content="index,follow"`)
+	requireContains(t, indexHTML, `name="robots" content="index,follow,max-snippet:160"`)
 	requireContains(t, indexHTML, "<h1>Portal Jurídico Brasileiro</h1>")
 	requireContains(t, indexHTML, `<a href="/fontes/planalto/">`)
 	requireNotContains(t, strings.ToLower(indexHTML), "<script")

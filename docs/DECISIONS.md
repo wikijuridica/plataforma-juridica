@@ -117,3 +117,41 @@ Motivos:
 - qualidade juridica depende de clareza, naturalidade e revisao humana.
 
 Consequencia: rascunhos tecnicos internos podem usar texto operacional sem polimento, mas paginas, metadados visiveis, CTA, navegacao e rodape publicos devem ser PT-BR correto. O algoritmo de normalizacao de qualidade deve preservar letras acentuadas para nao degradar os gates em portugues.
+
+## 2026-06-09 — Orcamento SERP conservador baseado em pesquisa Google
+
+Decisao: o projeto usa limites internos conservadores para `title`, metadescricao e snippet, sem afirmar que sao limites oficiais fixos do Google.
+
+Pesquisa oficial feita no dia da sessao:
+- `https://developers.google.com/search/docs/appearance/title-link?hl=pt-BR`
+- `https://developers.google.com/search/docs/appearance/snippet?hl=pt-br`
+- `https://developers.google.com/search/docs/essentials/technical`
+
+Motivos:
+- Google informa que nao ha limite fixo oficial para `<title>` e metadescricoes;
+- os textos podem ser truncados conforme a largura do dispositivo;
+- conteudo indexavel exige acesso do Googlebot, HTTP 200 e conteudo que nao viole politicas de spam.
+
+Consequencia: `title` deve ter 20 a 65 caracteres Unicode, metadescricao deve ter 70 a 160 caracteres Unicode e paginas indexaveis recebem `max-snippet:160`. Quando faltarem dados atuais sobre Googlebot ou superficie de busca, pesquisar a Central da Pesquisa Google no dia da sessao.
+
+## 2026-06-09 — Laboratorio contra conteudo mecanico antes do Googlebot
+
+Decisao: conteudo raso, mecanico ou criado por permutacao de palavras-chave deve ser detectado em laboratorio antes de qualquer exposicao ao Googlebot.
+
+Motivos:
+- a meta de escala nao autoriza spam;
+- humanos e Googlebot precisam receber conteudo natural, util e especifico;
+- scripts isolados podem ser enganados por texto longo, mas repetitivo.
+
+Consequencia: `./tools/lab-content-quality` cria textos temporarios em `/tmp`, aprova texto natural e reprova texto mecanico. `./tools/check-mechanical-content` bloqueia paginas indexaveis com sinais de thin content, keyword stuffing, baixa diversidade lexical, frases repetidas ou permutacao mecanica. Falsos positivos e falsos negativos devem virar melhoria de algoritmo.
+
+## 2026-06-09 — CPU baixo no runtime publico
+
+Decisao: CPU deve ser reservada para trafego legitimo, Googlebot, OAI-SearchBot e bots valiosos no runtime publico.
+
+Motivos:
+- producao precisa atender muitas URLs e bots sem desperdiçar CPU;
+- renderizacao publica deve ser previsivel, local e barata;
+- laboratorio pode ser mais pesado quando necessario para provar qualidade, mas isso nao pode virar dependencia do atendimento publico.
+
+Consequencia: `./tools/check-cpu-budget` escaneia caminhos de runtime publico/producao e reprova execucao externa, chamadas de rede, sleeps ou loops sem limite. Testes, build, laboratorio e auditorias podem usar comandos mais pesados quando forem necessarios e registrados.

@@ -80,6 +80,9 @@ Heurísticas simples são permitidas somente como etapa inicial comprovada. Quan
 - robots.txt.
 - URLs limpas, estáveis e humanas.
 - Busca interna, filtros, parâmetros e páginas internas devem ser `noindex` por padrão.
+- Quando não houver dados atuais suficientes sobre requisitos do Googlebot, snippets, links de título, metadados ou superfície de busca, o agente deve pesquisar a Central da Pesquisa Google no dia da sessão e registrar a fonte consultada.
+- Pela documentação pública atual do Google, não há limite fixo oficial de caracteres para `<title>` nem metadescrição; ambos podem ser truncados conforme a largura do dispositivo. O projeto adota orçamento conservador do projeto para reduzir truncagem e texto ruim.
+- Orçamento SERP do projeto: `title`: 20 a 65 caracteres Unicode; metadescrição: 70 a 160 caracteres Unicode; `max-snippet:160` em página indexável enquanto este orçamento estiver ativo.
 
 ### P2 — Conteúdo e dados
 
@@ -97,6 +100,7 @@ Heurísticas simples são permitidas somente como etapa inicial comprovada. Quan
 
 - Páginas públicas devem ser leves.
 - Leveza é requisito de indexação, não acabamento visual. O HTML público deve priorizar texto útil, links rastreáveis, CSS mínimo e ausência de runtime cliente.
+- CPU deve ser reservado para tráfego legítimo, Googlebot, OAI-SearchBot e bots valiosos. O contrato de baixo consumo de CPU vale para runtime público e produção; laboratório, testes, build e auditorias podem executar comandos mais pesados quando forem necessários para provar qualidade, desde que não virem requisito de atendimento público.
 - Não hidratar página inteira.
 - Não exigir JavaScript para ler conteúdo.
 - Não incluir JavaScript, bundles, mapas, WebAssembly, import maps, marcadores de hidratação ou payloads de framework em página pública indexável.
@@ -368,7 +372,11 @@ Criar aliases ou scripts equivalentes:
 - `./tools/check-sitemaps`
 - `./tools/check-canonicals`
 - `./tools/check-no-duplicate-content`
+- `./tools/check-google-search-appearance`
+- `./tools/check-mechanical-content`
+- `./tools/check-cpu-budget`
 - `./tools/check-performance-budget`
+- `./tools/lab-content-quality`
 
 Todo ciclo deve rodar validações relevantes.
 

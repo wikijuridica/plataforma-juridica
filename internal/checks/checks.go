@@ -12,6 +12,7 @@ import (
 	"portaljuridico/internal/crawl"
 	"portaljuridico/internal/editorial"
 	"portaljuridico/internal/quality"
+	"portaljuridico/internal/seo"
 	"portaljuridico/internal/sources"
 )
 
@@ -24,12 +25,15 @@ var Names = []string{
 	"architecture",
 	"content-quality",
 	"seo",
+	"google-search-appearance",
 	"crawlability",
 	"sources",
 	"sitemaps",
 	"canonicals",
 	"no-duplicate-content",
+	"mechanical-content",
 	"performance-budget",
+	"cpu-budget",
 }
 
 func Run(name string, root string) []string {
@@ -40,6 +44,8 @@ func Run(name string, root string) []string {
 		return checkContentQuality(root)
 	case "seo":
 		return checkSEO(root)
+	case "google-search-appearance":
+		return checkGoogleSearchAppearance(root)
 	case "crawlability":
 		return checkCrawlability(root)
 	case "sources":
@@ -50,8 +56,12 @@ func Run(name string, root string) []string {
 		return checkCanonicals(root)
 	case "no-duplicate-content":
 		return checkNoDuplicateContent(root)
+	case "mechanical-content":
+		return checkMechanicalContent(root)
 	case "performance-budget":
 		return checkPerformanceBudget(root)
+	case "cpu-budget":
+		return checkCPUBudget(root)
 	default:
 		return []string{"unknown_check=" + name}
 	}
@@ -163,6 +173,20 @@ func checkCrawlability(root string) []string {
 	return errors
 }
 
+func checkGoogleSearchAppearance(root string) []string {
+	repo, err := content.LoadRepository(root)
+	if err != nil {
+		return []string{err.Error()}
+	}
+	errors := make([]string, 0)
+	for _, page := range repo.Pages {
+		for _, issue := range seo.ValidateSearchAppearance(page) {
+			errors = append(errors, page.Path+":"+issue.Code+":"+issue.Message)
+		}
+	}
+	return errors
+}
+
 func checkSources(root string) []string {
 	registry, err := sources.LoadRegistry(root)
 	if err != nil {
@@ -251,6 +275,34 @@ func checkNoDuplicateContent(root string) []string {
 	return errors
 }
 
+func checkMechanicalContent(root string) []string {
+	repo, err := content.LoadRepository(root)
+	if err != nil {
+		return []string{err.Error()}
+	}
+	errors := make([]string, 0)
+	mechanicalCodes := map[string]bool{
+		"thin_content":                   true,
+		"keyword_stuffing":               true,
+		"low_lexical_diversity":          true,
+		"repeated_phrase":                true,
+		"repeated_sentence":              true,
+		"mechanical_keyword_permutation": true,
+	}
+	for _, page := range repo.Pages {
+		if !editorial.IsIndexable(page) {
+			continue
+		}
+		analysis := quality.AnalyzePage(page)
+		for _, issue := range analysis.Issues {
+			if mechanicalCodes[issue.Code] {
+				errors = append(errors, page.Path+":"+issue.Code+":"+issue.Message)
+			}
+		}
+	}
+	return errors
+}
+
 func checkPerformanceBudget(root string) []string {
 	out, cleanup, err := buildTemp(root)
 	if err != nil {
@@ -278,6 +330,61 @@ func checkPerformanceBudget(root string) []string {
 		errors = append(errors, htmlPerformanceIssues(path, data, info.Size())...)
 		return nil
 	})
+	return errors
+}
+
+func checkCPUBudget(root string) []string {
+	scanRoots := []string{
+		"cmd/server",
+		"internal/render",
+		"internal/ondemand",
+		"internal/router",
+		"internal/seo",
+		"internal/editorial",
+	}
+	errors := make([]string, 0)
+	for _, scanRoot := range scanRoots {
+		base := filepath.Join(root, scanRoot)
+		if _, err := os.Stat(base); err != nil {
+			continue
+		}
+		filepath.Walk(base, func(path string, info os.FileInfo, err error) error {
+			if err != nil || info == nil || info.IsDir() || !strings.HasSuffix(path, ".go") || strings.HasSuffix(path, "_test.go") {
+				return nil
+			}
+			data, err := os.ReadFile(path)
+			if err != nil {
+				errors = append(errors, err.Error())
+				return nil
+			}
+			errors = append(errors, cpuBudgetIssuesForSource(path, string(data))...)
+			return nil
+		})
+	}
+	return errors
+}
+
+func cpuBudgetIssuesForSource(path string, source string) []string {
+	text := strings.ToLower(source)
+	errors := make([]string, 0)
+	for _, marker := range []string{"exec.command", "\"os/exec\"", "'os/exec'"} {
+		if strings.Contains(text, marker) {
+			errors = append(errors, path+":public_runtime_exec_not_allowed")
+			break
+		}
+	}
+	for _, marker := range []string{"http.get(", "http.post(", "http.defaultclient", "net.dial"} {
+		if strings.Contains(text, marker) {
+			errors = append(errors, path+":public_runtime_network_call_not_allowed")
+			break
+		}
+	}
+	if strings.Contains(text, "time.sleep(") {
+		errors = append(errors, path+":public_runtime_sleep_not_allowed")
+	}
+	if strings.Contains(text, "for {") || strings.Contains(text, "for{") {
+		errors = append(errors, path+":unbounded_loop_not_allowed")
+	}
 	return errors
 }
 

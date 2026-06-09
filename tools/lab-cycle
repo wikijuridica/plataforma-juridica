@@ -6,6 +6,10 @@ export GOCACHE="${GOCACHE:-/tmp/opt-wiki-go-cache}"
 go test -count=1 ./...
 ./tools/check-all
 ./tools/check-sources
+./tools/check-google-search-appearance
+./tools/check-mechanical-content
+./tools/check-cpu-budget
+./tools/lab-content-quality
 go run ./cmd/build public
 go list -m all
 git diff --check

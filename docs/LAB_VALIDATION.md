@@ -12,12 +12,20 @@ Esse comando combina:
 - `go test -count=1 ./...`;
 - `./tools/check-all`;
 - `./tools/check-sources`;
+- `./tools/check-google-search-appearance`;
+- `./tools/check-mechanical-content`;
+- `./tools/check-cpu-budget`;
+- `./tools/lab-content-quality`;
 - `go run ./cmd/build public`;
 - `go list -m all`;
 - `git diff --check`;
 - busca por residuos `.py` e `.pyc`.
 
 O gate `./tools/check-performance-budget` deve reprovar HTML publico pesado, `<script>`, runtime cliente, bundle JavaScript, WebAssembly, mapas, `modulepreload`, import map, marcadores de hidratacao e CSS inline excessivo. Leveza e parte da prova de indexacao para Googlebot e bots valiosos.
+
+`./tools/lab-content-quality` usa arquivos temporarios em `/tmp` para validar texto natural versus texto mecanico. Isso e laboratorio, nao publicacao. Ele deve detectar conteudo raso, keyword stuffing e permutacao antes que qualquer pagina seja exposta ao Googlebot.
+
+`./tools/check-cpu-budget` vale para runtime publico/producao. Ele nao proibe testes, build, laboratorio ou auditorias mais pesadas quando forem necessarias para provar qualidade; ele impede que caminhos de atendimento publico gastem CPU com execucao externa, rede, sleeps ou loops sem limite.
 
 ## Politica
 

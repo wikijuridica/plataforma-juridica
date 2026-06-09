@@ -17,6 +17,7 @@ import (
 const minIndexableWords = 90
 const minInternalLinks = 2
 const nearDuplicateThreshold = 0.82
+const minLexicalDiversity = 0.38
 
 type Issue struct {
 	PagePath string
@@ -26,6 +27,18 @@ type Issue struct {
 
 type Report struct {
 	Issues []Issue
+}
+
+type TextIssue struct {
+	Code    string
+	Message string
+}
+
+type TextAnalysis struct {
+	WordCount        int
+	SignalWords      int
+	LexicalDiversity float64
+	Issues           []TextIssue
 }
 
 func (r Report) Passed() bool {
@@ -92,9 +105,6 @@ func ValidatePages(pages []content.Page) Report {
 		if page.MetaDescription == "" {
 			addIssue(&issues, page, "missing_meta_description", "pagina indexavel sem meta description")
 		}
-		if wordCount(page.PlainText()) < minIndexableWords {
-			addIssue(&issues, page, "thin_content", "conteudo indexavel abaixo do minimo textual")
-		}
 		if len(page.InternalLinks) < minInternalLinks {
 			addIssue(&issues, page, "missing_useful_internal_links", "pagina indexavel exige links internos uteis")
 		}
@@ -109,6 +119,12 @@ func ValidatePages(pages []content.Page) Report {
 		}
 		if page.IsLegalContent() && page.LegalNotice == "" {
 			addIssue(&issues, page, "legal_content_without_notice", "conteudo juridico exige aviso informativo")
+		}
+		for _, textIssue := range AnalyzePage(page).Issues {
+			addIssue(&issues, page, textIssue.Code, textIssue.Message)
+		}
+		for _, appearanceIssue := range seo.ValidateSearchAppearance(page) {
+			addIssue(&issues, page, appearanceIssue.Code, appearanceIssue.Message)
 		}
 	}
 
@@ -139,6 +155,89 @@ func ValidatePagesWithSources(pages []content.Page, registry sources.Registry) R
 
 func addIssue(issues *[]Issue, page content.Page, code string, message string) {
 	*issues = append(*issues, Issue{PagePath: page.Path, Code: code, Message: message})
+}
+
+func (a TextAnalysis) Passed() bool {
+	return len(a.Issues) == 0
+}
+
+func (a TextAnalysis) HasIssue(code string) bool {
+	for _, issue := range a.Issues {
+		if issue.Code == code {
+			return true
+		}
+	}
+	return false
+}
+
+func (a TextAnalysis) Messages() []string {
+	messages := make([]string, 0, len(a.Issues))
+	for _, issue := range a.Issues {
+		messages = append(messages, issue.Code+": "+issue.Message)
+	}
+	return messages
+}
+
+func AnalyzeText(value string) TextAnalysis {
+	words := strings.Fields(normalizeText(value))
+	signalWords := removeStopWords(words)
+	issues := make([]TextIssue, 0)
+	if len(words) < minIndexableWords {
+		issues = append(issues, TextIssue{
+			Code:    "thin_content",
+			Message: fmt.Sprintf("texto com %d palavras; minimo indexavel e %d", len(words), minIndexableWords),
+		})
+	}
+
+	lexicalDiversity := diversity(signalWords)
+	if len(words) >= minIndexableWords && lexicalDiversity < minLexicalDiversity {
+		issues = append(issues, TextIssue{
+			Code:    "low_lexical_diversity",
+			Message: fmt.Sprintf("diversidade lexical %.2f abaixo do minimo %.2f", lexicalDiversity, minLexicalDiversity),
+		})
+	}
+
+	mechanicalSignals := 0
+	if code, message, ok := keywordStuffing(signalWords); ok {
+		issues = append(issues, TextIssue{Code: code, Message: message})
+		mechanicalSignals++
+	}
+	if code, message, ok := repeatedPhrase(words); ok {
+		issues = append(issues, TextIssue{Code: code, Message: message})
+		mechanicalSignals++
+	}
+	if code, message, ok := repeatedSentence(value); ok {
+		issues = append(issues, TextIssue{Code: code, Message: message})
+		mechanicalSignals++
+	}
+	if lexicalDiversity < minLexicalDiversity && len(words) >= minIndexableWords {
+		mechanicalSignals++
+	}
+	if mechanicalSignals >= 2 {
+		issues = append(issues, TextIssue{
+			Code:    "mechanical_keyword_permutation",
+			Message: "texto combina repeticao, baixa diversidade ou permutacao de termos; bloquear antes do Googlebot",
+		})
+	}
+
+	return TextAnalysis{
+		WordCount:        len(words),
+		SignalWords:      len(signalWords),
+		LexicalDiversity: lexicalDiversity,
+		Issues:           issues,
+	}
+}
+
+func AnalyzePage(page content.Page) TextAnalysis {
+	parts := []string{
+		page.Summary,
+		page.LegalNotice,
+		page.PublicationPurpose,
+	}
+	for _, section := range page.BodySections {
+		parts = append(parts, section.Title, section.Body)
+	}
+	return AnalyzeText(strings.Join(parts, " "))
 }
 
 func checkDuplicates(indexable []content.Page, issues *[]Issue) {
@@ -200,6 +299,111 @@ func normalizeText(value string) string {
 		clean.WriteByte(' ')
 	}
 	return strings.Join(strings.Fields(clean.String()), " ")
+}
+
+func removeStopWords(words []string) []string {
+	result := make([]string, 0, len(words))
+	for _, word := range words {
+		if len([]rune(word)) <= 2 || portugueseStopWords()[word] {
+			continue
+		}
+		result = append(result, word)
+	}
+	return result
+}
+
+func portugueseStopWords() map[string]bool {
+	return map[string]bool{
+		"a": true, "ao": true, "aos": true, "as": true, "até": true,
+		"com": true, "como": true, "da": true, "das": true, "de": true,
+		"do": true, "dos": true, "e": true, "em": true, "entre": true,
+		"essa": true, "esse": true, "esta": true, "este": true, "isso": true,
+		"na": true, "nas": true, "no": true, "nos": true, "não": true,
+		"o": true, "os": true, "ou": true, "para": true, "pela": true,
+		"pelo": true, "por": true, "porque": true, "que": true, "se": true,
+		"sem": true, "sua": true, "suas": true, "seu": true, "seus": true,
+		"um": true, "uma": true,
+	}
+}
+
+func diversity(words []string) float64 {
+	if len(words) == 0 {
+		return 0
+	}
+	unique := make(map[string]bool)
+	for _, word := range words {
+		unique[word] = true
+	}
+	return float64(len(unique)) / float64(len(words))
+}
+
+func keywordStuffing(words []string) (string, string, bool) {
+	if len(words) == 0 {
+		return "", "", false
+	}
+	counts := make(map[string]int)
+	topWord := ""
+	topCount := 0
+	for _, word := range words {
+		counts[word]++
+		if counts[word] > topCount {
+			topWord = word
+			topCount = counts[word]
+		}
+	}
+	ratio := float64(topCount) / float64(len(words))
+	if topCount >= 8 && ratio >= 0.12 {
+		return "keyword_stuffing", fmt.Sprintf("termo %q aparece %d vezes em %d termos relevantes", topWord, topCount, len(words)), true
+	}
+	return "", "", false
+}
+
+func repeatedPhrase(words []string) (string, string, bool) {
+	counts := shingleCounts(words, 3)
+	topPhrase := ""
+	topCount := 0
+	for phrase, count := range counts {
+		if count > topCount {
+			topPhrase = phrase
+			topCount = count
+		}
+	}
+	if topCount >= 3 {
+		return "repeated_phrase", fmt.Sprintf("frase %q repetida %d vezes", topPhrase, topCount), true
+	}
+	return "", "", false
+}
+
+func repeatedSentence(value string) (string, string, bool) {
+	counts := make(map[string]int)
+	for _, sentence := range splitSentences(value) {
+		normalized := normalizeText(sentence)
+		if wordCount(normalized) < 6 {
+			continue
+		}
+		counts[normalized]++
+		if counts[normalized] >= 3 {
+			return "repeated_sentence", "mesma frase repetida tres ou mais vezes", true
+		}
+	}
+	return "", "", false
+}
+
+func splitSentences(value string) []string {
+	return strings.FieldsFunc(value, func(r rune) bool {
+		return r == '.' || r == '!' || r == '?' || r == '\n'
+	})
+}
+
+func shingleCounts(words []string, size int) map[string]int {
+	result := make(map[string]int)
+	if len(words) < size {
+		return result
+	}
+	for i := 0; i <= len(words)-size; i++ {
+		result[strings.Join(words[i:i+size], " ")]++
+	}
+	return result
 }
 
 func normalizedHash(value string) string {

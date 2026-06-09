@@ -35,6 +35,12 @@ func TestContractsRequireContinuationBeyondCheckpoints(t *testing.T) {
 		requireContains(t, text, "o código deve explicar suas próprias decisões")
 		requireContains(t, text, "Conteúdo visível ao público deve ser escrito em PT-BR")
 		requireContains(t, text, "grafia correta")
+		requireContains(t, text, "pesquisar a Central da Pesquisa Google no dia da sessão")
+		requireContains(t, text, "não há limite fixo oficial de caracteres")
+		requireContains(t, text, "orçamento conservador do projeto")
+		requireContains(t, text, "`title`: 20 a 65 caracteres Unicode")
+		requireContains(t, text, "metadescrição: 70 a 160 caracteres Unicode")
+		requireContains(t, text, "CPU deve ser reservado para tráfego legítimo")
 	}
 }
 

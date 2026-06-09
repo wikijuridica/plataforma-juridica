@@ -33,3 +33,17 @@ Roteiro mínimo antes de qualquer página jurídica:
 - separar texto oficial, explicação informativa e opinião;
 - validar com gates de qualidade, SEO e duplicidade;
 - revisar antes de liberar indexação.
+
+## Conteúdo mecânico
+
+Conteúdo raso ou mecânico deve ser detectado antes de qualquer exposição ao Googlebot. O laboratório `./tools/lab-content-quality` cria textos temporários em `/tmp`: um texto natural em PT-BR e um texto mecânico de permutação de palavras-chave. O detector precisa aprovar o texto natural e reprovar o mecânico.
+
+Sinais iniciais:
+- mínimo textual para conteúdo indexável;
+- baixa diversidade lexical;
+- excesso de repetição de palavra relevante;
+- frase repetida;
+- sentença repetida;
+- combinação de sinais que indique permutação de keyword.
+
+O algoritmo deve ser melhorado sempre que gerar falso positivo ou falso negativo. Exemplo já registrado: repetição normal de marca/título/heading não deve ser confundida com conteúdo mecânico; por isso a análise de página usa o corpo editorial, não o conjunto inteiro de title/meta/heading.
