@@ -47,6 +47,8 @@ Termos juridicos podem ser usados para iniciar pauta e rascunho, mas nao podem v
 
 Rascunho editorial tambem deve preservar grafia natural em PT-BR. Mesmo em laboratorio, termos como `divorcio online`, `auxilio doenca negado` e `negativa cobertura plano saude` devem virar texto natural com acentuacao e conectivos corretos antes de qualquer persistencia editorial. O script `./tools/refresh-editorial-drafts` atualiza drafts persistidos quando o algoritmo de escrita e refinado.
 
+`./tools/check-source-specificity-blockers` exige que termos priorizados tenham manifesto de fonte especifica antes de qualquer aprovacao. Fonte institucional ampla pode iniciar laboratorio, mas nao basta para conteudo publico quando falta norma, artigo, regra administrativa, requisito ou limite juridico especifico. Enquanto o bloqueio existir, `approval_allowed=false`, `publication_allowed=false` e `public_path=""`.
+
 `./tools/lab-term-draft` transforma seed valida em rascunho temporario dentro de `/tmp`, com estado `draft/noindex`, fonte citada e aviso informativo. Esse laboratorio prova linguagem natural sem escrever em `content/pages.json` e sem expor a seed ao Googlebot.
 
 `./tools/persist-term-drafts` persiste rascunhos validados em `data/editorial/drafts.jsonl` de forma idempotente. `./tools/check-editorial-drafts` reprova qualquer draft que tenha rota publica, indexacao, fonte ausente ou qualidade textual insuficiente.

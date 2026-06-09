@@ -34,6 +34,8 @@ Os candidatos de alta intencao ficam em `data/terms/intent_candidates.jsonl` e s
 
 Quando um candidato e promovido para `term_seeds`, ele deve preservar `candidate_id`, URL de evidencia de demanda, grupo de consulta, modo `digital_only` e intencao alta de CTA WhatsApp. Essa promocao nao cria pagina, nao cria CTA publico e nao libera sitemap.
 
+Bloqueios de fonte especifica ficam em `data/editorial/source_blockers.jsonl` e sao validados por `./tools/check-source-specificity-blockers`. Eles registram a fonte atual, os tipos de fonte ainda exigidos e a proxima direcao de pesquisa para cada termo priorizado.
+
 Rascunhos persistidos ficam em `data/editorial/drafts.jsonl`, separados de snapshots oficiais e de paginas publicas. Eles devem permanecer `draft/noindex` ate fonte, revisao, qualidade e decisao editorial completa.
 
 A fila de revisao fica em `data/editorial/review_queue.jsonl`. Ela registra autoria, motivo, historico e estado `needs_review`, mas nao libera publicacao nem cria URL.

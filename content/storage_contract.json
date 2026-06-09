@@ -103,6 +103,18 @@
       "description": "Manifesto de requisitos faltantes antes de qualquer URL publica."
     },
     {
+      "name": "source_specificity_blockers",
+      "path": "data/editorial/source_blockers.jsonl",
+      "record_type": "source_specificity_blocker",
+      "record_max_bytes": 8192,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": false,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Bloqueios por termo quando a fonte atual ainda nao e especifica o suficiente para aprovacao/publicacao."
+    },
+    {
       "name": "published_manifest",
       "path": "data/editorial/published_manifest.jsonl",
       "record_type": "published_content_manifest",

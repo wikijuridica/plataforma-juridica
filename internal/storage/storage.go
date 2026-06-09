@@ -128,7 +128,7 @@ func (c Contract) Validate() Report {
 		issues = append(issues, Issue{Code: "content_start_policy_not_draft_only", Message: "termos so podem iniciar rascunhos bloqueados para indexacao"})
 	}
 
-	required := []string{"term_seeds", "term_intent_candidates", "source_audits", "source_snapshots", "editorial_drafts", "published_manifest"}
+	required := []string{"term_seeds", "term_intent_candidates", "source_audits", "source_snapshots", "editorial_drafts", "source_specificity_blockers", "published_manifest"}
 	paths := make(map[string]string)
 	for _, name := range required {
 		layer, ok := c.LayerByName(name)

@@ -24,6 +24,7 @@ O projeto usa Go e biblioteca padrao como base tecnica. A escolha privilegia bin
 - `internal/reviewqueue`: fila editorial `needs_review` com historico e publicacao bloqueada.
 - `internal/approvals`: aprovacao editorial separada de publicacao, ainda sem URL publica.
 - `internal/publicationblockers`: manifesto de requisitos faltantes antes de qualquer URL publica.
+- `internal/sourceblockers`: bloqueios por termo quando a fonte atual ainda nao e especifica o suficiente para aprovacao/publicacao.
 - `internal/legal`: controle de conteudo juridico.
 - `internal/sources`: contratos de fontes oficiais.
 - `internal/storage`: banco leve proprio em JSONL para termos juridicos, auditorias, snapshots, rascunhos e manifesto publicado.
@@ -73,6 +74,7 @@ Camadas obrigatorias:
 - `source_audits`: auditoria de robots, termos de uso, alcance HTTP e decisao de bloqueio;
 - `source_snapshots`: snapshots autorizados, pequenos, com hash e proveniencia;
 - `editorial_drafts`: texto editorial proprio em PT-BR, sempre noindex ate aprovacao;
+- `source_specificity_blockers`: manifesto que impede aprovacao/publicacao quando o termo ainda precisa fonte primaria, norma especifica ou recorte juridico;
 - `published_manifest`: manifesto leve de conteudo aprovado, sem substituir o renderizador.
 
 Regra P0: termos podem iniciar `draft_only`; nenhuma linha do banco vira pagina indexavel sem fonte, revisao, qualidade, SEO, intencao unica e checkpoint.

@@ -330,3 +330,14 @@ Motivos:
 - persistir rascunho ruim aumenta risco de promover conteudo fraco depois.
 
 Consequencia: `internal/draftlab` aplica termo de exibicao natural; `./tools/refresh-editorial-drafts` regenera drafts persistidos apos refinamento; fila de revisao atualiza registros existentes sem liberar publicacao.
+
+## 2026-06-09 — Fonte especifica bloqueia aprovacao
+
+Decisao: termo priorizado com fonte ampla, institucional ou generica nao pode ser aprovado nem publicado ate haver manifesto de fonte especifica resolvido.
+
+Motivos:
+- demanda humana e CTA alto nao substituem base juridica correta;
+- fonte institucional pode orientar pesquisa, mas texto publico precisa regra, norma, artigo, requisito ou limite juridico aplicavel;
+- bloquear aprovacao evita que rascunho de laboratorio vire conteudo publico por engano.
+
+Consequencia: `data/editorial/source_blockers.jsonl` registra `approval_allowed=false`, `publication_allowed=false`, `public_path=""`, requisitos faltantes e proxima pesquisa por termo. `./tools/check-source-specificity-blockers` entra no laboratorio.

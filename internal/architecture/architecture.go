@@ -22,6 +22,7 @@ var requiredModules = map[string]string{
 	"termintents":         "internal/termintents",
 	"termpromotion":       "internal/termpromotion",
 	"publicationblockers": "internal/publicationblockers",
+	"sourceblockers":      "internal/sourceblockers",
 	"quality":             "internal/quality",
 	"seo":                 "internal/seo",
 	"crawl":               "internal/crawl",
