@@ -4,10 +4,13 @@ import (
 	"bufio"
 	"encoding/json"
 	"fmt"
+	"hash"
+	"hash/fnv"
 	"os"
 	"path/filepath"
 	"sort"
 	"strings"
+	"sync"
 	"unicode"
 
 	"portaljuridico/internal/humanscore"
@@ -60,6 +63,26 @@ type SimilarityPair struct {
 	RightID string
 	Score   float64
 }
+
+type similarityCacheStats struct {
+	Hits    int
+	Misses  int
+	Entries int
+}
+
+type similarityCacheEntry struct {
+	fingerprint string
+	pair        SimilarityPair
+}
+
+const maximumSimilarityCacheLimit = 4
+
+var maximumSimilarityCache = struct {
+	sync.Mutex
+	entries []similarityCacheEntry
+	hits    int
+	misses  int
+}{}
 
 func Validate(root string) Report {
 	entries, report := LoadRecords(root)
@@ -216,6 +239,35 @@ func MaximumPairSimilarity(entries []Entry) float64 {
 }
 
 func MaximumPairSimilarityDetail(entries []Entry) SimilarityPair {
+	fingerprint := similarityEntriesFingerprint(entries)
+	maximumSimilarityCache.Lock()
+	for index, entry := range maximumSimilarityCache.entries {
+		if entry.fingerprint == fingerprint {
+			maximumSimilarityCache.hits++
+			pair := entry.pair
+			if index != len(maximumSimilarityCache.entries)-1 {
+				copy(maximumSimilarityCache.entries[index:], maximumSimilarityCache.entries[index+1:])
+				maximumSimilarityCache.entries[len(maximumSimilarityCache.entries)-1] = entry
+			}
+			maximumSimilarityCache.Unlock()
+			return pair
+		}
+	}
+	maximumSimilarityCache.misses++
+	maximumSimilarityCache.Unlock()
+
+	pair := computeMaximumPairSimilarityDetail(entries)
+
+	maximumSimilarityCache.Lock()
+	maximumSimilarityCache.entries = append(maximumSimilarityCache.entries, similarityCacheEntry{fingerprint: fingerprint, pair: pair})
+	if len(maximumSimilarityCache.entries) > maximumSimilarityCacheLimit {
+		maximumSimilarityCache.entries = append([]similarityCacheEntry{}, maximumSimilarityCache.entries[len(maximumSimilarityCache.entries)-maximumSimilarityCacheLimit:]...)
+	}
+	maximumSimilarityCache.Unlock()
+	return pair
+}
+
+func computeMaximumPairSimilarityDetail(entries []Entry) SimilarityPair {
 	max := 0.0
 	pair := SimilarityPair{}
 	sets := make([]map[string]bool, len(entries))
@@ -237,6 +289,50 @@ func MaximumPairSimilarityDetail(entries []Entry) SimilarityPair {
 		}
 	}
 	return pair
+}
+
+func similarityEntriesFingerprint(entries []Entry) string {
+	hash := fnv.New64a()
+	fmt.Fprintf(hash, "count:%d|", len(entries))
+	for _, entry := range entries {
+		record := entry.Record
+		fmt.Fprintf(hash, "line:%d|", entry.Line)
+		writeFingerprintField(hash, record.BatchID)
+		writeFingerprintField(hash, record.UniqueIntentID)
+		writeFingerprintField(hash, record.SourceMatrixID)
+		writeFingerprintField(hash, record.LegalArea)
+		writeFingerprintField(hash, record.Term)
+		writeFingerprintField(hash, record.ReaderProblem)
+		writeFingerprintField(hash, record.SourceHook)
+		writeFingerprintField(hash, record.DocumentContext)
+		writeFingerprintField(hash, record.RiskContext)
+		writeFingerprintField(hash, record.DigitalAction)
+		writeFingerprintField(hash, record.CTAContext)
+	}
+	return fmt.Sprintf("%016x", hash.Sum64())
+}
+
+func writeFingerprintField(writer hash.Hash64, value string) {
+	fmt.Fprintf(writer, "%d:%s|", len(value), value)
+}
+
+func resetSimilarityCacheForTest() {
+	maximumSimilarityCache.Lock()
+	maximumSimilarityCache.entries = nil
+	maximumSimilarityCache.hits = 0
+	maximumSimilarityCache.misses = 0
+	maximumSimilarityCache.Unlock()
+}
+
+func similarityCacheStatsForTest() similarityCacheStats {
+	maximumSimilarityCache.Lock()
+	stats := similarityCacheStats{
+		Hits:    maximumSimilarityCache.hits,
+		Misses:  maximumSimilarityCache.misses,
+		Entries: len(maximumSimilarityCache.entries),
+	}
+	maximumSimilarityCache.Unlock()
+	return stats
 }
 
 func validBatchIDs(root string) map[string]bool {

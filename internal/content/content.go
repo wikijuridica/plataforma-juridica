@@ -77,15 +77,24 @@ type Repository struct {
 	BaseURLMode       string
 	OfficialURLStatus string
 	OfficialURLLocked bool
+	EditorialIdentity EditorialIdentity
 	Pages             []Page
 	Root              string
 }
 
+type EditorialIdentity struct {
+	AuthorName string `json:"author_name"`
+	OABSection string `json:"oab_section"`
+	OABNumber  string `json:"oab_number"`
+	Source     string `json:"source"`
+}
+
 type siteConfig struct {
-	BaseURL           string `json:"base_url"`
-	BaseURLMode       string `json:"base_url_mode"`
-	OfficialURLStatus string `json:"official_url_status"`
-	OfficialURLLocked bool   `json:"official_url_locked"`
+	BaseURL           string            `json:"base_url"`
+	BaseURLMode       string            `json:"base_url_mode"`
+	OfficialURLStatus string            `json:"official_url_status"`
+	OfficialURLLocked bool              `json:"official_url_locked"`
+	EditorialIdentity EditorialIdentity `json:"editorial_identity"`
 }
 
 func LoadRepository(root string) (Repository, error) {
@@ -109,6 +118,7 @@ func LoadRepository(root string) (Repository, error) {
 		BaseURLMode:       site.BaseURLMode,
 		OfficialURLStatus: site.OfficialURLStatus,
 		OfficialURLLocked: site.OfficialURLLocked,
+		EditorialIdentity: site.EditorialIdentity,
 		Pages:             pages,
 		Root:              projectRoot,
 	}, nil

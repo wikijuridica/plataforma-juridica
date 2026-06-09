@@ -793,3 +793,33 @@ Motivos:
 - a meta massiva exige comando rapido de avancar lote, com teste e regeneracao downstream, nao edicao manual de JSONL.
 
 Consequencia: `internal/batchcandidatepromotion` passa a ter `AdvanceToNextTargets`, mantendo `ExpandFromReadiness` como selecao current; `cmd/advance-batch-candidate-gates` e `tools/advance-batch-candidate-gates` materializam o next target quando a estrategia esta pronta. `batch_candidate_gates` sobe para 510 candidatos internos bloqueados: 90 em cada uma das cinco familias comerciais e 60 em previdenciario. A cadeia downstream sobe para 510 revisoes, prepublication gates, source-specificity, manifests e final drafts, todos `noindex`, sem render, sitemap, publicacao ou `public_path`. `batch_paid_intent_gates` passa a cobrir 590 alvos de laboratorio para o proximo crescimento planejado.
+
+## 2026-06-09 — Flexibilidade previdenciaria por curiosidade qualificada
+
+Decisao: previdenciario informativo nao precisa de alta intencao de pagamento para crescer internamente no laboratorio, desde que haja curiosidade qualificada, utilidade humana e bloqueio publico total.
+
+Motivos:
+- previdenciario tem demanda humana real em beneficios, CNIS, pericia, exigencia, prazo, documento e revisao, mesmo quando a pessoa ainda esta curiosa ou em fase administrativa;
+- bloquear toda curiosidade previdenciaria reduziria crescimento de familia juridica relevante e impediria cobertura informativa util;
+- afrouxar a regra geral criaria risco comercial em consumidor, familia, saude, sucessorio e trabalhista;
+- a excecao precisa continuar auditavel, com status proprio e sem publicacao.
+
+Consequencia: `batch-previdenciario-digital` pode usar `paid_intent_flexible_previdenciario_informational_blocked_publication` para crescer familias previdenciarias bloqueadas. Famílias comerciais continuam exigindo intencao paga particular ou bloqueio explicito. Gratuidade explicita, defensoria/justica gratuita, "sem pagar", promessa de beneficio, promessa de resultado e substituicao de canal publico continuam bloqueios P0. A lane previdenciaria permanece `noindex`, sem render, sitemap, publicacao ou `public_path`.
+
+Adendo: famílias comerciais também são informativas. Não retirar o conteúdo informativo da plataforma jurídica; a intenção natural de contratação deve ser incorporada por cenário jurídico, documentos, risco econômico, urgência, honorários/orçamento e CTA contextual, sem transformar a página em oferta seca.
+
+## 2026-06-09 — OAB, autoria configurada e atendimento jurídico digital
+
+Decisao: o projeto deve tratar atendimento jurídico 100% digital, tudo online, sem sair de casa, envio remoto de documentos, WhatsApp contextual e atendimento a brasileiros fora do Brasil como modo real de prestação jurídica digital; isso não é promessa de resultado, é realidade brasileira quando usado como descrição objetiva do atendimento.
+
+Pesquisa oficial feita no dia da sessao:
+- `https://www.oab.org.br/leisnormas/legislacao/provimentos/205-2021`
+- `https://www.oab.org.br/publicacoes/AbrirPDF?LivroId=0000004085`
+
+Motivos:
+- o Provimento OAB 205/2021 permite marketing jurídico compatível com a ética da OAB e define marketing de conteúdos jurídicos como criação/divulgação de conteúdo jurídico voltado a informar o público;
+- o mesmo Provimento exige informação objetiva, verdadeira, sobriedade e veda captação, mercantilização, valores, gratuidade/descontos, expressões persuasivas, autoengrandecimento, promessa de resultados e casos concretos como oferta;
+- o anexo do Provimento admite criação de conteúdo, artigos, ferramentas tecnológicas e chatbot para facilitar comunicação/coleta de dados sem suprimir a pessoalidade do advogado;
+- o Código de Ética e Disciplina exige publicidade informativa, internet como veículo lícito com limites, e nome/OAB na publicidade profissional.
+
+Consequencia: gates não devem reprovar termos como 100% digital, tudo online, sem sair de casa ou atendimento remoto quando forem descrição do fluxo. Devem reprovar garantia de êxito, liminar garantida, resultado certo, prazo prometido, comparação, captação indevida, caso concreto usado como oferta, sensacionalismo, valores, descontos e gratuidade. Autor dos conteúdos: Rafael Toledo, OAB/RJ 227191; a identidade fica em `content/site.json` como configuração versionada, não hardcoded em runtime.

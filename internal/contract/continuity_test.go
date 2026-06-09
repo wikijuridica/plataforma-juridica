@@ -78,6 +78,41 @@ func TestContractsRequireContinuationBeyondCheckpoints(t *testing.T) {
 	}
 }
 
+func TestContractsKeepPrevidenciarioFlexibleForQualifiedCuriosity(t *testing.T) {
+	for _, path := range []string{"AGENTS.md", "GOAL.md", "docs/CONTENT_QUALITY.md", "docs/LAB_VALIDATION.md"} {
+		text := readRootFile(t, path)
+		requireContains(t, text, "curiosidade qualificada")
+		requireContains(t, text, "não precisa de alta intenção de pagamento")
+		requireContains(t, text, "crescer famílias previdenciárias")
+		requireContains(t, text, "famílias comerciais continuam")
+		requireContains(t, text, "batch-previdenciario-digital")
+		requireContains(t, text, "paid_intent_flexible_previdenciario_informational_blocked_publication")
+	}
+}
+
+func TestContractsKeepCommercialFamiliesInformativeWithHiringIntent(t *testing.T) {
+	for _, path := range []string{"AGENTS.md", "GOAL.md", "docs/CONTENT_QUALITY.md", "docs/LAB_VALIDATION.md"} {
+		text := readRootFile(t, path)
+		requireContains(t, text, "famílias comerciais também são informativas")
+		requireContains(t, text, "não retirar o conteúdo informativo")
+		requireContains(t, text, "intenção natural de contratação")
+	}
+}
+
+func TestContractsDoNotTreatDigitalLegalServiceAsPromise(t *testing.T) {
+	for _, path := range []string{"AGENTS.md", "GOAL.md", "docs/CONTENT_QUALITY.md", "docs/LAB_VALIDATION.md", "docs/DECISIONS.md"} {
+		text := readRootFile(t, path)
+		requireContains(t, text, "100% digital")
+		requireContains(t, text, "sem sair de casa")
+		requireContains(t, text, "não é promessa de resultado")
+		requireContains(t, text, "realidade brasileira")
+		requireContains(t, text, "ética da OAB")
+		requireContains(t, text, "Rafael Toledo")
+		requireContains(t, text, "OAB/RJ 227191")
+		requireContains(t, text, "não hardcoded")
+	}
+}
+
 func TestCheckpointCarriesNextExecutionPlanInsteadOfStopping(t *testing.T) {
 	text := readRootFile(t, "CHECKPOINT.md")
 

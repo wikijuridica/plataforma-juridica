@@ -262,6 +262,10 @@ func hasPromiseCTA(value string) bool {
 		"liminar garantida",
 		"causa ganha",
 		"resultado garantido",
+		"resultado certo",
+		"ganho garantido",
+		"vitoria garantida",
+		"vitória garantida",
 		"resolver seu plano",
 		"em 24 horas",
 	}

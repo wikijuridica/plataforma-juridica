@@ -91,3 +91,46 @@ func TestLegalEditorialReviewRejectsPromiseCTAOrPublication(t *testing.T) {
 		}
 	}
 }
+
+func TestLegalEditorialReviewAllowsDigitalServiceLanguageButRejectsOutcomePromise(t *testing.T) {
+	record := validDigitalServiceReview()
+	report := legalreviews.ValidateRecord(record)
+	if report.HasIssue("legal_review_promise_cta") {
+		t.Fatalf("digital service wording must not be treated as promise: %v", report.Messages())
+	}
+	if !report.Passed() {
+		t.Fatalf("valid digital service review failed: %v", report.Messages())
+	}
+
+	record.CTADraft = "WhatsApp para atendimento jurídico online com resultado certo depois da análise digital dos documentos."
+	report = legalreviews.ValidateRecord(record)
+	if !report.HasIssue("legal_review_promise_cta") {
+		t.Fatalf("outcome promise was not blocked: %v", report.Codes())
+	}
+}
+
+func validDigitalServiceReview() legalreviews.Record {
+	return legalreviews.Record{
+		TermID:               "negativa-cobertura-plano-saude",
+		Term:                 "negativa de cobertura do plano de saúde",
+		ReviewID:             "negativa-cobertura-plano-saude",
+		ReviewStatus:         "legal_editorial_review_blocked",
+		Language:             "pt-BR",
+		AuthorialDraftID:     "negativa-cobertura-plano-saude",
+		SourceResolutionID:   "negativa-cobertura-plano-saude",
+		PrepublicationGateID: "negativa-cobertura-plano-saude",
+		ReviewerRole:         "juridico_editorial_lab",
+		LegalReviewNotes: []string{
+			"A revisão mantém conteúdo informativo sem promessa de resultado.",
+			"O CTA pede documentos para triagem jurídica digital responsável.",
+			"A linguagem remota descreve modo de atendimento, não êxito.",
+		},
+		RequiredFixes:     []string{"manter aviso informativo e revisar fonte antes de publicar"},
+		CTADraft:          "WhatsApp para triagem jurídica 100% digital, com envio remoto de documentos e atendimento sem sair de casa para avaliar o contexto antes de contratar.",
+		CTAContextMessage: "Origem: /temas/negativa-cobertura-plano-saude/ | Gate: negativa-cobertura-plano-saude | Tema: negativa de cobertura do plano de saúde | Documentos: contrato, negativa e laudos.",
+		CTAOriginPath:     "/temas/negativa-cobertura-plano-saude/",
+		CTAOriginGateID:   "negativa-cobertura-plano-saude",
+		CTAStatus:         "draft_contextual_not_public",
+		CheckedAt:         "2026-06-09",
+	}
+}
