@@ -36,6 +36,12 @@ Regra literal de continuidade: o agente não deve parar. Sempre planejar o próx
 
 Regra específica de `/goal`: se o Codex estiver em modo /goal, não é para parar enquanto existir trabalho no escopo. O próximo passo planejado deve ficar nos documentos persistentes e no checkpoint, e deve ser executado sem aguardar nova cobrança do usuário.
 
+Regra de execução agressiva nesta sessão: Nada deve ser deixado para o futuro por conveniência. Tudo que estiver no escopo é para esta sessão. Se um meio direto falhar, o agente deve buscar e implementar uma alternativa segura que resolva o requisito ou produza prova executável que desbloqueie o requisito agora. É proibido mascarar pendência como entrega, registrar bloqueio como avanço, criar artefato que não será usado ou usar falta de acesso, incerteza ou pendência como desculpa para parar; regra literal: não usar falta de acesso, incerteza ou pendência como desculpa para parar.
+
+Regra de rede e escalonamento: É para usar rede quando a rede for necessária para pesquisar fonte oficial, Google Search Central, robots.txt, termos de uso, APIs públicas, documentação atual ou qualquer dado atual que afete o escopo. Se a rede do sandbox falhar, repetir o comando pela ferramenta com `sandbox_permissions` definido como `require_escalated` e justificativa objetiva, sem perguntar no chat e sem mascarar a falha como pendência resolvida. Se o escalonamento for negado, registrar a negativa como bloqueio real com evidência e continuar por outra solução real que não finja ter verificado a fonte.
+
+Regra de banco leve e ingestão de termos: se for para ingestão de termos jurídicos, isso é válido para começar conteúdos apenas como semente de rascunho, nunca como publicação ou página indexável automática. É obrigatório manter um banco de dados leve e organizado, próprio, em camadas separadas, com `term_seeds`, `source_audits`, `source_snapshots`, `editorial_drafts` e `published_manifest`. Regra literal: separar ingestão de termos, auditoria de fonte, fonte bruta, rascunho editorial e conteúdo publicado; não misturar fonte bruta, auditoria de fonte, rascunho editorial e conteúdo publicado. A política de início por termos deve ser `draft_only` até passar fonte, revisão, qualidade, SEO, CTA e checkpoint.
+
 Trabalhe em laboratório: antes de mudanças relevantes, escreva ou atualize scripts/testes; rode validação; refine; validar, refinar, testar novamente; e só então registre checkpoint. Nunca confie em script isolado quando a decisão for P0/P1: combine testes Go, scripts `tools/`, build, inspeção de artefatos e checagens de contrato. Nada de mudar no chute.
 
 Sempre revisar e validar. Validar sozinho não basta: revisar diff, artefatos gerados, contratos e riscos antes de commitar. Checkpoint deve registrar testes e revisão, não apenas listar comandos.
@@ -67,6 +73,7 @@ Heurísticas simples são permitidas somente como etapa inicial comprovada. Quan
 - Não criar páginas rasas, duplicadas, parecidas ou feitas só para manipular busca.
 - Não publicar conteúdo mecânico, permutacional ou escrito para bot. Conteúdo jurídico deve ter escrita natural, utilidade humana e fonte correta pesquisada antes da redação.
 - É obrigatório não considerar fontes oficiais como alvo de scraping, clonagem ou reprodução mecânica. Fontes oficiais servem como referência, lastro e proveniência; o portal deve produzir conteúdo próprio, natural e único, e não criar clone, espelho ou spam.
+- É obrigatório separar qualquer ingestão de termos jurídicos em banco leve próprio antes de conteúdo. Termos podem iniciar `draft_only`, mas não podem virar página pública sem fonte, revisão, qualidade e intenção única.
 - Não fazer scraping cego.
 - Não ignorar robots.txt, termos de uso, sigilo processual, privacidade ou LGPD.
 - Não avançar com validação P0 falhando.
@@ -93,6 +100,7 @@ Heurísticas simples são permitidas somente como etapa inicial comprovada. Quan
 - Meta mínima futura: no mínimo 10 mil páginas jurídicas informativas aprovadas, cada uma com intenção única, fonte e revisão.
 - Conteúdo visível ao público deve ser escrito em PT-BR, com grafia correta, acentuação correta, pontuação clara e linguagem natural. Rascunho técnico interno pode ficar sem polimento, mas texto público não.
 - Antes de criar conteúdo, pesquisar a fonte correta, documentar a fonte e escrever de forma natural, com linguagem humana, sem moldes mecânicos.
+- Banco de termos jurídicos é semente editorial, não conteúdo final. Cada termo precisa carregar proveniência, estado de qualidade e caminho para revisão antes de qualquer CTA ou indexação.
 - Cada URL indexável deve ter intenção única.
 - Cada página deve ter `unique_intent_id`.
 - Cada página deve ter `canonical_url`.
@@ -184,6 +192,7 @@ A arquitetura deve seguir estes módulos conceituais:
 - `content`: modelos de conteúdo.
 - `legal`: entidades jurídicas.
 - `sources`: fontes oficiais e proveniência.
+- `storage`: banco leve próprio em JSONL para termos jurídicos, auditorias, snapshots, rascunhos e manifesto publicado, sempre separado por finalidade.
 - `provenance`: contrato de proveniência por payload, hash, robots, termos e finalidade de uso.
 - `quality`: verificadores antispam, duplicidade e conteúdo raso.
 - `seo`: canonical, meta, robots, sitemap, index/noindex.
@@ -373,6 +382,7 @@ Criar aliases ou scripts equivalentes:
 - `./tools/check-seo`
 - `./tools/check-crawlability`
 - `./tools/check-sources`
+- `./tools/check-storage-contract`
 - `./tools/check-sitemaps`
 - `./tools/check-canonicals`
 - `./tools/check-no-duplicate-content`

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type Source struct {
@@ -20,8 +21,12 @@ type Source struct {
 	AuditStatus        string `json:"audit_status"`
 	RobotsURL          string `json:"robots_url"`
 	RobotsStatus       string `json:"robots_status"`
+	RobotsCheckedAt    string `json:"robots_checked_at"`
 	TermsURL           string `json:"terms_url"`
 	TermsStatus        string `json:"terms_status"`
+	TermsCheckedAt     string `json:"terms_checked_at"`
+	AuditDecision      string `json:"audit_decision"`
+	AuditNote          string `json:"audit_note"`
 	ProvenanceStrategy string `json:"provenance_strategy"`
 	PrivacyRisk        string `json:"privacy_risk"`
 	NoSignupRequired   bool   `json:"no_signup_required"`
@@ -30,6 +35,10 @@ type Source struct {
 type Registry struct {
 	Sources []Source `json:"sources"`
 	Root    string   `json:"-"`
+}
+
+func (r Registry) RegistryPath() string {
+	return filepath.Join(r.Root, "content", "source_registry.json")
 }
 
 type Issue struct {
@@ -103,8 +112,23 @@ func (r Registry) ValidateForP0() Report {
 		if source.RobotsURL == "" || source.RobotsStatus == "" {
 			issues = append(issues, Issue{SourceID: source.SourceID, Code: "missing_robots_audit", Message: "fonte sem auditoria robots"})
 		}
+		if source.RobotsCheckedAt == "" {
+			issues = append(issues, Issue{SourceID: source.SourceID, Code: "missing_robots_checked_at", Message: "fonte sem data de auditoria robots"})
+		}
+		if isPendingAudit(source.RobotsStatus) {
+			issues = append(issues, Issue{SourceID: source.SourceID, Code: "robots_audit_still_pending", Message: "robots pendente nao pode ser mascarado como entrega"})
+		}
 		if source.TermsURL == "" || source.TermsStatus == "" {
 			issues = append(issues, Issue{SourceID: source.SourceID, Code: "missing_terms_audit", Message: "fonte sem auditoria de termos"})
+		}
+		if source.TermsCheckedAt == "" {
+			issues = append(issues, Issue{SourceID: source.SourceID, Code: "missing_terms_checked_at", Message: "fonte sem data de auditoria de termos"})
+		}
+		if isPendingAudit(source.TermsStatus) {
+			issues = append(issues, Issue{SourceID: source.SourceID, Code: "terms_audit_still_pending", Message: "termos pendentes nao podem ser mascarados como entrega"})
+		}
+		if source.AuditDecision == "" || source.AuditNote == "" {
+			issues = append(issues, Issue{SourceID: source.SourceID, Code: "missing_audit_decision", Message: "fonte sem decisao e nota de auditoria"})
 		}
 		if source.ProvenanceStrategy == "" {
 			issues = append(issues, Issue{SourceID: source.SourceID, Code: "missing_provenance_strategy", Message: "fonte sem estrategia de proveniencia"})
@@ -114,6 +138,10 @@ func (r Registry) ValidateForP0() Report {
 		}
 	}
 	return Report{Issues: issues}
+}
+
+func isPendingAudit(value string) bool {
+	return value == "" || strings.Contains(value, "pendente")
 }
 
 func (s Source) ApprovedForIndexableLegalContent() bool {

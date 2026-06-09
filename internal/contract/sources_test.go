@@ -69,8 +69,17 @@ func TestOfficialSourcesCarryRobotsTermsAndProvenanceAuditFields(t *testing.T) {
 		if source.RobotsURL == "" || source.RobotsStatus == "" {
 			t.Fatalf("source %q missing robots audit fields: %+v", source.SourceID, source)
 		}
+		if source.RobotsCheckedAt == "" {
+			t.Fatalf("source %q missing robots checked date", source.SourceID)
+		}
 		if source.TermsURL == "" || source.TermsStatus == "" {
 			t.Fatalf("source %q missing terms audit fields: %+v", source.SourceID, source)
+		}
+		if source.TermsCheckedAt == "" {
+			t.Fatalf("source %q missing terms checked date", source.SourceID)
+		}
+		if source.AuditDecision == "" || source.AuditNote == "" {
+			t.Fatalf("source %q missing audit decision/note: %+v", source.SourceID, source)
 		}
 		if source.ProvenanceStrategy == "" {
 			t.Fatalf("source %q missing provenance strategy", source.SourceID)

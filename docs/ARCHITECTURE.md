@@ -22,6 +22,7 @@ O projeto usa Go e biblioteca padrao como base tecnica. A escolha privilegia bin
 - `internal/editorial`: estados editoriais e politica index/noindex.
 - `internal/legal`: controle de conteudo juridico.
 - `internal/sources`: contratos de fontes oficiais.
+- `internal/storage`: banco leve proprio em JSONL para termos juridicos, auditorias, snapshots, rascunhos e manifesto publicado.
 - `internal/provenance`: contrato de proveniencia por payload antes de qualquer conteudo.
 - `internal/architecture`: validacao de estrutura e proibicoes P0.
 - `tools`: scripts locais obrigatorios.
@@ -53,6 +54,19 @@ CTA WhatsApp e critico para o produto: as paginas devem ser informativas, mas de
 ## Proveniencia por payload
 
 Antes de qualquer dado oficial virar conteudo, o payload precisa de registro com fonte, URL oficial, data de acesso, hash SHA-256, snapshot de robots, snapshot de termos, campos usados e finalidade. Fonte pesquisada nao equivale a conteudo aprovado.
+
+## Banco leve de termos e ingestao
+
+Ingestao de termos juridicos e valida para iniciar conteudos somente como semente de rascunho. O armazenamento e proprio, leve e separado em `content/storage_contract.json`, usando arquivos JSONL em `data/` e biblioteca padrao Go.
+
+Camadas obrigatorias:
+- `term_seeds`: termos juridicos para iniciar rascunhos, sem texto oficial bruto e sem texto editorial publico;
+- `source_audits`: auditoria de robots, termos de uso, alcance HTTP e decisao de bloqueio;
+- `source_snapshots`: snapshots autorizados, pequenos, com hash e proveniencia;
+- `editorial_drafts`: texto editorial proprio em PT-BR, sempre noindex ate aprovacao;
+- `published_manifest`: manifesto leve de conteudo aprovado, sem substituir o renderizador.
+
+Regra P0: termos podem iniciar `draft_only`; nenhuma linha do banco vira pagina indexavel sem fonte, revisao, qualidade, SEO, intencao unica e checkpoint.
 
 ## Laboratorio
 

@@ -1,0 +1,243 @@
+package storage
+
+import (
+	"bufio"
+	"encoding/json"
+	"fmt"
+	"os"
+	"path/filepath"
+	"strings"
+)
+
+type Contract struct {
+	Format                             string  `json:"format"`
+	DependencyPolicy                   string  `json:"dependency_policy"`
+	ProductionCPUPolicy                string  `json:"production_cpu_policy"`
+	SeparatesSourceAuditFromEditorial  bool    `json:"separates_source_audit_from_editorial"`
+	SeparatesTermSeedFromPublicContent bool    `json:"separates_term_seed_from_public_content"`
+	ContentStartPolicy                 string  `json:"content_start_policy"`
+	Layers                             []Layer `json:"layers"`
+	Root                               string  `json:"-"`
+}
+
+type Layer struct {
+	Name                     string `json:"name"`
+	Path                     string `json:"path"`
+	RecordType               string `json:"record_type"`
+	RecordMaxBytes           int    `json:"record_max_bytes"`
+	PublicIndexable          bool   `json:"public_indexable"`
+	AllowsRawOfficialText    bool   `json:"allows_raw_official_text"`
+	AllowsEditorialContent   bool   `json:"allows_editorial_content"`
+	RequiresSourceProvenance bool   `json:"requires_source_provenance"`
+	RequiresQualityState     bool   `json:"requires_quality_state"`
+	Description              string `json:"description"`
+}
+
+type Issue struct {
+	Code    string
+	Message string
+}
+
+type Report struct {
+	Issues []Issue
+}
+
+func LoadContract(root string) (Contract, error) {
+	projectRoot, err := findProjectRoot(root)
+	if err != nil {
+		return Contract{}, err
+	}
+	data, err := os.ReadFile(filepath.Join(projectRoot, "content", "storage_contract.json"))
+	if err != nil {
+		return Contract{}, err
+	}
+	var contract Contract
+	if err := json.Unmarshal(data, &contract); err != nil {
+		return Contract{}, err
+	}
+	contract.Root = projectRoot
+	return contract, nil
+}
+
+func Validate(root string) Report {
+	contract, err := LoadContract(root)
+	if err != nil {
+		return Report{Issues: []Issue{{Code: "storage_contract_load_failed", Message: err.Error()}}}
+	}
+	return contract.Validate()
+}
+
+func (c Contract) LayerByName(name string) (Layer, bool) {
+	for _, layer := range c.Layers {
+		if layer.Name == name {
+			return layer, true
+		}
+	}
+	return Layer{}, false
+}
+
+func AppendJSONL(root string, layerName string, record any) error {
+	contract, err := LoadContract(root)
+	if err != nil {
+		return err
+	}
+	layer, ok := contract.LayerByName(layerName)
+	if !ok {
+		return fmt.Errorf("unknown_layer=%s", layerName)
+	}
+	data, err := json.Marshal(record)
+	if err != nil {
+		return err
+	}
+	if layer.RecordMaxBytes <= 0 {
+		return fmt.Errorf("invalid_record_budget=%s", layerName)
+	}
+	if len(data)+1 > layer.RecordMaxBytes {
+		return fmt.Errorf("record_too_large=%s bytes=%d max=%d", layerName, len(data)+1, layer.RecordMaxBytes)
+	}
+	path := filepath.Join(contract.Root, layer.Path)
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return err
+	}
+	file, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0644)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	if _, err := file.Write(append(data, '\n')); err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c Contract) Validate() Report {
+	issues := make([]Issue, 0)
+	if c.Format != "jsonl_file_store_v1" {
+		issues = append(issues, Issue{Code: "invalid_format", Message: "banco leve deve usar jsonl_file_store_v1"})
+	}
+	if c.DependencyPolicy != "stdlib_only_no_external_database_dependency" {
+		issues = append(issues, Issue{Code: "invalid_dependency_policy", Message: "banco leve nao pode depender de banco externo, SDK ou dependencia externa"})
+	}
+	if !c.SeparatesSourceAuditFromEditorial {
+		issues = append(issues, Issue{Code: "source_audit_not_separated", Message: "auditoria de fonte deve ficar separada de texto editorial"})
+	}
+	if !c.SeparatesTermSeedFromPublicContent {
+		issues = append(issues, Issue{Code: "term_seed_not_separated", Message: "ingestao de termos deve ficar separada de conteudo publico"})
+	}
+	if !strings.Contains(c.ContentStartPolicy, "draft_only") {
+		issues = append(issues, Issue{Code: "content_start_policy_not_draft_only", Message: "termos so podem iniciar rascunhos bloqueados para indexacao"})
+	}
+
+	required := []string{"term_seeds", "source_audits", "source_snapshots", "editorial_drafts", "published_manifest"}
+	paths := make(map[string]string)
+	for _, name := range required {
+		layer, ok := c.LayerByName(name)
+		if !ok {
+			issues = append(issues, Issue{Code: "missing_layer", Message: name})
+			continue
+		}
+		issues = append(issues, c.validateLayer(layer, paths)...)
+	}
+	return Report{Issues: issues}
+}
+
+func (c Contract) validateLayer(layer Layer, paths map[string]string) []Issue {
+	issues := make([]Issue, 0)
+	if layer.Name == "" || layer.RecordType == "" || layer.Description == "" {
+		issues = append(issues, Issue{Code: "incomplete_layer", Message: layer.Name})
+	}
+	if layer.Path == "" || !strings.HasPrefix(layer.Path, "data/") {
+		issues = append(issues, Issue{Code: "invalid_layer_path", Message: layer.Name + ":" + layer.Path})
+	} else {
+		if previous := paths[layer.Path]; previous != "" {
+			issues = append(issues, Issue{Code: "shared_layer_path", Message: previous + ":" + layer.Name + ":" + layer.Path})
+		}
+		paths[layer.Path] = layer.Name
+		if _, err := os.Stat(filepath.Join(c.Root, layer.Path)); err != nil {
+			issues = append(issues, Issue{Code: "missing_layer_file", Message: layer.Name + ":" + layer.Path})
+		} else {
+			issues = append(issues, validateJSONLFile(filepath.Join(c.Root, layer.Path), layer)...)
+		}
+	}
+	if layer.RecordMaxBytes <= 0 || layer.RecordMaxBytes > 32768 {
+		issues = append(issues, Issue{Code: "invalid_record_budget", Message: layer.Name})
+	}
+	if layer.PublicIndexable {
+		issues = append(issues, Issue{Code: "storage_layer_directly_indexable", Message: layer.Name})
+	}
+	if layer.Name == "term_seeds" {
+		if layer.AllowsRawOfficialText || layer.AllowsEditorialContent {
+			issues = append(issues, Issue{Code: "term_seed_payload_too_broad", Message: "term_seeds nao armazena texto oficial bruto nem editorial"})
+		}
+		if !layer.RequiresSourceProvenance || !layer.RequiresQualityState {
+			issues = append(issues, Issue{Code: "term_seed_missing_guards", Message: "term_seeds exige proveniencia e estado de qualidade"})
+		}
+	}
+	if layer.Name == "editorial_drafts" {
+		if !layer.AllowsEditorialContent || layer.AllowsRawOfficialText {
+			issues = append(issues, Issue{Code: "editorial_draft_layer_invalid", Message: "drafts guardam texto editorial proprio, nao payload oficial bruto"})
+		}
+	}
+	return issues
+}
+
+func validateJSONLFile(path string, layer Layer) []Issue {
+	file, err := os.Open(path)
+	if err != nil {
+		return []Issue{{Code: "open_layer_file_failed", Message: layer.Name + ":" + err.Error()}}
+	}
+	defer file.Close()
+
+	issues := make([]Issue, 0)
+	scanner := bufio.NewScanner(file)
+	scanner.Buffer(make([]byte, 0, 4096), layer.RecordMaxBytes+1)
+	lineNumber := 0
+	for scanner.Scan() {
+		lineNumber++
+		line := scanner.Bytes()
+		if len(strings.TrimSpace(string(line))) == 0 {
+			continue
+		}
+		if len(line)+1 > layer.RecordMaxBytes {
+			issues = append(issues, Issue{Code: "jsonl_record_too_large", Message: fmt.Sprintf("%s:%d", layer.Name, lineNumber)})
+			continue
+		}
+		var payload map[string]any
+		if err := json.Unmarshal(line, &payload); err != nil {
+			issues = append(issues, Issue{Code: "invalid_jsonl_record", Message: fmt.Sprintf("%s:%d:%s", layer.Name, lineNumber, err.Error())})
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		issues = append(issues, Issue{Code: "scan_layer_file_failed", Message: layer.Name + ":" + err.Error()})
+	}
+	return issues
+}
+
+func (r Report) Passed() bool {
+	return len(r.Issues) == 0
+}
+
+func (r Report) Messages() []string {
+	messages := make([]string, 0, len(r.Issues))
+	for _, issue := range r.Issues {
+		messages = append(messages, fmt.Sprintf("%s: %s", issue.Code, issue.Message))
+	}
+	return messages
+}
+
+func findProjectRoot(start string) (string, error) {
+	current, err := filepath.Abs(start)
+	if err != nil {
+		return "", err
+	}
+	for {
+		if _, err := os.Stat(filepath.Join(current, "go.mod")); err == nil {
+			return current, nil
+		}
+		parent := filepath.Dir(current)
+		if parent == current {
+			return "", os.ErrNotExist
+		}
+		current = parent
+	}
+}

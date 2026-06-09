@@ -14,6 +14,7 @@ import (
 	"portaljuridico/internal/quality"
 	"portaljuridico/internal/seo"
 	"portaljuridico/internal/sources"
+	"portaljuridico/internal/storage"
 )
 
 const (
@@ -28,6 +29,7 @@ var Names = []string{
 	"google-search-appearance",
 	"crawlability",
 	"sources",
+	"storage-contract",
 	"sitemaps",
 	"canonicals",
 	"no-duplicate-content",
@@ -50,6 +52,8 @@ func Run(name string, root string) []string {
 		return checkCrawlability(root)
 	case "sources":
 		return checkSources(root)
+	case "storage-contract":
+		return checkStorageContract(root)
 	case "sitemaps":
 		return checkSitemaps(root)
 	case "canonicals":
@@ -193,6 +197,10 @@ func checkSources(root string) []string {
 		return []string{err.Error()}
 	}
 	return registry.ValidateForP0().Messages()
+}
+
+func checkStorageContract(root string) []string {
+	return storage.Validate(root).Messages()
 }
 
 func checkSitemaps(root string) []string {

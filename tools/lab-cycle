@@ -6,6 +6,7 @@ export GOCACHE="${GOCACHE:-/tmp/opt-wiki-go-cache}"
 go test -count=1 ./...
 ./tools/check-all
 ./tools/check-sources
+./tools/check-storage-contract
 ./tools/check-google-search-appearance
 ./tools/check-mechanical-content
 ./tools/check-cpu-budget

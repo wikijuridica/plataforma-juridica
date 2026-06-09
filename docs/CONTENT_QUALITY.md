@@ -29,10 +29,15 @@ Fonte oficial não é alvo para scraping, clone ou espelho. A fonte é referênc
 Roteiro mínimo antes de qualquer página jurídica:
 - identificar a fonte oficial correta;
 - documentar URL, data, limites, riscos e estratégia de proveniência;
+- registrar termo jurídico, quando usado como semente, no banco leve separado e manter o estado `draft_only`;
 - escrever resumo e comentário em linguagem humana;
 - separar texto oficial, explicação informativa e opinião;
 - validar com gates de qualidade, SEO e duplicidade;
 - revisar antes de liberar indexação.
+
+## Termos juridicos como semente
+
+Termos juridicos podem ser usados para iniciar pauta e rascunho, mas nao podem virar pagina automaticamente. A camada `term_seeds` exige proveniencia e estado de qualidade; a camada `editorial_drafts` guarda texto proprio em PT-BR; e o manifesto publicado registra apenas conteudo que ja passou por fonte, revisao, qualidade, SEO e decisao editorial.
 
 ## Conteúdo mecânico
 

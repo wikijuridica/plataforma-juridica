@@ -16,6 +16,7 @@ var requiredModules = map[string]string{
 	"content":      "internal/content",
 	"legal":        "internal/legal",
 	"sources":      "internal/sources",
+	"storage":      "internal/storage",
 	"provenance":   "internal/provenance",
 	"quality":      "internal/quality",
 	"seo":          "internal/seo",

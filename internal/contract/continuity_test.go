@@ -50,6 +50,21 @@ func TestContractsRequireContinuationBeyondCheckpoints(t *testing.T) {
 		requireContains(t, text, "`title`: 20 a 65 caracteres Unicode")
 		requireContains(t, text, "metadescrição: 70 a 160 caracteres Unicode")
 		requireContains(t, text, "CPU deve ser reservado para tráfego legítimo")
+		requireContains(t, text, "Nada deve ser deixado para o futuro")
+		requireContains(t, text, "Tudo que estiver no escopo é para esta sessão")
+		requireContains(t, text, "alternativa segura que resolva o requisito")
+		requireContains(t, text, "É proibido mascarar pendência como entrega")
+		requireContains(t, text, "não usar falta de acesso, incerteza ou pendência como desculpa para parar")
+		requireContains(t, text, "É para usar rede quando a rede for necessária")
+		requireContains(t, text, "Se a rede do sandbox falhar")
+		requireContains(t, text, "sandbox_permissions")
+		requireContains(t, text, "require_escalated")
+		requireContains(t, text, "sem perguntar no chat")
+		requireContains(t, text, "banco de dados leve e organizado")
+		requireContains(t, text, "term_seeds")
+		requireContains(t, text, "separar ingestão de termos")
+		requireContains(t, text, "não misturar fonte bruta, auditoria de fonte, rascunho editorial e conteúdo publicado")
+		requireContains(t, text, "draft_only")
 	}
 }
 

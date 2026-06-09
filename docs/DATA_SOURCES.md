@@ -3,7 +3,7 @@
 Antes de ingestao, cada fonte oficial precisa de documento em `docs/data-sources/`.
 
 Estado inicial:
-- Planalto: documentado preliminarmente em `docs/data-sources/planalto.md`, sem ingestao automatica.
+- Portal da Legislacao / Planalto: URL oficial confirmada como `https://legislacao.presidencia.gov.br/` por pagina publica `gov.br`, documentada em `docs/data-sources/planalto.md`, sem ingestao automatica por falha de alcance HTTP local.
 - Camara Dados Abertos: documentado preliminarmente em `docs/data-sources/camara-dados-abertos.md`, sem ingestao automatica.
 - Senado Dados Abertos: documentado preliminarmente em `docs/data-sources/senado-dados-abertos.md`, sem ingestao automatica.
 - LexML: documentado preliminarmente em `docs/data-sources/lexml.md`, sem ingestao automatica.
@@ -20,3 +20,9 @@ Antes de qualquer conteudo juridico em escala, a fonte correta deve ser pesquisa
 O registro operacional fica em `content/source_registry.json`. Durante P0, todas as fontes devem manter `ingestion_enabled=false`.
 
 As fontes listadas sao referencia e proveniencia. Elas nao autorizam scraping, clonagem, espelhamento ou criacao de paginas mecanicas. O portal deve escrever conteudo proprio, natural e unico a partir de pesquisa critica.
+
+## Banco leve separado
+
+Ingestao de termos juridicos pode iniciar a producao de conteudo apenas como rascunho (`draft_only`). Esses termos ficam em `data/terms/legal_terms.jsonl`, separados da auditoria de fonte, snapshots oficiais, rascunho editorial e manifesto publicado.
+
+O contrato de armazenamento fica em `content/storage_contract.json` e e validado por `./tools/check-storage-contract`. Nenhuma fonte auditada, termo juridico ou snapshot autorizado pode ser tratado como conteudo publico pronto. O caminho correto e: termo com proveniencia -> rascunho editorial proprio -> revisao -> qualidade -> SEO -> publicacao.
