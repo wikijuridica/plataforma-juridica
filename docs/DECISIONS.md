@@ -576,3 +576,15 @@ Motivos:
 - mudancas amplas ou criticas ainda exigem prova global para evitar regressao em varias camadas.
 
 Consequencia: o proximo ciclo deve escolher validacao proporcional. Rodar validacao global quando houver alteracao ampla, contrato central, risco P0/P1 critico, HTML/sitemap/canonical/robots/indexacao/performance, gerador em massa, preparacao de publicacao ou falha transversal. Em ciclos localizados, registrar no checkpoint os checks focados usados e por que eles cobrem o risco.
+
+## 2026-06-09 — Pre-publicacao bloqueada para candidatos revisados
+
+Decisao: criar `batch_prepublication_gates` como etapa posterior a `batch_candidate_reviews`, registrando canonical oficial, `noindex,follow`, title/meta e pendencias finais sem publicar.
+
+Motivos:
+- revisao juridico-editorial de candidato ainda nao equivale a pagina publica;
+- a URL oficial ja esta travada e deve aparecer no canonical candidato;
+- Googlebot nao deve receber candidatos enquanto fonte final, revisao SEO, manifesto publico e render/sitemap nao forem aprovados;
+- pre-publicacao em lote precisa ser validada por candidato, nao por suposicao global.
+
+Consequencia: `data/editorial/batch_prepublication_gates.jsonl`, `internal/batchprepublication`, `./tools/check-batch-prepublication-gates`, `internal/checks` e `tools/lab-cycle` entram no laboratorio. O ciclo usa validacao focada por politica proporcional: teste do contrato novo, tool especifica, storage contract, checks internos e diff check; validacao global fica reservada para alteracao ampla ou risco critico.

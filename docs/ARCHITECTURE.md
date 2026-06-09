@@ -35,6 +35,7 @@ O projeto usa Go e biblioteca padrao como base tecnica. A escolha privilegia bin
 - `internal/batchdraftarchive`: arquivo permanente bloqueado de rascunhos de lote que passaram no laboratorio e ainda nao podem virar pagina publica.
 - `internal/batchcandidategates`: selecao bloqueada de candidatos a partir do arquivo permanente, com base URL configuravel e publicacao falsa.
 - `internal/batchcandidatereviews`: revisao juridico-editorial bloqueada de candidatos de lote, com CTA WhatsApp contextual e matriz de fonte auditada.
+- `internal/batchprepublication`: gates de pre-publicacao bloqueada por candidato revisado, com canonical oficial e `noindex`.
 - `cmd/refresh-editorial-drafts`: regeneracao segura de rascunhos persistidos quando o algoritmo de escrita e refinado.
 - `internal/provenance`: contrato de proveniencia por payload antes de qualquer conteudo.
 - `internal/architecture`: validacao de estrutura e proibicoes P0.
@@ -105,6 +106,7 @@ Camadas obrigatorias:
 - `batch_draft_expansion_archive`: arquivo permanente bloqueado de rascunhos validados em laboratorio, preservado para expansao futura ate prova contraria;
 - `batch_candidate_gates`: gate permanente de candidatos selecionados do arquivo, ainda sem render, sitemap, publicacao ou `public_path`;
 - `batch_candidate_reviews`: revisao juridico-editorial bloqueada de candidatos de lote, com fonte matricial auditada e CTA WhatsApp de origem rastreavel;
+- `batch_prepublication_gates`: pre-publicacao bloqueada de candidatos revisados, com canonical oficial, title/meta, `noindex` e fonte final ainda pendente;
 - `batch_generation_metrics`: métricas agregadas de geração/refino por lote, provando volume, reescrita, score e similaridade sem criar URL pública;
 - `batch_source_matrix`: matriz de fontes oficiais por subtema, usada como referência/proveniência sem scraping e sem publicação;
 - `batch_source_url_audits`: auditoria das URLs da matriz, separada da camada editorial, exigindo cobertura de cada URL por `matrix_id` antes de escalar rascunhos;

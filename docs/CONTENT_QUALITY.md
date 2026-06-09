@@ -136,6 +136,8 @@ Publicação só pode avançar quando o texto atingir score alto, motivos de rep
 
 `./tools/check-batch-candidate-reviews` valida `data/editorial/batch_candidate_reviews.jsonl`. Cada intenção selecionada deve ter revisão jurídico-editorial bloqueada, fonte matricial auditada, CTA WhatsApp contextual com `Origem`, `Gate` e `Intent`, notas úteis e correções exigidas. Essa camada não publica: reprova domínio dentro de path candidato, promessa de resultado, CTA raso, fonte sem auditoria, `render_allowed=true`, `sitemap_allowed=true`, `publication_allowed=true` e qualquer `public_path`.
 
+`./tools/check-batch-prepublication-gates` valida `data/editorial/batch_prepublication_gates.jsonl`. Cada candidato revisado deve ter canonical oficial em `https://wikijuridica.com.br`, `candidate_robots=noindex,follow`, title/meta dentro do orçamento interno e fonte final marcada como pendente. Essa camada não renderiza, não entra em sitemap e não publica.
+
 `./tools/check-batch-source-matrix` valida a matriz de fonte oficial por subtema. Cada subtema precisa ter pelo menos duas URLs oficiais, tipos de fonte, score de especificidade, revisão de robots exigida, política `reference_only_no_scraping` e publicação bloqueada. O gerador só pode escalar amostras quando cada draft tiver `source_matrix_id` coberto por essa matriz.
 
 `./tools/check-batch-source-url-audits` valida a auditoria URL-level da matriz. Cada URL oficial usada por subtema precisa ter hash, robots/termos revisados, status bloqueado, política `reference_only_no_scraping_no_ingestion`, `scraping_allowed=false`, `ingestion_allowed=false`, `publication_allowed=false` e vínculo com todos os `matrix_id` que a usam.

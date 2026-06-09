@@ -438,6 +438,8 @@ Criar aliases ou scripts equivalentes:
 - `./tools/check-batch-drafts`
 - `./tools/check-batch-draft-expansion-archive`
 - `./tools/check-batch-candidate-gates`
+- `./tools/check-batch-candidate-reviews`
+- `./tools/check-batch-prepublication-gates`
 - `./tools/check-batch-draft-generation`
 - `./tools/check-batch-source-url-audits`
 - `./tools/check-batch-source-matrix`

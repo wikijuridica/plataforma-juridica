@@ -271,6 +271,18 @@
       "description": "Revisoes juridico-editoriais bloqueadas dos candidatos de lote, com CTA contextual e origem WhatsApp rastreavel, sem render, sitemap ou publicacao."
     },
     {
+      "name": "batch_prepublication_gates",
+      "path": "data/editorial/batch_prepublication_gates.jsonl",
+      "record_type": "batch_prepublication_gate_blocked",
+      "record_max_bytes": 16384,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": false,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Gates de pre-publicacao bloqueada dos candidatos de lote revisados, com canonical oficial, noindex e publicacao falsa."
+    },
+    {
       "name": "batch_generation_metrics",
       "path": "data/editorial/batch_generation_metrics.jsonl",
       "record_type": "batch_generation_scored_blocked",
