@@ -369,6 +369,9 @@ func buildManifest(prepublication batchprepublication.Record, source batchsource
 }
 
 func reusableFinalDraft(record batchfinaldrafts.Record, manifest batchpublicmanifest.Record) bool {
+	if record.BatchID == "batch-previdenciario-digital" && hasLegacyPrevidenciarioFinalDraft(record) {
+		return false
+	}
 	if record.ManifestGateID != manifest.ManifestGateID {
 		return false
 	}
@@ -392,6 +395,12 @@ func reusableFinalDraft(record batchfinaldrafts.Record, manifest batchpublicmani
 		return false
 	}
 	return quality.AnalyzeText(record.FullText()).Passed()
+}
+
+func hasLegacyPrevidenciarioFinalDraft(record batchfinaldrafts.Record) bool {
+	return strings.HasPrefix(record.Opening, "Caso em direito previdenciário exige recorte concreto para triagem online.") ||
+		strings.HasPrefix(record.DocumentGuidance, "Documentos de trabalho: decisão do INSS, laudos, exames, CNIS, protocolo do Meu INSS") ||
+		strings.HasPrefix(record.DigitalTriage, "Triagem digital organiza cronologia, autoridade consultada, parte contrária, prejuízo")
 }
 
 func buildFinalDraft(candidate selectedCandidate, manifest batchpublicmanifest.Record, checkedAt string) batchfinaldrafts.Record {
@@ -440,6 +449,9 @@ func buildFinalDraft(candidate selectedCandidate, manifest batchpublicmanifest.R
 }
 
 func finalOpening(candidate selectedCandidate) string {
+	if candidate.Draft.LegalArea == "previdenciario" {
+		return finalPrevidenciarioOpening(candidate)
+	}
 	problem := "Leitura inicial cruza fatos, documentos, autoridade consultada e resposta da outra parte, sem transformar o tema em promessa automática."
 	return "Caso em " + areaLabel(candidate) + " exige recorte concreto para triagem online. " + problem + " Faceta analisada: " + focusLabel(candidate) + ", com validação jurídico-editorial ainda bloqueada para evitar página pública sem fonte suficiente."
 }
@@ -450,11 +462,73 @@ func finalSourceUse(candidate selectedCandidate, urls []string) string {
 }
 
 func finalDocumentGuidance(candidate selectedCandidate) string {
+	if candidate.Draft.LegalArea == "previdenciario" {
+		return finalPrevidenciarioDocumentGuidance(candidate)
+	}
 	return "Documentos de trabalho: " + documentChecklist(candidate) + ". Revisão deve separar prova essencial, complemento útil, lacuna que impede conclusão e dado que muda urgência, valor discutido ou prazo de resposta."
 }
 
 func finalDigitalTriage(candidate selectedCandidate) string {
+	if candidate.Draft.LegalArea == "previdenciario" {
+		return finalPrevidenciarioDigitalTriage(candidate)
+	}
 	return "Triagem digital organiza cronologia, autoridade consultada, parte contrária, prejuízo, tentativa de solução e arquivo mínimo. Risco principal: " + riskLabel(candidate) + ". Serviço jurídico pago só avança com orçamento de honorários, escopo remoto e documentos suficientes para análise particular."
+}
+
+func finalPrevidenciarioOpening(candidate selectedCandidate) string {
+	term := strings.TrimSpace(candidate.Draft.Term)
+	if term == "" {
+		term = "tema previdenciário"
+	}
+	baseTerm := cleanFinalTerm(term)
+	problem := firstSentence(candidate.Draft.ReaderProblem)
+	if problem == "" {
+		problem = "O caso precisa ser separado por benefício, fase administrativa, documento principal e resposta do INSS."
+	}
+	return "Análise previdenciária de " + baseTerm + " parte de " + focusLabel(candidate) + " antes de qualquer conclusão sobre benefício. " + problem + " Material informativo permanece bloqueado, sem promessa de concessão, revisão ou prazo."
+}
+
+func finalPrevidenciarioDocumentGuidance(candidate selectedCandidate) string {
+	documentFocus := firstSentence(candidate.Draft.DocumentContext)
+	if documentFocus == "" {
+		documentFocus = "Documento previdenciário útil precisa ligar decisão, CNIS, laudo, protocolo e fase do pedido."
+	}
+	return "Na prova documental, " + lowerFirst(trimSentenceEnd(documentFocus)) + ". Checklist contextual: " + documentChecklist(candidate) + ". Revisão deve separar prova essencial, complemento útil, lacuna que impede conclusão e dado que muda prazo, renda, fase administrativa ou necessidade de consulta jurídica."
+}
+
+func finalPrevidenciarioDigitalTriage(candidate selectedCandidate) string {
+	action := firstSentence(candidate.Draft.DigitalAction)
+	if action == "" {
+		action = "A triagem online organiza requerimento, recurso, exigência, perícia, CNIS e documento médico por data."
+	}
+	risk := firstSentence(candidate.Draft.RiskContext)
+	if risk == "" {
+		risk = "O risco principal é confundir dúvida administrativa, documento incompleto e tese jurídica madura."
+	}
+	return "Pelo canal digital, " + lowerFirst(trimSentenceEnd(action)) + ". Risco observado: " + lowerFirst(trimSentenceEnd(risk)) + ". Mensagem de WhatsApp leva origem, intenção, documentos e fase do pedido para consulta remota responsável, sem substituir canal público nem prometer resultado."
+}
+
+func cleanFinalTerm(term string) string {
+	term = strings.TrimSpace(term)
+	marker := " com foco em "
+	if index := strings.LastIndex(term, marker); index > 0 {
+		return strings.TrimSpace(term[:index])
+	}
+	return term
+}
+
+func trimSentenceEnd(value string) string {
+	return strings.TrimRight(strings.TrimSpace(value), ".!?")
+}
+
+func lowerFirst(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return value
+	}
+	runes := []rune(value)
+	runes[0] = unicode.ToLower(runes[0])
+	return string(runes)
 }
 
 func finalCTA(candidate selectedCandidate, manifest batchpublicmanifest.Record) string {

@@ -17,6 +17,7 @@ const (
 	Path                         = "data/editorial/batch_expansion_strategy.jsonl"
 	ReadyNextCandidateGateStatus = "batch_expansion_strategy_blocked_next_candidate_gate"
 	BlockedPaidIntentStatus      = "batch_expansion_strategy_blocked_paid_intent"
+	ArchiveGrowthRequiredStatus  = "batch_expansion_strategy_blocked_archive_growth_required"
 	IndexPolicy                  = "noindex"
 )
 
@@ -154,6 +155,10 @@ func BuildRecord(readiness ReadinessSnapshot) Record {
 		status = BlockedPaidIntentStatus
 		nextTarget = readiness.CurrentCandidateCount
 		nextAction = "refinar paid-intent dos bloqueados ou manter bloqueio comercial antes de qualquer expansao desta familia"
+	} else if readiness.CurrentCandidateCount >= readiness.ArchiveRecordsObserved {
+		status = ArchiveGrowthRequiredStatus
+		nextTarget = readiness.CurrentCandidateCount
+		nextAction = "gerar mais rascunhos no batch_draft_expansion_archive com diversidade semantica, fonte especifica, CTA contextual e validacao antes de novo avanço"
 	}
 	return Record{
 		StrategyID:                "strategy-" + readiness.BatchID + "-cycle-45",
@@ -221,11 +226,19 @@ func ValidateRecordAgainstIndex(record Record, index StrategyIndex) Report {
 		if record.PaidIntentPassedCount != readiness.PaidIntentPassedCount || record.PaidIntentBlockedCount != readiness.PaidIntentBlockedCount {
 			issues = append(issues, Issue{Code: "batch_expansion_strategy_paid_counts_mismatch", Message: record.BatchID})
 		}
-		if readiness.PaidIntentBlockedCount == 0 && record.NextCandidateTarget <= record.CurrentCandidateCount {
+		if readiness.PaidIntentBlockedCount == 0 && readiness.CurrentCandidateCount < readiness.ArchiveRecordsObserved && record.NextCandidateTarget <= record.CurrentCandidateCount {
 			issues = append(issues, Issue{Code: "batch_expansion_strategy_not_growing_ready_family", Message: record.BatchID})
 		}
 		if readiness.PaidIntentBlockedCount > 0 && record.NextCandidateTarget > record.CurrentCandidateCount {
 			issues = append(issues, Issue{Code: "batch_expansion_strategy_grows_paid_blocked_family", Message: record.BatchID})
+		}
+		if readiness.PaidIntentBlockedCount == 0 && readiness.CurrentCandidateCount >= readiness.ArchiveRecordsObserved {
+			if record.StrategyStatus != ArchiveGrowthRequiredStatus {
+				issues = append(issues, Issue{Code: "batch_expansion_strategy_archive_growth_not_required", Message: record.BatchID})
+			}
+			if record.NextCandidateTarget != record.CurrentCandidateCount {
+				issues = append(issues, Issue{Code: "batch_expansion_strategy_archive_growth_target_mismatch", Message: record.BatchID})
+			}
 		}
 		if record.NextCandidateTarget > readiness.ArchiveRecordsObserved {
 			issues = append(issues, Issue{Code: "batch_expansion_strategy_target_exceeds_archive", Message: fmt.Sprintf("target=%d archive=%d", record.NextCandidateTarget, readiness.ArchiveRecordsObserved)})
@@ -233,11 +246,11 @@ func ValidateRecordAgainstIndex(record Record, index StrategyIndex) Report {
 		if readiness.PaidIntentBlockedCount > 0 && record.StrategyStatus != BlockedPaidIntentStatus {
 			issues = append(issues, Issue{Code: "batch_expansion_strategy_paid_blocker_not_preserved", Message: record.BatchID})
 		}
-		if readiness.PaidIntentBlockedCount == 0 && record.StrategyStatus != ReadyNextCandidateGateStatus {
+		if readiness.PaidIntentBlockedCount == 0 && readiness.CurrentCandidateCount < readiness.ArchiveRecordsObserved && record.StrategyStatus != ReadyNextCandidateGateStatus {
 			issues = append(issues, Issue{Code: "batch_expansion_strategy_ready_status_mismatch", Message: record.BatchID})
 		}
 	}
-	if record.StrategyStatus != ReadyNextCandidateGateStatus && record.StrategyStatus != BlockedPaidIntentStatus {
+	if record.StrategyStatus != ReadyNextCandidateGateStatus && record.StrategyStatus != BlockedPaidIntentStatus && record.StrategyStatus != ArchiveGrowthRequiredStatus {
 		issues = append(issues, Issue{Code: "batch_expansion_strategy_status_not_blocked", Message: record.StrategyStatus})
 	}
 	if record.MaxGrowthStep <= 0 || record.MaxGrowthStep > 30 {

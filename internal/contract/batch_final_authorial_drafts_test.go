@@ -1,6 +1,7 @@
 package contract_test
 
 import (
+	"strings"
 	"testing"
 
 	"portaljuridico/internal/batchfinaldrafts"
@@ -47,6 +48,51 @@ func TestBatchFinalAuthorialDraftsCoverEligibleManifestWithoutPublishing(t *test
 		if !record.HasInformationalNotice() {
 			t.Fatalf("line=%d missing informational legal notice", entry.Line)
 		}
+	}
+}
+
+func TestBatchFinalAuthorialDraftsKeepPrevidenciarioSemanticVariation(t *testing.T) {
+	records, loadReport := batchfinaldrafts.LoadRecords(".")
+	if !loadReport.Passed() {
+		t.Fatalf("could not load batch final authorial drafts: %v", loadReport.Messages())
+	}
+
+	previdenciarioCount := 0
+	openings := make(map[string]int)
+	documentGuidance := make(map[string]int)
+	digitalTriage := make(map[string]int)
+	for _, entry := range records {
+		record := entry.Record
+		if record.BatchID != "batch-previdenciario-digital" {
+			continue
+		}
+		previdenciarioCount++
+		openings[firstSentenceKey(record.Opening)]++
+		documentGuidance[firstSentenceKey(record.DocumentGuidance)]++
+		digitalTriage[firstSentenceKey(record.DigitalTriage)]++
+	}
+
+	if previdenciarioCount < 60 {
+		t.Fatalf("previdenciario final drafts=%d, want at least 60 blocked drafts before 590 expansion", previdenciarioCount)
+	}
+	if len(openings) < 10 {
+		t.Fatalf("previdenciario opening variants=%d, want at least 10 non-mechanical variants", len(openings))
+	}
+	if len(documentGuidance) < 10 {
+		t.Fatalf("previdenciario document guidance variants=%d, want at least 10 non-mechanical variants", len(documentGuidance))
+	}
+	if len(digitalTriage) < 10 {
+		t.Fatalf("previdenciario digital triage variants=%d, want at least 10 non-mechanical variants", len(digitalTriage))
+	}
+	maxAllowed := previdenciarioCount / 3
+	if mostRepeated(openings) > maxAllowed {
+		t.Fatalf("previdenciario opening repeated=%d, max allowed=%d", mostRepeated(openings), maxAllowed)
+	}
+	if mostRepeated(documentGuidance) > maxAllowed {
+		t.Fatalf("previdenciario document guidance repeated=%d, max allowed=%d", mostRepeated(documentGuidance), maxAllowed)
+	}
+	if mostRepeated(digitalTriage) > maxAllowed {
+		t.Fatalf("previdenciario digital triage repeated=%d, max allowed=%d", mostRepeated(digitalTriage), maxAllowed)
 	}
 }
 
@@ -127,4 +173,24 @@ func TestBatchFinalAuthorialDraftRejectsSourceBlockedOrPublicDraft(t *testing.T)
 			t.Fatalf("missing issue %q in %v", code, report.Codes())
 		}
 	}
+}
+
+func firstSentenceKey(value string) string {
+	value = strings.TrimSpace(strings.ToLower(value))
+	for index, r := range value {
+		if r == '.' || r == '!' || r == '?' {
+			return strings.TrimSpace(value[:index+1])
+		}
+	}
+	return value
+}
+
+func mostRepeated(counts map[string]int) int {
+	max := 0
+	for _, count := range counts {
+		if count > max {
+			max = count
+		}
+	}
+	return max
 }

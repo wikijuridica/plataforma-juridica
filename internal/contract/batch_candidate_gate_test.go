@@ -48,6 +48,7 @@ func TestBatchCandidateGatesSelectArchiveDraftsWithoutPublishing(t *testing.T) {
 	}
 
 	totalSelected := 0
+	totalExpectedCurrent := 0
 	for _, entry := range records {
 		record := entry.Record
 		readiness, ok := readinessByBatch[record.BatchID]
@@ -58,6 +59,7 @@ func TestBatchCandidateGatesSelectArchiveDraftsWithoutPublishing(t *testing.T) {
 		if !ok {
 			t.Fatalf("%s missing expansion strategy", record.BatchID)
 		}
+		totalExpectedCurrent += strategy.CurrentCandidateCount
 		expectedPaidPassed := make([]string, 0)
 		for _, intentID := range readiness.ExpansionCandidateIntentIDs {
 			if paidintent.AllowsExpansion(paidByIntent[intentID]) {
@@ -87,8 +89,8 @@ func TestBatchCandidateGatesSelectArchiveDraftsWithoutPublishing(t *testing.T) {
 			t.Fatalf("%s must track locked official URL while preserving blocked publication, mode=%q locked=%t", record.BatchID, record.BaseURLMode, record.OfficialURLLocked)
 		}
 	}
-	if totalSelected != 510 {
-		t.Fatalf("selected intents=%d, want 510 paid-passed or previdenciario-informational strategy candidates", totalSelected)
+	if totalSelected != totalExpectedCurrent {
+		t.Fatalf("selected intents=%d, want materialized strategy current total=%d", totalSelected, totalExpectedCurrent)
 	}
 }
 

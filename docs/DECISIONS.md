@@ -823,3 +823,15 @@ Motivos:
 - o Código de Ética e Disciplina exige publicidade informativa, internet como veículo lícito com limites, e nome/OAB na publicidade profissional.
 
 Consequencia: gates não devem reprovar termos como 100% digital, tudo online, sem sair de casa ou atendimento remoto quando forem descrição do fluxo. Devem reprovar garantia de êxito, liminar garantida, resultado certo, prazo prometido, comparação, captação indevida, caso concreto usado como oferta, sensacionalismo, valores, descontos e gratuidade. Autor dos conteúdos: Rafael Toledo, OAB/RJ 227191; a identidade fica em `content/site.json` como configuração versionada, não hardcoded em runtime.
+
+## 2026-06-09 — Avanco 590 com refino semantico e archive esgotado explicito
+
+Decisao: o avanço interno de 510 para 590 candidatos bloqueados só pode ocorrer depois de teste semântico específico contra repetição previdenciária e refresh completo da cadeia downstream.
+
+Motivos:
+- `--expect-total` evita salto acidental, mas não prova qualidade semântica;
+- a lane previdenciária informativa pode crescer por curiosidade qualificada, mas não pode manter abertura, documentos, triagem e CTA repetidos;
+- final drafts antigos podem ser reutilizados pelo pipeline se o reuso não detectar padrão legado;
+- cinco famílias comerciais chegaram a 100/100 registros do archive, então fingir próximo crescimento sem novo archive seria pendência mascarada.
+
+Consequencia: `batch_final_authorial_drafts` passa a exigir variação semântica mínima em previdenciário e o pipeline reconstrói finais previdenciários legados usando problema do leitor, documentos, risco e ação digital do rascunho selecionado. `batch_candidate_gates` sobe para 590 candidatos internos bloqueados, com cadeia downstream em 590 e flags públicas falsas. `batch_expansion_strategy` ganha `batch_expansion_strategy_blocked_archive_growth_required` para famílias com current igual ao archive observado; o próximo ciclo deve gerar mais `batch_draft_expansion_archive` permanente, bloqueado, semântico e validado antes de novo avanço.
