@@ -10,8 +10,10 @@ Objetivos iniciais:
 
 O primeiro ciclo P0/P1 materializa o contrato tecnico, nao um acervo juridico amplo. Conteudo juridico substantivo continua bloqueado ate fonte, proveniencia e revisao passarem pelos gates.
 
-Meta de crescimento: o produto deve chegar a no minimo 10 mil paginas juridicas informativas com alta intencao de contratar advogado e CTA proprio de WhatsApp para contratacao quando a pagina for adequada. Essa meta e posterior aos gates: arquitetura, fontes, proveniencia, revisao, qualidade e indexacao precisam estar comprovadas antes de publicar conteudo juridico em escala.
+Meta de crescimento: o produto deve chegar a no minimo 10 mil paginas juridicas informativas e preparar arquitetura para centenas de milhares ou milhoes de paginas possiveis, com alta intencao de contratar advogado e CTA proprio de WhatsApp para contratacao quando a pagina for adequada. Essa meta exige fabrica massiva por lotes, conteudo unico, fonte, score humano/natural, validacao em massa e CTA contextual; ela nao autoriza spam, template, conteudo IA-like, thin content ou pagina sem valor.
 
-O projeto nao deve crescer por spam, permutacao de palavras-chave ou texto mecanico. A escala precisa vir de pesquisa de fonte correta, escrita natural, utilidade humana, revisao e validacao repetida em laboratorio.
+O projeto nao deve crescer por spam, permutacao de palavras-chave ou texto mecanico. A escala precisa vir de pesquisa de fonte correta, escrita natural, utilidade humana, revisao algoritmica, validacao massiva e refinamento repetido em laboratorio.
 
-O agente Codex neste repositorio opera com autonomia de engenheiro senior, arquiteto e criador de conteudo juridico. Ele deve continuar o trabalho dentro do escopo, corrigir bugs e lacunas sem aguardar aprovacao normal e persistir cada ciclo em checkpoint e commit.
+O agente Codex neste repositorio opera com autonomia de engenheiro senior, arquiteto e criador de conteudo juridico. Ele deve usar engenharia agressiva inteligente, continuar o trabalho dentro do escopo, corrigir bugs e lacunas sem aguardar aprovacao normal e persistir cada ciclo em checkpoint e commit.
+
+Commit nao e conclusao do `/goal`. Antes de commitar, o agente deve fazer autocrítica, registrar o que foi resolvido, o que ainda pode melhorar e o proximo ciclo executavel. O trabalho continua enquanto a meta massiva, a arquitetura, a qualidade e a indexacao nao estiverem comprovadas.

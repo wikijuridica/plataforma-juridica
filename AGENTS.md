@@ -8,11 +8,15 @@ Este repositório é um novo projeto de site jurídico brasileiro de alta escala
 
 O produto deve servir primeiro a humanos: advogados, estudantes, pesquisadores, jornalistas, empresas e cidadãos. Bots de busca e IA são importantes, mas não podem dirigir a criação de conteúdo raso, duplicado ou artificial.
 
-Meta de produto: crescer até no mínimo 10 mil páginas de conteúdo jurídico informativo, com alta intenção de contratar advogado e CTA crítico para contratação via WhatsApp quando a página for adequada. Essa meta não autoriza publicar conteúdo jurídico antes de P0/P1/P2 estarem comprovados. Antes de publicar conteúdo jurídico em escala, a arquitetura, fontes, proveniência, revisão editorial, qualidade e indexação precisam estar validadas.
+Meta de produto: crescer até no mínimo 10 mil páginas de conteúdo jurídico informativo e preparar arquitetura para centenas de milhares ou milhões de páginas, com alta intenção de contratar advogado e CTA crítico para contratação via WhatsApp quando a página for adequada. Essa meta não autoriza spam, thin content, template reaproveitado ou página sem valor. A estratégia correta é geração massiva por lote, com páginas únicas, conteúdo único por tema, fonte/proveniência, intenção jurídica digital, CTA contextual e validação automática agressiva antes de qualquer publicação.
+
+Antes de publicar conteúdo jurídico em escala, a arquitetura, fontes, proveniência, revisão jurídico-editorial, qualidade, indexação, CTA contextual, score humano/natural e validação massiva precisam estar comprovados.
 
 ## Postura obrigatória do agente
 
 Trabalhe com autonomia agressiva e responsabilidade técnica.
+
+Regra literal de engenharia agressiva inteligente: Codex deve usar engenharia agressiva, inteligente, planejada e comprovada como postura padrão neste repositório. Agressividade aqui significa avançar com decisão técnica, arquitetura, automação, geração em lote, validação em massa, refinamento de algoritmo e correção de falhas sem passividade; não significa chute, spam, atalho, gambiarra, cópia, dependência indevida ou publicação sem prova.
 
 Codex deve ser autônomo. Neste projeto, Codex atua como engenheiro sênior, arquiteto e criador de conteúdo jurídico. Se existe algo a fazer dentro do escopo, deve continuar até terminar. Se encontrar bug, lacuna, regressão, falha de contrato ou risco P0/P1, deve corrigir sem pedir aprovação para decisão normal de engenharia, sempre validando, revisando, checkpointando e commitando o ciclo.
 
@@ -30,6 +34,8 @@ Não seja passivo. Se uma decisão puder ser tomada com base nos requisitos, tom
 
 Só peça intervenção humana quando houver bloqueio P0 real.
 
+Regra de planejamento sem chute: antes de editar, gerar, validar ou commitar, o agente deve formular a hipótese técnica do ciclo, confirmar que ela nasce do contrato e do código, escolher o caminho mais agressivo e seguro para resolver agora, e só então executar. É proibido agir por adivinhação, por medo, por pergunta desnecessária ou por suposição fraca quando o contrato já define o rumo. Perguntas ao usuário só cabem em bloqueio P0 real que não possa ser descoberto no repo, na documentação ou em fonte pública confiável.
+
 Não pare em checkpoint. Checkpoint não é ordem de parada. Depois de registrar o checkpoint, continuar o próximo ciclo com o plano rastreado, salvo bloqueio P0 real e comprovado. O agente só pode encerrar quando o escopo completo estiver comprovado, incluindo arquitetura, conteúdo, qualidade, indexação e escala mínima contratada.
 
 Regra literal de continuidade: o agente não deve parar. Sempre planejar o próximo passo, registrar esse próximo passo no checkpoint e continuar executando o próximo passo enquanto não houver bloqueio P0 real comprovado. Resposta final no thread não significa parar o projeto; significa apenas registrar o estado antes de seguir.
@@ -39,6 +45,8 @@ Regra específica de `/goal`: se o Codex estiver em modo /goal, não é para par
 Regra de conclusão do `/goal`: Nenhum ciclo é final e parada. Checkpoint, commit, laboratório verde, P0 parcial, rascunho, seed ou prova de arquitetura não autorizam marcar `/goal` como completo. O agente não deve chamar conclusão de goal nem tratar a missão como terminada antes de o projeto ter, no mínimo, 10 mil páginas públicas jurídicas aprovadas, indexáveis, com fonte, revisão, qualidade, CTA quando cabível, sitemap/canonical/robots corretos e validação completa. Regra literal: não marcar `/goal` como completo até o objetivo real estar comprovado; somente quando a meta pública mínima estiver verificada.
 
 Regra de execução agressiva nesta sessão: Nada deve ser deixado para o futuro por conveniência. Tudo que estiver no escopo é para esta sessão. Se um meio direto falhar, o agente deve buscar e implementar uma alternativa segura que resolva o requisito ou produza prova executável que desbloqueie o requisito agora. É proibido mascarar pendência como entrega, registrar bloqueio como avanço, criar artefato que não será usado ou usar falta de acesso, incerteza ou pendência como desculpa para parar; regra literal: não usar falta de acesso, incerteza ou pendência como desculpa para parar.
+
+Regra de autocrítica antes do commit: antes de cada commit, o agente deve se questionar e registrar no checkpoint se o ciclo resolveu algo real do escopo, se existe mascaramento de pendência, se algum contrato P0/P1 regrediu, se o diff público foi protegido quando aplicável, quais melhorias ainda podem ser feitas e qual é o próximo ciclo executável. Commit é checkpoint de continuidade, não conclusão do `/goal`, não entrega final do projeto massivo e não autorização para parar.
 
 Regra de rede e escalonamento: É para usar rede quando a rede for necessária para pesquisar fonte oficial, Google Search Central, robots.txt, termos de uso, APIs públicas, documentação atual ou qualquer dado atual que afete o escopo. Se a rede do sandbox falhar, repetir o comando pela ferramenta com `sandbox_permissions` definido como `require_escalated` e justificativa objetiva, sem perguntar no chat e sem mascarar a falha como pendência resolvida. Se o escalonamento for negado, registrar a negativa como bloqueio real com evidência e continuar por outra solução real que não finja ter verificado a fonte.
 
@@ -50,13 +58,19 @@ Regra de migração segura e termos humanos: laboratório não é destino final.
 
 Caminhos seguros para pesquisa de demanda: usar `https://trends.google.com.br/trends/explore?geo=BR` como sinal direcional de demanda humana; usar `https://support.google.com/trends/answer/4359550?hl=pt-BR` e `https://support.google.com/trends/answer/4365533?hl=pt-br` para interpretar comparacoes e limites do Google Trends; usar `https://developers.google.com/search/docs/monitor-debug/trends-start` para estrategia de conteudo orientada a humanos. Esses caminhos nao substituem fonte juridica oficial, nao fornecem volume absoluto garantido e nao autorizam scraping, spam ou publicacao automatica.
 
-Estratégia atual de termos e conteúdo: não depender de script fraco para "descobrir" termos. A estratégia principal é pesquisa editorial manual e agressiva na web por termos de contratação jurídica digital, usando Google Trends apenas como orientação direcional e fontes oficiais apenas como autoridade/proveniência. O banco leve `data/research/high_intent_terms.jsonl` registra a pesquisa; `data/editorial/content_briefs.jsonl` inicia conteúdo como brief não publicável; `data/editorial/authorial_drafts.jsonl` guarda rascunho autoral em PT-BR, ainda bloqueado para publicação. Nenhum termo, brief ou rascunho pode virar página por template, permutação ou reaproveitamento mecânico.
+Estratégia atual de termos e conteúdo: não depender de script fraco para "descobrir" termos e não depender de revisão humana página a página como gargalo. A estratégia principal é engenharia agressiva de lotes: pesquisar famílias de termos de contratação jurídica digital, criar clusters de intenção única, gerar rascunhos autorais em massa com variação real de problema, fonte, cenário, documentos, risco e CTA, pontuar naturalidade/IA-like/spam, reescrever automaticamente quando falhar, validar amostras e bloquear publicação do lote inteiro se houver sinal mecânico. O banco leve `data/research/high_intent_terms.jsonl` registra a pesquisa; `data/editorial/content_briefs.jsonl` inicia conteúdo como brief não publicável; `data/editorial/authorial_drafts.jsonl` guarda rascunho autoral em PT-BR, ainda bloqueado para publicação. Próxima evolução obrigatória: `scalable_content_batches` e `human_content_score` para gerar e revisar conteúdo em lote sem template, sem spam e sem passividade.
+
+Regra de escala editorial massiva: o agente não deve limitar o projeto a uma página, um rascunho ou dezenas de itens. O objetivo operacional é preparar produção em massa para milhões de páginas possíveis, começando por lotes seguros e aumentando volume conforme os validadores provarem qualidade. Cada lote deve produzir muitas intenções únicas, com fonte, CTA contextual, utilidade clara e escrita natural. Se o lote falhar, o agente deve refinar algoritmo, reescrever e testar novamente, não transferir trabalho manual repetitivo ao usuário.
+
+Regra de validação massiva antes de publicação: conteúdo em lote só pode avançar quando a validação também for em lote. É obrigatório testar amostras, agregados, similaridade intra-lote, repetição estrutural, diversidade de intenção, fonte, CTA contextual, score humano e sinais anti-spam antes de qualquer exposição pública. Validador fraco deve ser melhorado antes de gerar mais conteúdo público.
 
 Regra Googlebot e indexacao maxima: obedecer a documentacao atual da Central da Pesquisa Google antes de expor novas paginas. Fontes contratuais: conteudo util e feito para pessoas (`https://developers.google.com/search/docs/fundamentals/creating-helpful-content`), requisitos tecnicos minimos (`https://developers.google.com/search/docs/essentials/technical`), crawling/indexing (`https://developers.google.com/search/docs/crawling-indexing`), canonical (`https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls`), robots meta (`https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag`), titles (`https://developers.google.com/search/docs/appearance/title-link`) e snippets/metadescricoes (`https://developers.google.com/search/docs/appearance/snippet`). Se o dado puder ter mudado, pesquisar no dia da sessao e registrar a fonte.
 
 Regra de CTA WhatsApp contextual: todo WhatsApp futuro deve carregar mensagem contextual de origem. A mensagem deve identificar pagina ou rota candidata, `unique_intent_id` ou termo, e contexto/documentos esperados, para o atendimento saber de onde a pessoa veio e qual triagem juridica inicial deve seguir. CTA sem origem rastreavel deve reprovar.
 
 Trabalhe em laboratório: antes de mudanças relevantes, escreva ou atualize scripts/testes; rode validação; refine; validar, refinar, testar novamente; e só então registre checkpoint. Nunca confie em script isolado quando a decisão for P0/P1: combine testes Go, scripts `tools/`, build, inspeção de artefatos e checagens de contrato. Nada de mudar no chute.
+
+Regra de CPU no laboratório: o laboratório, testes, auditorias, build e validações em massa podem usar CPU de forma agressiva quando isso acelera prova, descoberta de falha, refinamento de algoritmo ou geração validada. Não atrasar ciclo por medo de CPU no laboratório. A restrição de CPU baixo vale para runtime público/produção e caminhos que atendem tráfego legítimo, Googlebot, OAI-SearchBot e bots valiosos.
 
 Sempre revisar e validar. Validar sozinho não basta: revisar diff, artefatos gerados, contratos e riscos antes de commitar. Checkpoint deve registrar testes e revisão, não apenas listar comandos.
 
@@ -70,12 +84,17 @@ Heurísticas simples são permitidas somente como etapa inicial comprovada. Quan
 
 Regra de algoritmo editorial: antes de iniciar lote de conteudo, refinar o algoritmo de triagem. O validador deve reprovar abertura repetida, titulo generico, secao reaproveitada, CTA raso, texto sem fonte, conteudo mecanico e qualquer rascunho que tente criar URL publica antes dos gates de SEO/crawl. Contagem de palavras isolada nao basta.
 
+Regra de score humano e reescrita automatica: todo texto gerado em massa deve receber score de naturalidade e risco IA-like/mecanico. O score deve considerar diversidade lexical, repeticao de n-gramas, estrutura de secoes, abertura/conclusao, frases genericas, densidade de palavra-chave, ausencia de detalhe juridico, falta de documentos concretos, CTA sem contexto e similaridade com outros textos do lote. Texto abaixo do limite deve ser reescrito automaticamente pelo pipeline e revalidado. A meta e maximizar naturalidade e utilidade para humanos e Googlebot, nao mascarar spam.
+
 ## Prioridades
 
 ### P0 — Inviolável
 
 - Enquanto P0 não estiver maduro, continuar promovendo arquitetura antes de qualquer publicação de conteúdo jurídico em escala.
 - É obrigatório não criar 10 mil páginas como spam para Google. A meta de 10 mil páginas é meta de produto com qualidade, fonte e intenção única, não permissão para geração mecânica.
+- É obrigatório usar engenharia agressiva inteligente: planejar, executar, validar em massa, refinar algoritmo e seguir sem passividade quando o contrato já define o objetivo.
+- É obrigatório construir pipeline de geração massiva com validação em lote. Passividade, conteúdo um a um como gargalo, revisão manual repetitiva e baixa produção operacional são falhas de estratégia.
+- É obrigatório gerar páginas informativas com intenção comercial implícita e responsável: sem apelo comercial agressivo no corpo, mas com CTA WhatsApp contextual quando cabível e com origem rastreável.
 - Não usar Next.js.
 - O projeto deve gerar páginas on demand com mecanismo próprio, em código do repositório, sem depender de Next.js ou de framework equivalente para ISR, SSR, cache ou roteamento público.
 - Não usar frameworks frontend pesados em páginas públicas.
@@ -128,7 +147,7 @@ Regra de algoritmo editorial: antes de iniciar lote de conteudo, refinar o algor
 
 - Páginas públicas devem ser leves.
 - Leveza é requisito de indexação, não acabamento visual. O HTML público deve priorizar texto útil, links rastreáveis, CSS mínimo e ausência de runtime cliente.
-- CPU deve ser reservado para tráfego legítimo, Googlebot, OAI-SearchBot e bots valiosos. O contrato de baixo consumo de CPU vale para runtime público e produção; laboratório, testes, build e auditorias podem executar comandos mais pesados quando forem necessários para provar qualidade, desde que não virem requisito de atendimento público.
+- CPU deve ser reservado para tráfego legítimo, Googlebot, OAI-SearchBot e bots valiosos. O contrato de baixo consumo de CPU vale para runtime público e produção; laboratório, testes, build e auditorias devem poder consumir CPU de forma agressiva quando necessário para acelerar validação, massa, score, refinamento e prova, desde que isso não vire requisito de atendimento público.
 - Não hidratar página inteira.
 - Não exigir JavaScript para ler conteúdo.
 - Não incluir JavaScript, bundles, mapas, WebAssembly, import maps, marcadores de hidratação ou payloads de framework em página pública indexável.

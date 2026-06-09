@@ -18,6 +18,25 @@ Conteúdo que falha permanece `draft`, `needs_review`, `noindex` ou `archived`, 
 
 CTA comercial por WhatsApp é subordinado a este gate. Página sem fonte, sem revisão, sem intenção única ou sem valor informativo não pode usar CTA como justificativa para indexação.
 
+## Estratégia massiva sem spam
+
+O projeto não deve operar como redação manual página a página. A escala correta é geração em lote com validação automática agressiva, reescrita automática e bloqueio de lote inteiro quando houver padrão mecânico. O objetivo é preparar milhares, centenas de milhares e milhões de páginas possíveis, mas cada URL indexável precisa ter intenção única, fonte, utilidade concreta, texto próprio e CTA contextual quando cabível.
+
+Conteúdo massivo exige engenharia agressiva inteligente: planejar a família jurídica, gerar muitas intenções únicas, validar em massa, refinar o algoritmo e repetir. Não é aceitável liberar lote por confiança em um script isolado, por revisão manual lenta ou por texto que apenas parece diferente.
+
+Regras de lote:
+- criar famílias de alta intenção de contratação jurídica 100% digital;
+- derivar intenções únicas por problema, documento, fonte, risco, etapa e cenário, não por permutação de palavra-chave;
+- gerar conteúdo autoral com seções e exemplos diferentes por tema;
+- evitar linguagem comercial agressiva no corpo: página é informativa, com intenção de contratar e CTA contextual separado;
+- pontuar naturalidade, risco IA-like, spam, repetição estrutural, similaridade entre itens do lote e densidade de keyword;
+- reescrever automaticamente itens abaixo do score mínimo e validar novamente;
+- bloquear o lote inteiro se a amostra ou qualquer métrica agregada indicar template, thin content, fonte fraca, CTA sem origem ou páginas parecidas.
+
+Revisão humana não pode ser gargalo para milhões de páginas. O papel do laboratório é transformar validação e revisão em algoritmo: score, motivos de reprovação, reescrita, amostragem e auditoria. Se o algoritmo estiver fraco, o agente deve melhorá-lo e continuar, não transferir correção repetitiva ao usuário.
+
+Validação massiva é obrigatória antes de publicação massiva. O lote precisa provar diversidade real em agregados e amostras: intenção, fonte, estrutura, abertura, exemplos, documentos, CTA contextual, densidade de termos, similaridade e utilidade. Falha de lote exige reescrita/refinamento e reteste, não publicação parcial por conveniência.
+
 ## Escrita natural
 
 Conteúdo visível ao público deve ser escrito em PT-BR, com grafia correta, acentuação correta, pontuação clara e linguagem natural. Rascunho técnico interno pode ficar sem polimento, mas texto público não.
@@ -90,3 +109,17 @@ Sinais iniciais:
 - combinação de sinais que indique permutação de keyword.
 
 O algoritmo deve ser melhorado sempre que gerar falso positivo ou falso negativo. Exemplo já registrado: repetição normal de marca/título/heading não deve ser confundida com conteúdo mecânico; por isso a análise de página usa o corpo editorial, não o conjunto inteiro de title/meta/heading.
+
+## Score humano e IA-like
+
+O próximo gate obrigatório é `human_content_score`: pontuação de naturalidade e risco IA-like/mecânico para texto jurídico em massa. Esse score deve ser usado para revisar e reescrever automaticamente, não para criar aparência artificial. Métricas mínimas:
+- diversidade lexical e de frases;
+- variação de abertura, headings e conclusão;
+- presença de detalhes concretos do problema jurídico;
+- documentos e próximos passos digitais plausíveis;
+- fonte/proveniência conectada ao tema;
+- ausência de promessas, superlativos e linguagem de venda;
+- baixa similaridade com outros textos do mesmo lote;
+- CTA contextual com origem, termo e documentos esperados.
+
+Publicação só pode avançar quando o texto atingir score alto, motivos de reprovação estiverem zerados e o lote provar diversidade real.

@@ -6,6 +6,7 @@
 - Contrato proibindo Next.js e exigindo geracao on demand propria.
 - Contrato de continuidade: checkpoint nao encerra trabalho.
 - Plano finito para no minimo 10 mil paginas futuras, bloqueadas para publicacao durante P0.
+- Pipeline de lotes massivos para centenas de milhares ou milhões de páginas possíveis, sem spam, com intenção única, score humano e CTA contextual.
 - Politica propria de CTA WhatsApp, subordinada a fonte e revisao.
 - Laboratorio multi-validacao em `tools/lab-cycle`.
 - HTML textual completo.
@@ -17,6 +18,8 @@
 ## Proximos ciclos
 
 - Continuar P0: fortalecer arquitetura de escala, cache, roteamento, validadores e auditoria antes de publicar conteudo juridico em escala.
+- Continuar P0: implementar `scalable_content_batches` e `human_content_score` para sair de rascunho unitário e operar geração em massa com validação e reescrita automática.
+- Continuar P0: transformar autocrítica pré-commit e validação massiva em contrato testável, para impedir commit tratado como conclusão do `/goal`.
 - Continuar P0 em laboratorio: validar, refinar, testar novamente e inspecionar artefatos.
 - P2: ampliar contratos de tipos de pagina e fontes oficiais.
 - P3: medir concorrencia, cache e geracao incremental para alto volume.

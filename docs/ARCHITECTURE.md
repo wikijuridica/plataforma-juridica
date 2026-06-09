@@ -49,11 +49,15 @@ Leveza e requisito de indexacao. O renderizador deve entregar HTML textual compl
 
 `internal/checks` reprova HTML publico acima do orcamento, CSS inline excessivo, referencias a runtime cliente e marcadores de Next.js, React, Vue/Svelte/Astro/Angular, Vite ou Webpack. Qualquer excecao exigiria ADR de dependencia e continuaria bloqueada para pagina publica indexavel enquanto P0 estiver ativo.
 
-## Escala antes de conteudo
+## Escala e fábrica de conteúdo
 
-Durante P0, a plataforma deve preparar escala, nao fabricar paginas juridicas. `content/scale_plan.json` define blueprints finitos para pelo menos 10 mil paginas planejadas e `published_pages_during_p0` deve permanecer zero. O desbloqueio de conteudo exige P2: fonte oficial documentada, proveniencia, autoria, revisao, intencao unica, qualidade e indexacao coerente.
+Durante P0, a plataforma deve preparar escala massiva sem publicar spam. `content/scale_plan.json` define blueprints finitos para pelo menos 10 mil paginas planejadas, mas a arquitetura deve suportar centenas de milhares ou milhões de URLs por geração on demand própria. O desbloqueio de conteudo exige P2: fonte oficial documentada, proveniencia, autoria, revisão automatizada/algorítmica comprovada, intenção única, qualidade e indexacao coerente.
 
-O plano de escala e um contrato de capacidade, nao um gerador de spam para Google. O modulo `scale` deve ajudar a medir alcance futuro e bloquear publicacao em massa enquanto as fontes e validadores nao estiverem maduros.
+O plano de escala e um contrato de capacidade e uma fábrica de conteúdo validado, nao um gerador de spam para Google. O modulo `scale` deve ajudar a medir alcance futuro, montar lotes finitos por família jurídica, diversificar intenção e bloquear publicacao em massa enquanto fontes, scoring, CTA e validadores nao estiverem maduros.
+
+Novo eixo obrigatório: `scalable_content_batches`. Essa camada deve registrar lotes com centenas ou milhares de intenções candidatas, score de naturalidade, fonte, CTA contextual, similaridade intra-lote e decisão de bloqueio. O pipeline deve gerar, pontuar, reescrever e revalidar em lote.
+
+A arquitetura deve favorecer engenharia agressiva inteligente: processamento em lote, validação agregada, diagnósticos específicos, reexecução rápida, refinamento de algoritmo e prova por dados. O runtime público deve continuar barato, mas o laboratório pode consumir CPU de forma agressiva para provar escala e qualidade antes de qualquer publicação.
 
 ## CTA WhatsApp
 
@@ -85,6 +89,8 @@ Camadas obrigatorias:
 - `source_specificity_resolutions`: manifesto de fontes especificas resolvidas para pre-publicacao, ainda sem URL publica;
 - `prepublication_gates`: contrato SEO/crawl para rota candidata finita, com render, sitemap e publicacao bloqueados;
 - `legal_editorial_reviews`: revisao juridico-editorial bloqueada com CTA WhatsApp contextual em rascunho;
+- `scalable_content_batches`: lotes massivos de intenções únicas e rascunhos autorais, bloqueados quando houver spam, template ou score humano insuficiente;
+- `human_content_score`: score de naturalidade/IA-like/mecânico para revisão algorítmica, reescrita e auditoria;
 - `published_manifest`: manifesto leve de conteudo aprovado, sem substituir o renderizador.
 
 Regra P0: termos podem iniciar `draft_only`; nenhuma linha do banco vira pagina indexavel sem fonte, revisao, qualidade, SEO, intencao unica e checkpoint.
@@ -92,3 +98,5 @@ Regra P0: termos podem iniciar `draft_only`; nenhuma linha do banco vira pagina 
 ## Laboratorio
 
 Toda mudanca P0/P1 deve passar por ciclo de laboratorio: escrever ou ajustar teste, rodar validacao, refinar, testar novamente e inspecionar artefatos. `tools/lab-cycle` combina `go test -count=1 ./...`, `tools/check-all`, build, auditoria de dependencias, diff check e busca por residuos Python.
+
+Antes de commit, o laboratório deve registrar autocrítica: hipótese do ciclo, prova obtida, riscos, melhorias possíveis, motivo pelo qual o commit é apenas checkpoint e próximo ciclo planejado. Essa autocrítica impede commit tratado como conclusão do projeto massivo.

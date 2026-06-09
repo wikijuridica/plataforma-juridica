@@ -401,3 +401,29 @@ Motivos:
 - publicar CTA antes dos gates poderia contaminar a pagina e prejudicar confianca.
 
 Consequencia: `data/editorial/legal_reviews.jsonl` registra a primeira revisao bloqueada; `internal/legalreviews` e `./tools/check-legal-editorial-reviews` exigem rascunho autoral, fonte resolvida, gate de pre-publicacao, notas juridicas, correcoes pendentes, CTA WhatsApp sem promessa, mensagem contextual com origem da pagina/rota candidata, `render_allowed=false`, `sitemap_allowed=false`, `publication_allowed=false` e `public_path=""`. `content/cta_policy.json` tambem exige template global com `{path}`, `{unique_intent_id}` e `{title}`.
+
+## 2026-06-09 — Mudança para fábrica massiva de conteúdo único
+
+Decisao: o projeto nao deve depender de revisão humana página a página nem limitar a produção a uma página ou poucas dezenas de rascunhos. A estratégia passa a ser geração massiva por lotes, com validação automática agressiva, score humano/IA-like, reescrita automática e bloqueio de lote quando houver spam, template ou baixa utilidade.
+
+Motivos:
+- a meta real é portal jurídico massivo, com potencial para milhões de páginas;
+- revisão manual repetitiva não escala;
+- conteúdo único e natural precisa ser propriedade do algoritmo, não exceção artesanal;
+- Googlebot deve encontrar páginas informativas, úteis e leves, não templates;
+- CTA WhatsApp deve ser contextual e lucrativo para advogado, sem transformar o texto em anúncio.
+
+Consequencia: próximos ciclos devem implementar `human_content_score` e `scalable_content_batches`. Cada lote deve gerar muitas intenções únicas de contratação jurídica 100% digital, validar fonte, CTA contextual, score de naturalidade, similaridade intra-lote e bloqueio de publicação. Itens abaixo do score devem ser reescritos automaticamente e revalidados, não entregues ao usuário para correção manual.
+
+## 2026-06-09 — Engenharia agressiva inteligente e autocrítica pré-commit
+
+Decisao: Codex deve operar com engenharia agressiva inteligente: planejar a hipótese, executar sem passividade, validar em massa quando o escopo for massa, refinar algoritmo e registrar autocrítica antes de commitar.
+
+Motivos:
+- o contrato do projeto ja define plataforma juridica massiva, alta intencao e contratação digital;
+- perguntas desnecessarias e decisões medrosas atrasam o P0;
+- commit por ciclo é rastreabilidade, não conclusão do `/goal`;
+- massa sem validação em massa vira spam, e validação tímida não prova milhões de páginas;
+- o agente precisa apontar o que pode melhorar e o próximo ciclo antes de preservar o checkpoint.
+
+Consequencia: antes de cada commit, `CHECKPOINT.md` deve registrar o que foi resolvido, provas, autocrítica, pendências reais, melhorias possíveis, próximo ciclo e a frase operacional de que o commit não encerra o `/goal`. O laboratório pode usar CPU agressivamente para testes, score, reescrita, auditoria e validação em massa; o baixo consumo de CPU continua obrigatório no runtime público/produção.

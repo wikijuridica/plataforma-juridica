@@ -57,3 +57,19 @@ Aprovacoes editoriais ficam em `data/editorial/approved_drafts.jsonl`. Mesmo apr
 O manifesto de bloqueio fica em `data/editorial/publication_blockers.jsonl`. Ele lista requisitos faltantes para publicar e orienta a priorizacao de termos por demanda humana, nao por permutacao de keyword.
 
 A pesquisa de demanda de termos deve separar evidencia de busca humana, fonte juridica e intencao comercial. Para a fase inicial, alta intencao significa contratacao juridica online, sem requisito presencial como padrao. Termos de alta demanda mas baixa adequacao a atendimento digital devem ser registrados como menor prioridade, nao mascarados como CTA forte.
+
+## Lotes de conteúdo
+
+Dados de lote devem ficar em banco leve separado, futuro `data/editorial/scalable_content_batches.jsonl`, sem virar sitemap automaticamente. Cada lote precisa registrar:
+- família jurídica;
+- número de intenções únicas planejadas;
+- fontes oficiais por subtema;
+- critérios de diferenciação entre páginas;
+- score mínimo humano/natural;
+- limite de similaridade intra-lote;
+- CTA contextual por origem;
+- decisão de publicação bloqueada ou liberada.
+
+Termos em massa não podem nascer de combinação infinita de cidade, palavra-chave e área. A escala deve vir de problemas jurídicos reais, etapas processuais/administrativas, documentos, riscos, fontes e intenções digitais distintas.
+
+Pesquisa de fonte em escala deve ser planejada por famílias e subtemas, nao improvisada por página. O lote deve carregar mapa de fontes suficientes para cada grupo de intenção, com fonte oficial/proveniência antes de rascunho público. Ausência de fonte específica bloqueia o lote, mesmo que a demanda e o CTA sejam fortes.
