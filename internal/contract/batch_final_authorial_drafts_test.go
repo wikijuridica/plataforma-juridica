@@ -26,8 +26,8 @@ func TestBatchFinalAuthorialDraftsCoverEligibleManifestWithoutPublishing(t *test
 	if len(records) < 5 {
 		t.Fatalf("final authorial drafts=%d, want at least 5 paid-passed preserved drafts after filtering free/admin-risk intents", len(records))
 	}
-	if len(records) < 100 {
-		t.Fatalf("final authorial drafts=%d, want at least 100 blocked drafts generated from source-locked mass manifests", len(records))
+	if len(records) < 168 {
+		t.Fatalf("final authorial drafts=%d, want at least 168 blocked drafts generated from source-locked mass manifests", len(records))
 	}
 
 	for _, entry := range records {

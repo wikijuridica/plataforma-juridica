@@ -58,8 +58,8 @@ func TestBatchSourceSpecificityPromotesAuditedSpecificMatricesAtScale(t *testing
 		}
 	}
 
-	if len(lockedByIntent) < 100 {
-		t.Fatalf("source-locked candidates=%d, want at least 100 candidates promoted by audited specific official URLs", len(lockedByIntent))
+	if len(lockedByIntent) < 168 {
+		t.Fatalf("source-locked candidates=%d, want at least 168 candidates promoted by audited specific official URLs", len(lockedByIntent))
 	}
 
 	for _, intentID := range []string{
@@ -68,7 +68,10 @@ func TestBatchSourceSpecificityPromotesAuditedSpecificMatricesAtScale(t *testing
 		"previdenciario-auxilio-incapacidade-pericia-fonte-primaria",
 		"saude-suplementar-prazo-consulta-especialista-competencia-digital",
 		"sucessorio-inventario-extrajudicial-consenso-documento-minimo",
+		"trabalhista-verbas-rescisorias-nao-pagas",
 		"trabalhista-acidente-trabalho-estabilidade-documento-minimo",
+		"familia-pensao-revisao-desemprego-documento-minimo",
+		"consumidor-financeiro-negativacao-divida-desconhecida-fonte-primaria",
 	} {
 		record, ok := lockedByIntent[intentID]
 		if !ok {

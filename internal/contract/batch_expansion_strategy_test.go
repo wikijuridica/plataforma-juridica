@@ -1,0 +1,122 @@
+package contract_test
+
+import (
+	"testing"
+
+	"portaljuridico/internal/batchexpansionstrategy"
+)
+
+func TestBatchExpansionStrategyPlansNextScaleWithoutPublishing(t *testing.T) {
+	report := batchexpansionstrategy.Validate(".")
+	if !report.Passed() {
+		t.Fatalf("batch expansion strategy failed contract: %v", report.Messages())
+	}
+
+	records, loadReport := batchexpansionstrategy.LoadRecords(".")
+	if !loadReport.Passed() {
+		t.Fatalf("could not load batch expansion strategy: %v", loadReport.Messages())
+	}
+	if len(records) != 6 {
+		t.Fatalf("strategy records=%d, want one per batch family", len(records))
+	}
+
+	readyFamilies := 0
+	totalCurrent := 0
+	totalNext := 0
+	for _, entry := range records {
+		record := entry.Record
+		totalCurrent += record.CurrentCandidateCount
+		totalNext += record.NextCandidateTarget
+		if record.StrategyStatus == batchexpansionstrategy.ReadyNextCandidateGateStatus {
+			readyFamilies++
+			if record.NextCandidateTarget < 60 {
+				t.Fatalf("line=%d next target=%d, want at least 60 for ready family", entry.Line, record.NextCandidateTarget)
+			}
+		}
+		if record.BatchID == "batch-previdenciario-digital" && record.StrategyStatus != batchexpansionstrategy.BlockedPaidIntentStatus {
+			t.Fatalf("previdenciario status=%q, want paid-intent blocker preserved", record.StrategyStatus)
+		}
+		if !record.RequiresVerifiedSource || !record.RequiresPaidIntent || !record.RequiresContextualCTA || !record.RequiresHumanScore || !record.RequiresSemanticDiversity {
+			t.Fatalf("line=%d missing intelligent expansion guard", entry.Line)
+		}
+		if len(record.SemanticAxes) < 6 || len(record.ValidationCommands) < 5 {
+			t.Fatalf("line=%d weak semantic axes or validation plan", entry.Line)
+		}
+		if record.IndexPolicy != "noindex" || record.ManifestAllowed || record.RenderAllowed || record.SitemapAllowed || record.PublicationAllowed || record.PublicPath != "" {
+			t.Fatalf("line=%d strategy escaped blocked contract", entry.Line)
+		}
+	}
+	if readyFamilies < 5 {
+		t.Fatalf("ready families=%d, want at least 5 ready families for next expansion", readyFamilies)
+	}
+	if totalNext <= totalCurrent {
+		t.Fatalf("strategy did not plan growth: current=%d next=%d", totalCurrent, totalNext)
+	}
+}
+
+func TestBatchExpansionStrategyRejectsPassiveOrPublicPlan(t *testing.T) {
+	index := batchexpansionstrategy.StrategyIndex{
+		ReadinessByBatch: map[string]batchexpansionstrategy.ReadinessSnapshot{
+			"batch-familia-digital": {
+				BatchID:                "batch-familia-digital",
+				LegalArea:              "familia",
+				ReadinessStatus:        "batch_candidate_expansion_ready_blocked_publication",
+				ArchiveRecordsObserved: 100,
+				CurrentCandidateCount:  30,
+				PaidIntentBlockedCount: 0,
+			},
+		},
+	}
+	record := batchexpansionstrategy.Record{
+		StrategyID:                "bad-strategy",
+		BatchID:                   "batch-familia-digital",
+		LegalArea:                 "familia",
+		StrategyStatus:            "ready_to_publish",
+		CurrentCandidateCount:     30,
+		NextCandidateTarget:       30,
+		MaxGrowthStep:             1000,
+		RequiresVerifiedSource:    false,
+		RequiresPaidIntent:        false,
+		RequiresContextualCTA:     false,
+		RequiresHumanScore:        false,
+		RequiresSemanticDiversity: false,
+		SemanticAxes:              []string{"keyword"},
+		ValidationCommands:        []string{"./tools/check-all"},
+		NextAction:                "",
+		IndexPolicy:               "index",
+		ManifestAllowed:           true,
+		RenderAllowed:             true,
+		SitemapAllowed:            true,
+		PublicationAllowed:        true,
+		PublicPath:                "/temas/familia/",
+		CheckedAt:                 "2026-06-09",
+	}
+
+	report := batchexpansionstrategy.ValidateRecordAgainstIndex(record, index)
+	if report.Passed() {
+		t.Fatal("ValidateRecordAgainstIndex passed, want passive/public expansion failures")
+	}
+	for _, code := range []string{
+		"batch_expansion_strategy_status_not_blocked",
+		"batch_expansion_strategy_not_growing_ready_family",
+		"batch_expansion_strategy_growth_step_too_large",
+		"batch_expansion_strategy_without_verified_source",
+		"batch_expansion_strategy_without_paid_intent",
+		"batch_expansion_strategy_without_contextual_cta",
+		"batch_expansion_strategy_without_human_score",
+		"batch_expansion_strategy_without_semantic_diversity",
+		"batch_expansion_strategy_weak_semantic_axes",
+		"batch_expansion_strategy_weak_validation_plan",
+		"batch_expansion_strategy_missing_next_action",
+		"batch_expansion_strategy_invalid_index_policy",
+		"batch_expansion_strategy_manifest_allowed",
+		"batch_expansion_strategy_render_allowed",
+		"batch_expansion_strategy_sitemap_allowed",
+		"batch_expansion_strategy_publication_allowed",
+		"batch_expansion_strategy_has_public_path",
+	} {
+		if !report.HasIssue(code) {
+			t.Fatalf("missing issue %q in %v", code, report.Codes())
+		}
+	}
+}

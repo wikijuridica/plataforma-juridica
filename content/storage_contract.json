@@ -259,6 +259,18 @@
       "description": "Gate permanente de candidatos selecionados a partir do arquivo de rascunhos validado; nao publica, nao renderiza e nao cria sitemap."
     },
     {
+      "name": "batch_expansion_strategy",
+      "path": "data/editorial/batch_expansion_strategy.jsonl",
+      "record_type": "batch_expansion_strategy_blocked",
+      "record_max_bytes": 16384,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": false,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Estrategia bloqueada do proximo crescimento em lote; exige fonte verificada, paid-intent, CTA contextual, score humano, diversidade semantica e validacoes antes de ampliar candidatos."
+    },
+    {
       "name": "batch_candidate_expansion_readiness",
       "path": "data/editorial/batch_candidate_expansion_readiness.jsonl",
       "record_type": "batch_candidate_expansion_readiness_blocked",

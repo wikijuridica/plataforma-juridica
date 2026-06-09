@@ -191,6 +191,28 @@ Motivos:
 
 Consequencia: `batch_source_specificity_resolutions` passou a usar `BuildSpecificSourceURLsByMatrix`; fontes amplas como Codigo Civil, CDC, CLT, raiz de orgao ou home institucional continuam bloqueadas sem URL especifica. O ciclo promoveu 102 candidatos para fonte travada e 102 rascunhos finais bloqueados, mantendo `noindex`, sem render, sem sitemap, sem publicacao e sem scraping/ingestao.
 
+## 2026-06-09 — Ancoras oficiais especificas do Planalto como referencia bloqueada
+
+Decisao: matrizes que ainda dependiam de CLT, Codigo Civil ou CDC amplos podem usar ancoras de artigo em `www.planalto.gov.br/ccivil_03.old/...#art...` como fonte especifica auditada, desde que o uso seja estritamente `reference_only_no_scraping_no_ingestion`.
+
+Motivos:
+- o ciclo precisava reduzir o bloqueio de fonte sem mascarar fonte ampla como especifica;
+- a propria resposta web do Planalto para a CLT compilada apontou o caminho historico `ccivil_03.old`;
+- artigo especifico e uma referencia juridica mais precisa do que a pagina compilada inteira para rescisao, jornada, justa causa, verbas, alimentos, guarda, revisao de pensao, negativacao e cobranca.
+
+Consequencia: o audit URL-level registra robots, termos, hash, timeout HTTP local/escalonado e uso bloqueado; nao ha scraping, ingestao, render, sitemap ou publicacao. A fonte ampla continua na matriz como contexto, mas o destravamento de `final_source_locked_reference_only` passa a exigir a URL de artigo especifica auditada.
+
+## 2026-06-09 — Estrategia de expansao bloqueada antes de ampliar lote
+
+Decisao: quando fonte/readiness deixam de ser gargalo, o proximo passo deve ser registrado em `batch_expansion_strategy` antes de ampliar candidatos, para evitar checkpoint passivo.
+
+Motivos:
+- source locked e rascunho final bloqueado nao sao publicacao nem conclusao do `/goal`;
+- escala massiva precisa de crescimento real, mas por passos auditaveis para nao virar spam;
+- familias prontas devem crescer, enquanto familia com paid-intent reprovado deve preservar bloqueio comercial.
+
+Consequencia: `internal/batchexpansionstrategy`, `data/editorial/batch_expansion_strategy.jsonl`, `cmd/refresh-batch-expansion-strategy`, `./tools/check-batch-expansion-strategy` e `./tools/refresh-batch-expansion-strategy` entram no laboratorio. O plano atual aumenta 5 familias de 30 para 60 candidatos no proximo gate e mantem previdenciario em 18 ate refino/bloqueio comercial, sem render, sitemap, manifest público ou publicação.
+
 ## 2026-06-09 — Banco leve separado para ingestao de termos
 
 Decisao: ingestao de termos juridicos pode iniciar conteudos apenas como semente de rascunho, usando banco leve proprio em JSONL e camadas separadas.

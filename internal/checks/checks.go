@@ -16,6 +16,7 @@ import (
 	"portaljuridico/internal/batchdraftarchive"
 	"portaljuridico/internal/batchdraftgen"
 	"portaljuridico/internal/batchdrafts"
+	"portaljuridico/internal/batchexpansionstrategy"
 	"portaljuridico/internal/batchfinaldrafts"
 	"portaljuridico/internal/batchprepublication"
 	"portaljuridico/internal/batchpublicmanifest"
@@ -81,6 +82,7 @@ var Names = []string{
 	"batch-drafts",
 	"batch-draft-expansion-archive",
 	"batch-candidate-expansion-readiness",
+	"batch-expansion-strategy",
 	"batch-candidate-gates",
 	"batch-candidate-reviews",
 	"batch-prepublication-gates",
@@ -156,6 +158,8 @@ func Run(name string, root string) []string {
 		return checkBatchDraftExpansionArchive(root)
 	case "batch-candidate-expansion-readiness":
 		return checkBatchCandidateExpansionReadiness(root)
+	case "batch-expansion-strategy":
+		return checkBatchExpansionStrategy(root)
 	case "batch-candidate-gates":
 		return checkBatchCandidateGates(root)
 	case "batch-candidate-reviews":
@@ -405,6 +409,10 @@ func checkBatchDraftExpansionArchive(root string) []string {
 
 func checkBatchCandidateExpansionReadiness(root string) []string {
 	return batchcandidateexpansion.Validate(root).Messages()
+}
+
+func checkBatchExpansionStrategy(root string) []string {
+	return batchexpansionstrategy.Validate(root).Messages()
 }
 
 func checkBatchCandidateGates(root string) []string {
