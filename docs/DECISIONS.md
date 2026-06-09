@@ -427,3 +427,16 @@ Motivos:
 - o agente precisa apontar o que pode melhorar e o próximo ciclo antes de preservar o checkpoint.
 
 Consequencia: antes de cada commit, `CHECKPOINT.md` deve registrar o que foi resolvido, provas, autocrítica, pendências reais, melhorias possíveis, próximo ciclo e a frase operacional de que o commit não encerra o `/goal`. O laboratório pode usar CPU agressivamente para testes, score, reescrita, auditoria e validação em massa; o baixo consumo de CPU continua obrigatório no runtime público/produção.
+
+## 2026-06-09 — Score humano e lotes massivos bloqueados
+
+Decisao: implementar `human_content_score` e `scalable_content_batches` como primeiras camadas executáveis da fábrica massiva de conteúdo jurídico único, mantendo tudo bloqueado para render, sitemap, indexação e publicação.
+
+Motivos:
+- o projeto precisa planejar milhões de páginas sem criar spam nem páginas públicas prematuras;
+- validação massiva precisa ser artefato executável, não promessa em contrato;
+- score humano/IA-like deve orientar reescrita automática e bloqueio de lote;
+- CTA WhatsApp contextual precisa nascer no lote com origem e documentos esperados;
+- produção continua leve, enquanto laboratório pode usar CPU para score e validação em massa.
+
+Consequencia: `data/editorial/scalable_content_batches.jsonl` registra 1.020.000 páginas planejadas em seis famílias jurídicas digitais, todas bloqueadas. `data/editorial/human_content_scores.jsonl` registra scores humanos/naturalidade sem publicar conteúdo. `internal/humanscore`, `internal/scalablebatches`, `./tools/check-human-content-score` e `./tools/check-scalable-content-batches` entram no laboratório. O próximo ciclo deve gerar drafts em lote e testar reescrita automática de falhas, sem exposição pública.

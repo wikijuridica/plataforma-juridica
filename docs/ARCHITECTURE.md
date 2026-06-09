@@ -55,7 +55,7 @@ Durante P0, a plataforma deve preparar escala massiva sem publicar spam. `conten
 
 O plano de escala e um contrato de capacidade e uma fábrica de conteúdo validado, nao um gerador de spam para Google. O modulo `scale` deve ajudar a medir alcance futuro, montar lotes finitos por família jurídica, diversificar intenção e bloquear publicacao em massa enquanto fontes, scoring, CTA e validadores nao estiverem maduros.
 
-Novo eixo obrigatório: `scalable_content_batches`. Essa camada deve registrar lotes com centenas ou milhares de intenções candidatas, score de naturalidade, fonte, CTA contextual, similaridade intra-lote e decisão de bloqueio. O pipeline deve gerar, pontuar, reescrever e revalidar em lote.
+Eixo obrigatório implementado: `scalable_content_batches`. Essa camada registra lotes com centenas de milhares de intenções candidatas planejadas, score de naturalidade, fonte, CTA contextual, similaridade intra-lote e decisão de bloqueio. O pipeline deve gerar, pontuar, reescrever e revalidar em lote.
 
 A arquitetura deve favorecer engenharia agressiva inteligente: processamento em lote, validação agregada, diagnósticos específicos, reexecução rápida, refinamento de algoritmo e prova por dados. O runtime público deve continuar barato, mas o laboratório pode consumir CPU de forma agressiva para provar escala e qualidade antes de qualquer publicação.
 

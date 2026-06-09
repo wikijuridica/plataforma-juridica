@@ -58,7 +58,7 @@ Regra de migração segura e termos humanos: laboratório não é destino final.
 
 Caminhos seguros para pesquisa de demanda: usar `https://trends.google.com.br/trends/explore?geo=BR` como sinal direcional de demanda humana; usar `https://support.google.com/trends/answer/4359550?hl=pt-BR` e `https://support.google.com/trends/answer/4365533?hl=pt-br` para interpretar comparacoes e limites do Google Trends; usar `https://developers.google.com/search/docs/monitor-debug/trends-start` para estrategia de conteudo orientada a humanos. Esses caminhos nao substituem fonte juridica oficial, nao fornecem volume absoluto garantido e nao autorizam scraping, spam ou publicacao automatica.
 
-Estratégia atual de termos e conteúdo: não depender de script fraco para "descobrir" termos e não depender de revisão humana página a página como gargalo. A estratégia principal é engenharia agressiva de lotes: pesquisar famílias de termos de contratação jurídica digital, criar clusters de intenção única, gerar rascunhos autorais em massa com variação real de problema, fonte, cenário, documentos, risco e CTA, pontuar naturalidade/IA-like/spam, reescrever automaticamente quando falhar, validar amostras e bloquear publicação do lote inteiro se houver sinal mecânico. O banco leve `data/research/high_intent_terms.jsonl` registra a pesquisa; `data/editorial/content_briefs.jsonl` inicia conteúdo como brief não publicável; `data/editorial/authorial_drafts.jsonl` guarda rascunho autoral em PT-BR, ainda bloqueado para publicação. Próxima evolução obrigatória: `scalable_content_batches` e `human_content_score` para gerar e revisar conteúdo em lote sem template, sem spam e sem passividade.
+Estratégia atual de termos e conteúdo: não depender de script fraco para "descobrir" termos e não depender de revisão humana página a página como gargalo. A estratégia principal é engenharia agressiva de lotes: pesquisar famílias de termos de contratação jurídica digital, criar clusters de intenção única, gerar rascunhos autorais em massa com variação real de problema, fonte, cenário, documentos, risco e CTA, pontuar naturalidade/IA-like/spam, reescrever automaticamente quando falhar, validar amostras e bloquear publicação do lote inteiro se houver sinal mecânico. O banco leve `data/research/high_intent_terms.jsonl` registra a pesquisa; `data/editorial/content_briefs.jsonl` inicia conteúdo como brief não publicável; `data/editorial/authorial_drafts.jsonl` guarda rascunho autoral em PT-BR, ainda bloqueado para publicação; `data/editorial/human_content_scores.jsonl` e `data/editorial/scalable_content_batches.jsonl` registram score humano e lotes massivos bloqueados. Próxima evolução obrigatória: gerar drafts em lote, reescrever falhas automaticamente e ampliar validação em massa sem template, sem spam e sem passividade.
 
 Regra de escala editorial massiva: o agente não deve limitar o projeto a uma página, um rascunho ou dezenas de itens. O objetivo operacional é preparar produção em massa para milhões de páginas possíveis, começando por lotes seguros e aumentando volume conforme os validadores provarem qualidade. Cada lote deve produzir muitas intenções únicas, com fonte, CTA contextual, utilidade clara e escrita natural. Se o lote falhar, o agente deve refinar algoritmo, reescrever e testar novamente, não transferir trabalho manual repetitivo ao usuário.
 
@@ -423,6 +423,12 @@ Criar aliases ou scripts equivalentes:
 - `./tools/check-review-queue`
 - `./tools/check-approvals`
 - `./tools/check-publication-blockers`
+- `./tools/check-source-specificity-blockers`
+- `./tools/check-source-specificity-resolutions`
+- `./tools/check-prepublication-gates`
+- `./tools/check-legal-editorial-reviews`
+- `./tools/check-human-content-score`
+- `./tools/check-scalable-content-batches`
 - `./tools/check-sitemaps`
 - `./tools/check-canonicals`
 - `./tools/check-no-duplicate-content`

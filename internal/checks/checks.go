@@ -15,12 +15,14 @@ import (
 	"portaljuridico/internal/crawl"
 	"portaljuridico/internal/editorial"
 	"portaljuridico/internal/editorialdrafts"
+	"portaljuridico/internal/humanscore"
 	"portaljuridico/internal/legalreviews"
 	"portaljuridico/internal/manualresearch"
 	"portaljuridico/internal/prepublication"
 	"portaljuridico/internal/publicationblockers"
 	"portaljuridico/internal/quality"
 	"portaljuridico/internal/reviewqueue"
+	"portaljuridico/internal/scalablebatches"
 	"portaljuridico/internal/seo"
 	"portaljuridico/internal/sourceblockers"
 	"portaljuridico/internal/sourceresolutions"
@@ -58,6 +60,8 @@ var Names = []string{
 	"source-specificity-resolutions",
 	"prepublication-gates",
 	"legal-editorial-reviews",
+	"human-content-score",
+	"scalable-content-batches",
 	"sitemaps",
 	"canonicals",
 	"no-duplicate-content",
@@ -110,6 +114,10 @@ func Run(name string, root string) []string {
 		return checkPrepublicationGates(root)
 	case "legal-editorial-reviews":
 		return checkLegalEditorialReviews(root)
+	case "human-content-score":
+		return checkHumanContentScore(root)
+	case "scalable-content-batches":
+		return checkScalableContentBatches(root)
 	case "sitemaps":
 		return checkSitemaps(root)
 	case "canonicals":
@@ -313,6 +321,14 @@ func checkPrepublicationGates(root string) []string {
 
 func checkLegalEditorialReviews(root string) []string {
 	return legalreviews.Validate(root).Messages()
+}
+
+func checkHumanContentScore(root string) []string {
+	return humanscore.Validate(root).Messages()
+}
+
+func checkScalableContentBatches(root string) []string {
+	return scalablebatches.Validate(root).Messages()
 }
 
 func checkSitemaps(root string) []string {

@@ -112,7 +112,7 @@ O algoritmo deve ser melhorado sempre que gerar falso positivo ou falso negativo
 
 ## Score humano e IA-like
 
-O próximo gate obrigatório é `human_content_score`: pontuação de naturalidade e risco IA-like/mecânico para texto jurídico em massa. Esse score deve ser usado para revisar e reescrever automaticamente, não para criar aparência artificial. Métricas mínimas:
+O gate `human_content_score` é obrigatório: pontuação de naturalidade e risco IA-like/mecânico para texto jurídico em massa. Esse score deve ser usado para revisar e reescrever automaticamente, não para criar aparência artificial. Métricas mínimas:
 - diversidade lexical e de frases;
 - variação de abertura, headings e conclusão;
 - presença de detalhes concretos do problema jurídico;
@@ -123,3 +123,5 @@ O próximo gate obrigatório é `human_content_score`: pontuação de naturalida
 - CTA contextual com origem, termo e documentos esperados.
 
 Publicação só pode avançar quando o texto atingir score alto, motivos de reprovação estiverem zerados e o lote provar diversidade real.
+
+`./tools/check-human-content-score` valida os registros de score. `./tools/check-scalable-content-batches` valida lotes massivos planejados, bloqueados para publicação e com escala real de produção, sem criar HTML ou sitemap.

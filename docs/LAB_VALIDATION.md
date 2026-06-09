@@ -20,6 +20,12 @@ Esse comando combina:
 - `./tools/check-review-queue`;
 - `./tools/check-approvals`;
 - `./tools/check-publication-blockers`;
+- `./tools/check-source-specificity-blockers`;
+- `./tools/check-source-specificity-resolutions`;
+- `./tools/check-prepublication-gates`;
+- `./tools/check-legal-editorial-reviews`;
+- `./tools/check-human-content-score`;
+- `./tools/check-scalable-content-batches`;
 - `./tools/lab-term-draft`;
 - `./tools/check-google-search-appearance`;
 - `./tools/check-mechanical-content`;
@@ -67,6 +73,10 @@ Quando uma fonte especifica for encontrada, registrar `source_specificity_resolu
 Antes de renderizar uma rota candidata, registrar `prepublication_gates` e rodar `./tools/check-prepublication-gates`. O gate deve provar title/meta/canonical dentro do orcamento do Google Search, mas manter render, sitemap e publicacao bloqueados.
 
 Antes de qualquer CTA visivel, registrar `legal_editorial_reviews` e rodar `./tools/check-legal-editorial-reviews`. CTA WhatsApp deve ser contextual, pedir documentos para triagem e reprovar qualquer promessa de resultado, prazo ou liminar.
+
+Antes de qualquer lote massivo, registrar `scalable_content_batches` e rodar `./tools/check-scalable-content-batches`. O lote precisa ter validação em massa, score humano mínimo, limite IA-like, limite de similaridade, CTA contextual, fontes oficiais por família e publicação bloqueada.
+
+Antes de qualquer reescrita/publicação derivada de lote, registrar `human_content_score` e rodar `./tools/check-human-content-score`. Score baixo ou risco IA-like alto exige reescrita e nova validação, nunca publicação ou correção manual repetitiva pelo usuário.
 
 ## Politica
 

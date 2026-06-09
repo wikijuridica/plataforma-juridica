@@ -187,6 +187,30 @@
       "description": "Revisao juridico-editorial bloqueada com CTA contextual em rascunho, sem render publico, sitemap ou publicacao."
     },
     {
+      "name": "human_content_score",
+      "path": "data/editorial/human_content_scores.jsonl",
+      "record_type": "human_content_score_record",
+      "record_max_bytes": 8192,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": false,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Score de naturalidade e risco IA-like/mecanico para texto juridico em massa; guarda metadados e bloqueia publicacao quando falha."
+    },
+    {
+      "name": "scalable_content_batches",
+      "path": "data/editorial/scalable_content_batches.jsonl",
+      "record_type": "scalable_content_batch_manifest",
+      "record_max_bytes": 32768,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": false,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Manifestos leves de lotes massivos com intencoes unicas, fonte, score humano, CTA contextual e publicacao bloqueada."
+    },
+    {
       "name": "published_manifest",
       "path": "data/editorial/published_manifest.jsonl",
       "record_type": "published_content_manifest",

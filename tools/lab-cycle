@@ -21,6 +21,8 @@ go test -count=1 ./...
 ./tools/check-source-specificity-resolutions
 ./tools/check-prepublication-gates
 ./tools/check-legal-editorial-reviews
+./tools/check-human-content-score
+./tools/check-scalable-content-batches
 ./tools/lab-term-draft
 ./tools/check-google-search-appearance
 ./tools/check-mechanical-content

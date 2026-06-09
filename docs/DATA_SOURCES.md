@@ -60,7 +60,7 @@ A pesquisa de demanda de termos deve separar evidencia de busca humana, fonte ju
 
 ## Lotes de conteúdo
 
-Dados de lote devem ficar em banco leve separado, futuro `data/editorial/scalable_content_batches.jsonl`, sem virar sitemap automaticamente. Cada lote precisa registrar:
+Dados de lote ficam em banco leve separado, `data/editorial/scalable_content_batches.jsonl`, sem virar sitemap automaticamente. Cada lote precisa registrar:
 - família jurídica;
 - número de intenções únicas planejadas;
 - fontes oficiais por subtema;
@@ -69,6 +69,8 @@ Dados de lote devem ficar em banco leve separado, futuro `data/editorial/scalabl
 - limite de similaridade intra-lote;
 - CTA contextual por origem;
 - decisão de publicação bloqueada ou liberada.
+
+Scores humanos/naturalidade ficam em `data/editorial/human_content_scores.jsonl`. Esse arquivo guarda metadados de score e decisão de reescrita, não texto oficial bruto nem página pública.
 
 Termos em massa não podem nascer de combinação infinita de cidade, palavra-chave e área. A escala deve vir de problemas jurídicos reais, etapas processuais/administrativas, documentos, riscos, fontes e intenções digitais distintas.
 

@@ -128,7 +128,7 @@ func (c Contract) Validate() Report {
 		issues = append(issues, Issue{Code: "content_start_policy_not_draft_only", Message: "termos so podem iniciar rascunhos bloqueados para indexacao"})
 	}
 
-	required := []string{"term_seeds", "term_intent_candidates", "manual_keyword_research", "source_audits", "source_snapshots", "editorial_drafts", "content_briefs", "authorial_content_drafts", "source_specificity_blockers", "source_specificity_resolutions", "prepublication_gates", "legal_editorial_reviews", "published_manifest"}
+	required := []string{"term_seeds", "term_intent_candidates", "manual_keyword_research", "source_audits", "source_snapshots", "editorial_drafts", "content_briefs", "authorial_content_drafts", "source_specificity_blockers", "source_specificity_resolutions", "prepublication_gates", "legal_editorial_reviews", "human_content_score", "scalable_content_batches", "published_manifest"}
 	paths := make(map[string]string)
 	for _, name := range required {
 		layer, ok := c.LayerByName(name)
@@ -226,6 +226,22 @@ func (c Contract) validateLayer(layer Layer, paths map[string]string) []Issue {
 		}
 		if !layer.RequiresSourceProvenance || !layer.RequiresQualityState {
 			issues = append(issues, Issue{Code: "legal_review_missing_guards", Message: "legal_editorial_reviews exigem fonte resolvida e estado de qualidade"})
+		}
+	}
+	if layer.Name == "human_content_score" {
+		if layer.AllowsRawOfficialText || layer.AllowsEditorialContent {
+			issues = append(issues, Issue{Code: "human_score_layer_invalid", Message: "human_content_score guarda score e metadados, nao texto bruto nem pagina editorial"})
+		}
+		if !layer.RequiresSourceProvenance || !layer.RequiresQualityState {
+			issues = append(issues, Issue{Code: "human_score_missing_guards", Message: "human_content_score exige fonte/proveniencia e estado de qualidade"})
+		}
+	}
+	if layer.Name == "scalable_content_batches" {
+		if layer.AllowsRawOfficialText || layer.AllowsEditorialContent {
+			issues = append(issues, Issue{Code: "batch_layer_invalid", Message: "scalable_content_batches guarda manifesto de lote, nao texto bruto nem pagina editorial"})
+		}
+		if !layer.RequiresSourceProvenance || !layer.RequiresQualityState {
+			issues = append(issues, Issue{Code: "batch_layer_missing_guards", Message: "scalable_content_batches exige fonte/proveniencia e estado de qualidade"})
 		}
 	}
 	return issues
