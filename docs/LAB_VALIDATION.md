@@ -64,6 +64,8 @@ Quando uma fonte especifica for encontrada, registrar `source_specificity_resolu
 
 Antes de renderizar uma rota candidata, registrar `prepublication_gates` e rodar `./tools/check-prepublication-gates`. O gate deve provar title/meta/canonical dentro do orcamento do Google Search, mas manter render, sitemap e publicacao bloqueados.
 
+Antes de qualquer CTA visivel, registrar `legal_editorial_reviews` e rodar `./tools/check-legal-editorial-reviews`. CTA WhatsApp deve ser contextual, pedir documentos para triagem e reprovar qualquer promessa de resultado, prazo ou liminar.
+
 ## Politica
 
 Nenhum script isolado e prova suficiente para mudanca P0/P1. Use o laboratorio como conjunto minimo e inspecione os artefatos quando a mudanca afetar HTML, sitemap, robots, canonical, indexacao, qualidade ou conteudo.

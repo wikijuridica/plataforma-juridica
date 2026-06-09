@@ -175,6 +175,18 @@
       "description": "Gate de SEO/crawl de pre-publicacao para rota candidata finita, sem render publico, sitemap ou publicacao."
     },
     {
+      "name": "legal_editorial_reviews",
+      "path": "data/editorial/legal_reviews.jsonl",
+      "record_type": "blocked_legal_editorial_review",
+      "record_max_bytes": 8192,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": false,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Revisao juridico-editorial bloqueada com CTA contextual em rascunho, sem render publico, sitemap ou publicacao."
+    },
+    {
       "name": "published_manifest",
       "path": "data/editorial/published_manifest.jsonl",
       "record_type": "published_content_manifest",

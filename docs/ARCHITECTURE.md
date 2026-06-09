@@ -61,6 +61,8 @@ O plano de escala e um contrato de capacidade, nao um gerador de spam para Googl
 
 CTA WhatsApp e critico para o produto: as paginas devem ser informativas, mas desenhadas para alta intencao de contratar advogado quando o contexto for adequado. A criticidade comercial nao remove os gates juridicos.
 
+Todo CTA de WhatsApp deve carregar mensagem contextual de origem. A mensagem precisa incluir path/canonical ou rota candidata, intencao unica/termo e resumo da demanda para o atendimento saber de onde a pessoa veio e qual triagem inicial faz sentido.
+
 ## Proveniencia por payload
 
 Antes de qualquer dado oficial virar conteudo, o payload precisa de registro com fonte, URL oficial, data de acesso, hash SHA-256, snapshot de robots, snapshot de termos, campos usados e finalidade. Fonte pesquisada nao equivale a conteudo aprovado.
@@ -82,6 +84,7 @@ Camadas obrigatorias:
 - `source_specificity_blockers`: manifesto que impede aprovacao/publicacao quando o termo ainda precisa fonte primaria, norma especifica ou recorte juridico;
 - `source_specificity_resolutions`: manifesto de fontes especificas resolvidas para pre-publicacao, ainda sem URL publica;
 - `prepublication_gates`: contrato SEO/crawl para rota candidata finita, com render, sitemap e publicacao bloqueados;
+- `legal_editorial_reviews`: revisao juridico-editorial bloqueada com CTA WhatsApp contextual em rascunho;
 - `published_manifest`: manifesto leve de conteudo aprovado, sem substituir o renderizador.
 
 Regra P0: termos podem iniciar `draft_only`; nenhuma linha do banco vira pagina indexavel sem fonte, revisao, qualidade, SEO, intencao unica e checkpoint.

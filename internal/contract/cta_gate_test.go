@@ -1,6 +1,7 @@
 package contract_test
 
 import (
+	"strings"
 	"testing"
 
 	"portaljuridico/internal/content"
@@ -39,6 +40,12 @@ func TestWhatsAppCTARendersOnlyForApprovedLegalPageWithApprovedSource(t *testing
 	}
 	if !cta.CanRender(policy, approvedLegalPage(), approvedRegistry) {
 		t.Fatal("CTA did not render for approved legal page with approved source")
+	}
+	message := cta.ContextMessage(policy, approvedLegalPage())
+	for _, token := range []string{"/wiki/direito-civil/advogado-teste/", "wiki:advogado-teste", "Advogado teste"} {
+		if !strings.Contains(message, token) {
+			t.Fatalf("context message missing %q: %s", token, message)
+		}
 	}
 }
 

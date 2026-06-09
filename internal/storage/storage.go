@@ -128,7 +128,7 @@ func (c Contract) Validate() Report {
 		issues = append(issues, Issue{Code: "content_start_policy_not_draft_only", Message: "termos so podem iniciar rascunhos bloqueados para indexacao"})
 	}
 
-	required := []string{"term_seeds", "term_intent_candidates", "manual_keyword_research", "source_audits", "source_snapshots", "editorial_drafts", "content_briefs", "authorial_content_drafts", "source_specificity_blockers", "source_specificity_resolutions", "prepublication_gates", "published_manifest"}
+	required := []string{"term_seeds", "term_intent_candidates", "manual_keyword_research", "source_audits", "source_snapshots", "editorial_drafts", "content_briefs", "authorial_content_drafts", "source_specificity_blockers", "source_specificity_resolutions", "prepublication_gates", "legal_editorial_reviews", "published_manifest"}
 	paths := make(map[string]string)
 	for _, name := range required {
 		layer, ok := c.LayerByName(name)
@@ -218,6 +218,14 @@ func (c Contract) validateLayer(layer Layer, paths map[string]string) []Issue {
 		}
 		if !layer.RequiresSourceProvenance || !layer.RequiresQualityState {
 			issues = append(issues, Issue{Code: "prepublication_gate_missing_guards", Message: "prepublication_gates exigem fonte resolvida e estado de qualidade"})
+		}
+	}
+	if layer.Name == "legal_editorial_reviews" {
+		if layer.AllowsRawOfficialText || layer.AllowsEditorialContent {
+			issues = append(issues, Issue{Code: "legal_review_layer_invalid", Message: "legal_editorial_reviews guardam metadados de revisao e CTA rascunho, nao texto oficial bruto nem pagina editorial"})
+		}
+		if !layer.RequiresSourceProvenance || !layer.RequiresQualityState {
+			issues = append(issues, Issue{Code: "legal_review_missing_guards", Message: "legal_editorial_reviews exigem fonte resolvida e estado de qualidade"})
 		}
 	}
 	return issues

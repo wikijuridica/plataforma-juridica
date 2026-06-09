@@ -389,3 +389,15 @@ Motivos:
 - a escala de 10 mil paginas exige paths finitos e canonicals planejados sem criar URL prematura.
 
 Consequencia: `data/editorial/prepublication_gates.jsonl` registra a primeira rota candidata para `negativa-cobertura-plano-saude`; `internal/prepublication` e `./tools/check-prepublication-gates` exigem fonte resolvida, blocker ativo, path limpo, canonical HTTPS, `noindex,follow`, title/meta dentro do orcamento, `render_allowed=false`, `sitemap_allowed=false`, `publication_allowed=false` e `public_path=""`.
+
+## 2026-06-09 — Revisão jurídico-editorial bloqueada com CTA contextual
+
+Decisao: CTA WhatsApp e parte critica do produto, mas deve passar por revisao juridico-editorial antes de ficar visivel.
+
+Motivos:
+- paginas informativas podem ter alta intencao de contratacao sem prometer resultado;
+- CTA agressivo sem fonte e revisao vira risco juridico e conteudo ruim para humanos;
+- o fluxo digital precisa pedir documentos relevantes sem induzir expectativa falsa;
+- publicar CTA antes dos gates poderia contaminar a pagina e prejudicar confianca.
+
+Consequencia: `data/editorial/legal_reviews.jsonl` registra a primeira revisao bloqueada; `internal/legalreviews` e `./tools/check-legal-editorial-reviews` exigem rascunho autoral, fonte resolvida, gate de pre-publicacao, notas juridicas, correcoes pendentes, CTA WhatsApp sem promessa, mensagem contextual com origem da pagina/rota candidata, `render_allowed=false`, `sitemap_allowed=false`, `publication_allowed=false` e `public_path=""`. `content/cta_policy.json` tambem exige template global com `{path}`, `{unique_intent_id}` e `{title}`.

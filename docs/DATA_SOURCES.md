@@ -46,6 +46,8 @@ Resolucoes de fonte especifica ficam em `data/editorial/source_resolutions.jsonl
 
 Gates de pre-publicacao ficam em `data/editorial/prepublication_gates.jsonl` e sao validados por `./tools/check-prepublication-gates`. Eles conectam fonte resolvida, blocker ainda ativo e contrato SEO/crawl candidato, sem render publico ou sitemap.
 
+Revisoes juridico-editoriais ficam em `data/editorial/legal_reviews.jsonl` e sao validadas por `./tools/check-legal-editorial-reviews`. Elas conectam rascunho autoral, fonte resolvida e pre-publicacao, preparando CTA WhatsApp como rascunho interno sem promessa e sem publicacao.
+
 Rascunhos persistidos ficam em `data/editorial/drafts.jsonl`, separados de snapshots oficiais e de paginas publicas. Eles devem permanecer `draft/noindex` ate fonte, revisao, qualidade e decisao editorial completa.
 
 A fila de revisao fica em `data/editorial/review_queue.jsonl`. Ela registra autoria, motivo, historico e estado `needs_review`, mas nao libera publicacao nem cria URL.

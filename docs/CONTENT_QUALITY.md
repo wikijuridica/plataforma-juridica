@@ -59,6 +59,10 @@ Rascunho editorial tambem deve preservar grafia natural em PT-BR. Mesmo em labor
 
 `./tools/check-prepublication-gates` valida `data/editorial/prepublication_gates.jsonl`. Esse gate pode registrar title, meta description, canonical e path candidato, mas deve manter `render_allowed=false`, `sitemap_allowed=false`, `publication_allowed=false`, `public_path=""` e `candidate_robots=noindex,follow` ate todos os gates passarem.
 
+`./tools/check-legal-editorial-reviews` valida `data/editorial/legal_reviews.jsonl`. A revisao pode preparar CTA WhatsApp contextual, mas deve reprovar promessa de liminar, prazo, causa ganha ou resultado garantido. O CTA fica `draft_contextual_not_public` ate revisao final, sem render, sitemap ou publicacao.
+
+CTA WhatsApp sem mensagem contextual de origem deve reprovar. A mensagem precisa identificar a pagina/rota candidata, o termo ou intencao unica e os documentos esperados, para nao perder contexto comercial e juridico na triagem.
+
 `./tools/lab-term-draft` transforma seed valida em rascunho temporario dentro de `/tmp`, com estado `draft/noindex`, fonte citada e aviso informativo. Esse laboratorio prova linguagem natural sem escrever em `content/pages.json` e sem expor a seed ao Googlebot.
 
 `./tools/persist-term-drafts` persiste rascunhos validados em `data/editorial/drafts.jsonl` de forma idempotente. `./tools/check-editorial-drafts` reprova qualquer draft que tenha rota publica, indexacao, fonte ausente ou qualidade textual insuficiente.

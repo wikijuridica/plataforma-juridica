@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"portaljuridico/internal/content"
 	"portaljuridico/internal/editorial"
@@ -15,6 +16,9 @@ type Policy struct {
 	Channel                      string   `json:"channel"`
 	PhonePlaceholder             string   `json:"phone_placeholder"`
 	Intent                       string   `json:"intent"`
+	RequiresContextMessage       bool     `json:"requires_context_message"`
+	ContextMessageTemplate       string   `json:"context_message_template"`
+	ContextOriginParameters      []string `json:"context_origin_parameters"`
 	RequiresApprovedLegalContent bool     `json:"requires_approved_legal_content"`
 	RequiresSourceProvenance     bool     `json:"requires_source_provenance"`
 	RequiresEditorialReview      bool     `json:"requires_editorial_review"`
@@ -65,7 +69,30 @@ func CanRender(policy Policy, page content.Page, registry sources.Registry) bool
 			}
 		}
 	}
+	if policy.RequiresContextMessage && ContextMessage(policy, page) == "" {
+		return false
+	}
 	return true
+}
+
+func ContextMessage(policy Policy, page content.Page) string {
+	template := strings.TrimSpace(policy.ContextMessageTemplate)
+	if template == "" {
+		return ""
+	}
+	message := strings.NewReplacer(
+		"{path}", page.Path,
+		"{unique_intent_id}", page.UniqueIntentID,
+		"{title}", page.Title,
+		"{intent}", policy.Intent,
+	).Replace(template)
+	if strings.Contains(message, "{") || strings.Contains(message, "}") {
+		return ""
+	}
+	if !strings.Contains(message, page.Path) || !strings.Contains(message, page.UniqueIntentID) || !strings.Contains(message, page.Title) {
+		return ""
+	}
+	return message
 }
 
 func allowedPageType(policy Policy, pageType string) bool {

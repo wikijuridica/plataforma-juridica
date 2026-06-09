@@ -124,6 +124,14 @@ func TestWhatsAppCTAContractExistsButDoesNotBypassLegalQuality(t *testing.T) {
 	if strings.TrimSpace(policy.PhonePlaceholder) == "" {
 		t.Fatal("CTA policy must carry a placeholder for owned WhatsApp configuration")
 	}
+	if !policy.RequiresContextMessage {
+		t.Fatal("CTA policy must require contextual WhatsApp message")
+	}
+	for _, token := range []string{"{path}", "{unique_intent_id}", "{title}"} {
+		if !strings.Contains(policy.ContextMessageTemplate, token) {
+			t.Fatalf("CTA context template missing %q: %s", token, policy.ContextMessageTemplate)
+		}
+	}
 }
 
 func readRootFile(t *testing.T, path string) string {

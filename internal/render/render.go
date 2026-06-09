@@ -2,6 +2,7 @@ package render
 
 import (
 	"html"
+	"net/url"
 	"strings"
 
 	"portaljuridico/internal/content"
@@ -18,7 +19,7 @@ func Page(page content.Page) string {
 func PageWithCTA(page content.Page, policy cta.Policy, registry sources.Registry) string {
 	ctaHTML := ""
 	if cta.CanRender(policy, page, registry) {
-		ctaHTML = renderWhatsAppCTA()
+		ctaHTML = renderWhatsAppCTA(page, policy)
 	}
 	return pageHTML(page, ctaHTML)
 }
@@ -63,11 +64,13 @@ func pageHTML(page content.Page, ctaHTML string) string {
 	return out.String()
 }
 
-func renderWhatsAppCTA() string {
+func renderWhatsAppCTA(page content.Page, policy cta.Policy) string {
+	message := cta.ContextMessage(policy, page)
+	href := "/contato/advogado/?origem=" + url.QueryEscape(page.Path) + "&mensagem=" + url.QueryEscape(message)
 	return `<section class="cta-whatsapp" aria-labelledby="cta-whatsapp-titulo">` +
 		`<h2 id="cta-whatsapp-titulo">Contratar advogado pelo WhatsApp</h2>` +
 		`<p>Converse com atendimento jurídico para avaliar seu caso com segurança.</p>` +
-		`<a href="/contato/advogado/" rel="nofollow">Iniciar atendimento jurídico</a>` +
+		`<a href="` + html.EscapeString(href) + `" rel="nofollow" data-context-message="` + html.EscapeString(message) + `">Iniciar atendimento jurídico</a>` +
 		`</section>` + "\n"
 }
 
