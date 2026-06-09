@@ -295,7 +295,15 @@ func semanticFacetTokens(uniqueIntentID string, sourceMatrixID string) []string 
 	if !strings.HasPrefix(uniqueIntentID, prefix) {
 		return nil
 	}
-	return strings.Split(strings.TrimPrefix(uniqueIntentID, prefix), "-")
+	facetID := strings.TrimPrefix(uniqueIntentID, prefix)
+	tokens := strings.Split(facetID, "-")
+	for _, known := range compositeFacetIDs {
+		if facetID == known || strings.HasPrefix(facetID, known+"-rodada-") {
+			tokens = append(tokens, known, strings.ReplaceAll(known, "-", ""))
+			break
+		}
+	}
+	return tokens
 }
 
 func semanticSubthemeTokens(sourceMatrixID string, legalArea string) []string {
@@ -313,6 +321,7 @@ func semanticSubthemeTokens(sourceMatrixID string, legalArea string) []string {
 			subtheme = append(subtheme, token)
 		}
 	}
+	subtheme = append(subtheme, sourceMatrixID, strings.ReplaceAll(sourceMatrixID, "-", ""))
 	return subtheme
 }
 
@@ -385,6 +394,32 @@ var operationalTokens = map[string]bool{
 	"resposta": true, "leitor": true, "caso": true, "subtema": true, "linha": true, "tempo": true, "datas": true, "prova": true,
 	"atendimento": true, "publica": true, "pública": true, "laboratorio": true, "laboratório": true, "revisao": true, "revisão": true,
 	"prazo": true, "prazos": true, "arquivo": true, "arquivos": true, "contexto": true,
+}
+
+var compositeFacetIDs = []string{
+	"prova-digital",
+	"prazo-e-urgencia",
+	"fonte-primaria",
+	"documento-minimo",
+	"negociacao-previa",
+	"risco-economico",
+	"vulnerabilidade",
+	"competencia-digital",
+	"linha-do-tempo",
+	"prova-de-negativa",
+	"parte-responsavel",
+	"estado-do-processo",
+	"prova-medica-ou-tecnica",
+	"conflito-de-versoes",
+	"custo-de-inercia",
+	"rota-administrativa",
+	"prova-patrimonial",
+	"impacto-familiar",
+	"evidencia-de-boa-fe",
+	"lacuna-de-fonte",
+	"risco-clinico",
+	"rotina-de-trabalho",
+	"historico-previdenciario",
 }
 
 var semanticCategories = map[string]string{

@@ -227,12 +227,18 @@ func ValidateRecordAgainstManifestIndex(record Record, index ManifestIndex) Repo
 	if titleLen > seo.TitleMaxCharacters {
 		issues = append(issues, Issue{Code: "batch_final_draft_title_too_long", Message: fmt.Sprintf("%s:%d", record.UniqueIntentID, titleLen)})
 	}
+	if looksTruncatedFocus(record.CandidateTitle) {
+		issues = append(issues, Issue{Code: "batch_final_draft_title_truncated_focus", Message: record.UniqueIntentID})
+	}
 	metaLen := len([]rune(record.CandidateMetaDescription))
 	if metaLen < seo.MetaDescriptionMinCharacters {
 		issues = append(issues, Issue{Code: "batch_final_draft_meta_too_short", Message: fmt.Sprintf("%s:%d", record.UniqueIntentID, metaLen)})
 	}
 	if metaLen > seo.MetaDescriptionMaxCharacters {
 		issues = append(issues, Issue{Code: "batch_final_draft_meta_too_long", Message: fmt.Sprintf("%s:%d", record.UniqueIntentID, metaLen)})
+	}
+	if looksTruncatedFocus(record.CandidateMetaDescription) {
+		issues = append(issues, Issue{Code: "batch_final_draft_meta_truncated_focus", Message: record.UniqueIntentID})
 	}
 	if record.DraftStatus != DraftStatus {
 		issues = append(issues, Issue{Code: "batch_final_draft_invalid_status", Message: record.DraftStatus})
@@ -341,6 +347,12 @@ func compareManifest(record Record, manifest EligibleManifest) []Issue {
 		issues = append(issues, Issue{Code: "batch_final_draft_source_urls_mismatch", Message: record.UniqueIntentID})
 	}
 	return issues
+}
+
+func looksTruncatedFocus(value string) bool {
+	normalized := strings.ToLower(strings.TrimSpace(value))
+	normalized = strings.TrimRight(normalized, ".:;- ")
+	return strings.HasSuffix(normalized, "com foco em") || strings.HasSuffix(normalized, "com foco")
 }
 
 func sameStringSet(left []string, right []string) bool {

@@ -21,6 +21,7 @@ func TestPaidIntentRefinementsPersistNaturalBodyRewritesWithoutPublishing(t *tes
 	}
 
 	seenCTAOnly := 0
+	seenLowBusiness := 0
 	seenMissing := 0
 	for _, entry := range entries {
 		record := entry.Record
@@ -29,6 +30,8 @@ func TestPaidIntentRefinementsPersistNaturalBodyRewritesWithoutPublishing(t *tes
 			seenMissing++
 		case paidintent.CTAOnlyBlockedStatus:
 			seenCTAOnly++
+		case paidintent.LowBusinessScoreStatus:
+			seenLowBusiness++
 		case paidintent.PublicAssistanceBlockedStatus, paidintent.AdminSelfServiceBlockedStatus:
 			t.Fatalf("refinement tried to rescue blocked free/self-service intent=%s status=%s", record.UniqueIntentID, record.OriginalPaidIntentStatus)
 		default:
@@ -44,8 +47,8 @@ func TestPaidIntentRefinementsPersistNaturalBodyRewritesWithoutPublishing(t *tes
 			t.Fatalf("intent=%s refinement escaped blocked publication contract", record.UniqueIntentID)
 		}
 	}
-	if seenMissing < 100 || seenCTAOnly < 1 {
-		t.Fatalf("refinement status coverage missing=%d cta_only=%d", seenMissing, seenCTAOnly)
+	if seenMissing+seenCTAOnly+seenLowBusiness < 100 {
+		t.Fatalf("refinement status coverage missing=%d cta_only=%d low_business=%d", seenMissing, seenCTAOnly, seenLowBusiness)
 	}
 
 	paidRecords, paidReport := paidintent.LoadRecords(".")

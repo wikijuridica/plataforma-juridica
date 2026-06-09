@@ -92,3 +92,30 @@ func TestBatchDraftRejectsMechanicalRewriteOrPublication(t *testing.T) {
 		}
 	}
 }
+
+func TestBatchDraftSimilarityRecognizesCompositeFacetIntent(t *testing.T) {
+	left := batchdrafts.Record{
+		UniqueIntentID:  "familia-divorcio-consensual-filhos-bens-prova-digital",
+		SourceMatrixID:  "familia-divorcio-consensual-filhos-bens",
+		LegalArea:       "familia",
+		Term:            "divorcio consensual online com filhos e bens com foco em prova",
+		ReaderProblem:   "Prova digital preservada exige separar prints, protocolos e arquivos enviados em aplicativos antes da minuta.",
+		SourceHook:      "Codigo Civil, CNJ e documentos familiares orientam consenso, guarda, alimentos ou partilha.",
+		DocumentContext: "Certidoes, renda, despesas, calendario combinado e minuta familiar mostram o impacto concreto.",
+		RiskContext:     "O risco e tentar via inadequada quando ha filhos menores, desacordo oculto ou partilha sem documentacao.",
+		DigitalAction:   "O sistema agrupa arquivos por data e identifica lacunas antes da conversa com advogado particular.",
+	}
+	right := left
+	right.UniqueIntentID = "familia-divorcio-consensual-filhos-bens-linha-do-tempo"
+	right.Term = "divorcio consensual online com filhos e bens com foco em cronologia"
+	right.ReaderProblem = "Linha do tempo organizada exige montar sequencia de fatos antes de escolher a providencia."
+	right.DigitalAction = "A triagem transforma datas em roteiro de avaliacao antes da conversa com advogado particular."
+
+	pair := batchdrafts.MaximumPairSimilarityDetail([]batchdrafts.Entry{
+		{Line: 1, Record: left},
+		{Line: 2, Record: right},
+	})
+	if pair.Score > 0.64 {
+		t.Fatalf("composite facet similarity=%.4f, want <=0.64 for distinct intent facets", pair.Score)
+	}
+}

@@ -11,8 +11,9 @@ import (
 )
 
 const (
-	LedgerPath          = ".agents/agent_context_ledger.jsonl"
-	ReferenceOnlyPolicy = "reference_only_no_repo_write"
+	LedgerPath           = ".agents/agent_context_ledger.jsonl"
+	ReferenceOnlyPolicy  = "reference_only_no_repo_write"
+	DelegatedWritePolicy = "delegated_repo_write_codex_validated"
 )
 
 type Record struct {
@@ -133,8 +134,20 @@ func ValidateRecord(record Record) Report {
 	if record.Status != "completed" && record.Status != "closed" && record.Status != "integrated" {
 		issues = append(issues, Issue{Code: "agent_context_status_invalid", Message: record.Status})
 	}
-	if record.UsagePolicy != ReferenceOnlyPolicy {
+	switch record.UsagePolicy {
+	case ReferenceOnlyPolicy:
+		if record.RepoWriteAllowed {
+			issues = append(issues, Issue{Code: "agent_context_repo_write_allowed", Message: record.AgentID})
+		}
+	case DelegatedWritePolicy:
+		if !record.RepoWriteAllowed {
+			issues = append(issues, Issue{Code: "agent_context_delegated_write_flag_missing", Message: record.AgentID})
+		}
+	default:
 		issues = append(issues, Issue{Code: "agent_context_usage_policy_invalid", Message: record.UsagePolicy})
+		if record.RepoWriteAllowed {
+			issues = append(issues, Issue{Code: "agent_context_repo_write_allowed", Message: record.AgentID})
+		}
 	}
 	if len(strings.Fields(record.Summary)) < 8 {
 		issues = append(issues, Issue{Code: "agent_context_summary_too_short", Message: record.AgentID})
@@ -147,9 +160,6 @@ func ValidateRecord(record Record) Report {
 	}
 	if strings.TrimSpace(record.IntegrationDecision) == "" {
 		issues = append(issues, Issue{Code: "agent_context_missing_integration_decision", Message: record.AgentID})
-	}
-	if record.RepoWriteAllowed {
-		issues = append(issues, Issue{Code: "agent_context_repo_write_allowed", Message: record.AgentID})
 	}
 	if !record.CodexValidationRequired {
 		issues = append(issues, Issue{Code: "agent_context_validation_not_required", Message: record.AgentID})

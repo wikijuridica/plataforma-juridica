@@ -33,8 +33,13 @@ func TestBatchExpansionStrategyPlansNextScaleWithoutPublishing(t *testing.T) {
 				t.Fatalf("line=%d next target=%d, want at least 60 for ready family", entry.Line, record.NextCandidateTarget)
 			}
 		}
-		if record.BatchID == "batch-previdenciario-digital" && record.StrategyStatus != batchexpansionstrategy.BlockedPaidIntentStatus {
-			t.Fatalf("previdenciario status=%q, want paid-intent blocker preserved", record.StrategyStatus)
+		if record.BatchID == "batch-previdenciario-digital" {
+			if record.StrategyStatus != batchexpansionstrategy.ReadyNextCandidateGateStatus {
+				t.Fatalf("previdenciario status=%q, want informational flexible growth", record.StrategyStatus)
+			}
+			if record.NextCandidateTarget <= record.CurrentCandidateCount {
+				t.Fatalf("previdenciario next target=%d, want growth beyond current=%d", record.NextCandidateTarget, record.CurrentCandidateCount)
+			}
 		}
 		if !record.RequiresVerifiedSource || !record.RequiresPaidIntent || !record.RequiresContextualCTA || !record.RequiresHumanScore || !record.RequiresSemanticDiversity {
 			t.Fatalf("line=%d missing intelligent expansion guard", entry.Line)

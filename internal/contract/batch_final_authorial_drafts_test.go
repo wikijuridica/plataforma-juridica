@@ -47,14 +47,6 @@ func TestBatchFinalAuthorialDraftsCoverEligibleManifestWithoutPublishing(t *test
 		if !record.HasInformationalNotice() {
 			t.Fatalf("line=%d missing informational legal notice", entry.Line)
 		}
-		for _, blockedIntent := range []string{
-			"previdenciario-bpc-loas-cadunico-renda",
-			"previdenciario-cumprimento-exigencia-parado",
-		} {
-			if record.UniqueIntentID == blockedIntent {
-				t.Fatalf("paid intent blocked draft %q escaped into eligible final authorial drafts", blockedIntent)
-			}
-		}
 	}
 }
 

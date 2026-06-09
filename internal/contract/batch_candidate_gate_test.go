@@ -5,6 +5,7 @@ import (
 
 	"portaljuridico/internal/batchcandidateexpansion"
 	"portaljuridico/internal/batchcandidategates"
+	"portaljuridico/internal/batchexpansionstrategy"
 	"portaljuridico/internal/paidintent"
 )
 
@@ -33,9 +34,17 @@ func TestBatchCandidateGatesSelectArchiveDraftsWithoutPublishing(t *testing.T) {
 	if !paidReport.Passed() {
 		t.Fatalf("could not load paid intent gates: %v", paidReport.Messages())
 	}
-	paidStatusByIntent := make(map[string]string)
+	paidByIntent := make(map[string]paidintent.Record)
 	for _, entry := range paidRecords {
-		paidStatusByIntent[entry.Record.UniqueIntentID] = entry.Record.PaidIntentStatus
+		paidByIntent[entry.Record.UniqueIntentID] = entry.Record
+	}
+	strategyRecords, strategyReport := batchexpansionstrategy.LoadRecords(".")
+	if !strategyReport.Passed() {
+		t.Fatalf("could not load expansion strategy: %v", strategyReport.Messages())
+	}
+	strategyByBatch := make(map[string]batchexpansionstrategy.Record)
+	for _, entry := range strategyRecords {
+		strategyByBatch[entry.Record.BatchID] = entry.Record
 	}
 
 	totalSelected := 0
@@ -45,17 +54,30 @@ func TestBatchCandidateGatesSelectArchiveDraftsWithoutPublishing(t *testing.T) {
 		if !ok {
 			t.Fatalf("%s missing expansion readiness", record.BatchID)
 		}
-		expected := make([]string, 0)
+		strategy, ok := strategyByBatch[record.BatchID]
+		if !ok {
+			t.Fatalf("%s missing expansion strategy", record.BatchID)
+		}
+		expectedPaidPassed := make([]string, 0)
 		for _, intentID := range readiness.ExpansionCandidateIntentIDs {
-			if paidStatusByIntent[intentID] == paidintent.PassedBlockedStatus {
-				expected = append(expected, intentID)
+			if paidintent.AllowsExpansion(paidByIntent[intentID]) {
+				expectedPaidPassed = append(expectedPaidPassed, intentID)
+			}
+			if len(expectedPaidPassed) == strategy.CurrentCandidateCount {
+				break
 			}
 		}
-		if !sameStringSet(record.SelectedUniqueIntentIDs, expected) {
-			t.Fatalf("%s selected intents do not match paid-passed readiness candidates: selected=%d expected=%d", record.BatchID, len(record.SelectedUniqueIntentIDs), len(expected))
+		if !sameStringSet(record.SelectedUniqueIntentIDs, expectedPaidPassed) {
+			t.Fatalf("%s selected intents do not match strategy current paid-passed candidates: selected=%d expected=%d", record.BatchID, len(record.SelectedUniqueIntentIDs), len(expectedPaidPassed))
 		}
 		if len(record.SelectedUniqueIntentIDs) < 18 {
 			t.Fatalf("%s selected intents=%d, want at least 18 paid-passed expansion candidates", record.BatchID, len(record.SelectedUniqueIntentIDs))
+		}
+		if len(record.SelectedUniqueIntentIDs) != strategy.CurrentCandidateCount {
+			t.Fatalf("%s selected intents=%d, want materialized strategy current count=%d", record.BatchID, len(record.SelectedUniqueIntentIDs), strategy.CurrentCandidateCount)
+		}
+		if strategy.StrategyStatus == batchexpansionstrategy.ReadyNextCandidateGateStatus && strategy.NextCandidateTarget <= strategy.CurrentCandidateCount {
+			t.Fatalf("%s next target=%d, want growth beyond current=%d", record.BatchID, strategy.NextCandidateTarget, strategy.CurrentCandidateCount)
 		}
 		totalSelected += len(record.SelectedUniqueIntentIDs)
 		if record.RenderAllowed || record.SitemapAllowed || record.PublicationAllowed || record.PublicPath != "" {
@@ -65,8 +87,8 @@ func TestBatchCandidateGatesSelectArchiveDraftsWithoutPublishing(t *testing.T) {
 			t.Fatalf("%s must track locked official URL while preserving blocked publication, mode=%q locked=%t", record.BatchID, record.BaseURLMode, record.OfficialURLLocked)
 		}
 	}
-	if totalSelected != 168 {
-		t.Fatalf("selected intents=%d, want 168 paid-passed expansion candidates", totalSelected)
+	if totalSelected != 330 {
+		t.Fatalf("selected intents=%d, want 330 paid-passed or previdenciario-informational strategy candidates", totalSelected)
 	}
 }
 

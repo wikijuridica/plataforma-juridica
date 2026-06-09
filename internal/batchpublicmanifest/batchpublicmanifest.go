@@ -243,12 +243,18 @@ func ValidateRecordAgainstManifestIndex(record Record, index ManifestIndex) Repo
 	if titleLen > seo.TitleMaxCharacters {
 		issues = append(issues, Issue{Code: "batch_public_manifest_title_too_long", Message: fmt.Sprintf("%s:%d", record.UniqueIntentID, titleLen)})
 	}
+	if looksTruncatedFocus(record.CandidateTitle) {
+		issues = append(issues, Issue{Code: "batch_public_manifest_title_truncated_focus", Message: record.UniqueIntentID})
+	}
 	metaLen := len([]rune(record.CandidateMetaDescription))
 	if metaLen < seo.MetaDescriptionMinCharacters {
 		issues = append(issues, Issue{Code: "batch_public_manifest_meta_too_short", Message: fmt.Sprintf("%s:%d", record.UniqueIntentID, metaLen)})
 	}
 	if metaLen > seo.MetaDescriptionMaxCharacters {
 		issues = append(issues, Issue{Code: "batch_public_manifest_meta_too_long", Message: fmt.Sprintf("%s:%d", record.UniqueIntentID, metaLen)})
+	}
+	if looksTruncatedFocus(record.CandidateMetaDescription) {
+		issues = append(issues, Issue{Code: "batch_public_manifest_meta_truncated_focus", Message: record.UniqueIntentID})
 	}
 	if record.ManifestGateStatus != SEOReviewPendingStatus && record.ManifestGateStatus != SourceBlockedStatus {
 		issues = append(issues, Issue{Code: "batch_public_manifest_invalid_status", Message: record.ManifestGateStatus})
@@ -417,6 +423,12 @@ func convertPrepublicationIssues(report batchprepublication.Report) []Issue {
 		issues = append(issues, Issue{Code: "batch_public_manifest_prepublication_" + issue.Code, Message: issue.Message})
 	}
 	return issues
+}
+
+func looksTruncatedFocus(value string) bool {
+	normalized := strings.ToLower(strings.TrimSpace(value))
+	normalized = strings.TrimRight(normalized, ".:;- ")
+	return strings.HasSuffix(normalized, "com foco em") || strings.HasSuffix(normalized, "com foco")
 }
 
 func (r Report) Passed() bool { return len(r.Issues) == 0 }

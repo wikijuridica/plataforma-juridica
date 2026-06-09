@@ -200,12 +200,18 @@ func ValidateRecordAgainstReviewIndex(record Record, index ReviewIndex) Report {
 	if titleLen > seo.TitleMaxCharacters {
 		issues = append(issues, Issue{Code: "batch_prepublication_title_too_long", Message: fmt.Sprintf("%s:%d", record.UniqueIntentID, titleLen)})
 	}
+	if looksTruncatedFocus(record.CandidateTitle) {
+		issues = append(issues, Issue{Code: "batch_prepublication_title_truncated_focus", Message: record.UniqueIntentID})
+	}
 	metaLen := len([]rune(record.CandidateMetaDescription))
 	if metaLen < seo.MetaDescriptionMinCharacters {
 		issues = append(issues, Issue{Code: "batch_prepublication_meta_too_short", Message: fmt.Sprintf("%s:%d", record.UniqueIntentID, metaLen)})
 	}
 	if metaLen > seo.MetaDescriptionMaxCharacters {
 		issues = append(issues, Issue{Code: "batch_prepublication_meta_too_long", Message: fmt.Sprintf("%s:%d", record.UniqueIntentID, metaLen)})
+	}
+	if looksTruncatedFocus(record.CandidateMetaDescription) {
+		issues = append(issues, Issue{Code: "batch_prepublication_meta_truncated_focus", Message: record.UniqueIntentID})
 	}
 	if record.SourceSpecificityStatus != "matrix_audited_final_source_pending" {
 		issues = append(issues, Issue{Code: "batch_prepublication_source_specificity_not_pending", Message: record.SourceSpecificityStatus})
@@ -273,6 +279,12 @@ func convertReviewIssues(report batchcandidatereviews.Report) []Issue {
 		issues = append(issues, Issue{Code: "batch_prepublication_review_" + issue.Code, Message: issue.Message})
 	}
 	return issues
+}
+
+func looksTruncatedFocus(value string) bool {
+	normalized := strings.ToLower(strings.TrimSpace(value))
+	normalized = strings.TrimRight(normalized, ".:;- ")
+	return strings.HasSuffix(normalized, "com foco em") || strings.HasSuffix(normalized, "com foco")
 }
 
 func (r Report) Passed() bool { return len(r.Issues) == 0 }

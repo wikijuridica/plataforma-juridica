@@ -6,6 +6,7 @@ import (
 
 	"portaljuridico/internal/batchcandidateexpansion"
 	"portaljuridico/internal/batchcandidategates"
+	"portaljuridico/internal/batchexpansionstrategy"
 	"portaljuridico/internal/paidintent"
 )
 
@@ -23,9 +24,11 @@ func ExpandFromReadiness(root string) ([]batchcandidategates.Record, Report) {
 	archiveIndex, archiveReport := batchcandidategates.BuildArchiveIndex(root)
 	readinessEntries, readinessReport := batchcandidateexpansion.LoadRecords(root)
 	paidEntries, paidReport := paidintent.LoadRecords(root)
+	strategyEntries, strategyReport := batchexpansionstrategy.LoadRecords(root)
 	issues := append(convertGateIssues(loadReport), convertGateIssues(archiveReport)...)
 	issues = append(issues, convertReadinessIssues(readinessReport)...)
 	issues = append(issues, convertPaidIssues(paidReport)...)
+	issues = append(issues, convertStrategyIssues(strategyReport)...)
 	if len(issues) > 0 {
 		return nil, Report{Issues: issues}
 	}
@@ -34,9 +37,13 @@ func ExpandFromReadiness(root string) ([]batchcandidategates.Record, Report) {
 	for _, entry := range readinessEntries {
 		readinessByBatch[entry.Record.BatchID] = entry.Record
 	}
-	paidStatusByIntent := make(map[string]string)
+	strategyByBatch := make(map[string]batchexpansionstrategy.Record)
+	for _, entry := range strategyEntries {
+		strategyByBatch[entry.Record.BatchID] = entry.Record
+	}
+	paidByIntent := make(map[string]paidintent.Record)
 	for _, entry := range paidEntries {
-		paidStatusByIntent[entry.Record.UniqueIntentID] = entry.Record.PaidIntentStatus
+		paidByIntent[entry.Record.UniqueIntentID] = entry.Record
 	}
 
 	expanded := make([]batchcandidategates.Record, 0, len(entries))
@@ -47,13 +54,24 @@ func ExpandFromReadiness(root string) ([]batchcandidategates.Record, Report) {
 			issues = append(issues, Issue{Code: "batch_candidate_missing_expansion_readiness", Message: record.BatchID})
 			continue
 		}
+		strategy, ok := strategyByBatch[record.BatchID]
+		if !ok {
+			issues = append(issues, Issue{Code: "batch_candidate_missing_expansion_strategy", Message: record.BatchID})
+			continue
+		}
 		selected := make([]string, 0, len(readiness.ExpansionCandidateIntentIDs))
 		for _, intentID := range readiness.ExpansionCandidateIntentIDs {
-			if paidStatusByIntent[intentID] != paidintent.PassedBlockedStatus {
+			if !paidintent.AllowsExpansion(paidByIntent[intentID]) {
 				continue
 			}
 			selected = append(selected, intentID)
 		}
+		target := materializationTarget(readiness, strategy)
+		if len(selected) < target {
+			issues = append(issues, Issue{Code: "batch_candidate_too_few_paid_passed_intents", Message: fmt.Sprintf("%s=%d current=%d", record.BatchID, len(selected), target)})
+			continue
+		}
+		selected = firstN(selected, target)
 		if len(selected) < 18 {
 			issues = append(issues, Issue{Code: "batch_candidate_too_few_paid_passed_intents", Message: fmt.Sprintf("%s=%d", record.BatchID, len(selected))})
 			continue
@@ -111,4 +129,29 @@ func convertPaidIssues(report paidintent.Report) []Issue {
 		issues = append(issues, Issue{Code: "batch_candidate_promotion_paid_intent_" + issue.Code, Message: issue.Message})
 	}
 	return issues
+}
+
+func convertStrategyIssues(report batchexpansionstrategy.Report) []Issue {
+	issues := make([]Issue, 0, len(report.Issues))
+	for _, issue := range report.Issues {
+		issues = append(issues, Issue{Code: "batch_candidate_promotion_strategy_" + issue.Code, Message: issue.Message})
+	}
+	return issues
+}
+
+func firstN(values []string, limit int) []string {
+	if limit > len(values) {
+		limit = len(values)
+	}
+	return append([]string{}, values[:limit]...)
+}
+
+func materializationTarget(readiness batchcandidateexpansion.Record, strategy batchexpansionstrategy.Record) int {
+	if readiness.BatchID == "batch-previdenciario-digital" &&
+		readiness.ReadinessStatus == batchcandidateexpansion.ReadyBlockedStatus &&
+		strategy.CurrentCandidateCount < readiness.TargetCandidateCount &&
+		readiness.TargetCandidateCount <= 30 {
+		return readiness.TargetCandidateCount
+	}
+	return strategy.CurrentCandidateCount
 }

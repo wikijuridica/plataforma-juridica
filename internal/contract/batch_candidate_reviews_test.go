@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"portaljuridico/internal/batchcandidatereviews"
+	"portaljuridico/internal/paidintent"
 )
 
 func TestBatchCandidateReviewsCoverEverySelectedIntentWithoutPublishing(t *testing.T) {
@@ -26,6 +27,14 @@ func TestBatchCandidateReviewsCoverEverySelectedIntentWithoutPublishing(t *testi
 	}
 	if len(records) < 168 {
 		t.Fatalf("reviews=%d, want at least 168 paid-passed selected batch intents for the expanded P0 pipeline", len(records))
+	}
+	paidRecords, paidReport := paidintent.LoadRecords(".")
+	if !paidReport.Passed() {
+		t.Fatalf("could not load paid intent gates: %v", paidReport.Messages())
+	}
+	paidByIntent := make(map[string]paidintent.Record)
+	for _, entry := range paidRecords {
+		paidByIntent[entry.Record.UniqueIntentID] = entry.Record
 	}
 
 	seen := make(map[string]bool)
@@ -54,13 +63,12 @@ func TestBatchCandidateReviewsCoverEverySelectedIntentWithoutPublishing(t *testi
 		if !record.CTAContextMessageContains("Intent: " + record.UniqueIntentID) {
 			t.Fatalf("line=%d cta context missing unique intent id %q: %s", entry.Line, record.UniqueIntentID, record.CTAContextMessage)
 		}
-	}
-	for _, blockedIntent := range []string{
-		"previdenciario-bpc-loas-cadunico-renda",
-		"previdenciario-cumprimento-exigencia-parado",
-	} {
-		if seen[blockedIntent] {
-			t.Fatalf("paid intent blocked candidate %q escaped into batch candidate reviews", blockedIntent)
+		paidRecord, ok := paidByIntent[record.UniqueIntentID]
+		if !ok {
+			t.Fatalf("line=%d selected intent %q missing paid-intent gate", entry.Line, record.UniqueIntentID)
+		}
+		if !paidintent.AllowsExpansion(paidRecord) {
+			t.Fatalf("line=%d non-expansible paid-intent status escaped into review: intent=%q status=%q", entry.Line, record.UniqueIntentID, paidRecord.PaidIntentStatus)
 		}
 	}
 }

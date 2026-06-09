@@ -151,55 +151,64 @@ func RefineRepository(root string) (Result, Report) {
 	}
 
 	finalIndexByIntent := make(map[string]int)
+	finalIntentIDs := make(map[string]bool)
 	for index, entry := range finalEntries {
 		finalIndexByIntent[entry.Record.UniqueIntentID] = index
+		finalIntentIDs[entry.Record.UniqueIntentID] = true
 	}
-	archiveIndexByIntent := make(map[string]int)
-	for index, entry := range archiveEntries {
-		archiveIndexByIntent[entry.Record.UniqueIntentID] = index
+	expansionGateByIntent := make(map[string]paidintent.Record)
+	for _, entry := range gates {
+		gate := entry.Record
+		if gate.GateScope == paidintent.ExpansionReadinessGateScope {
+			expansionGateByIntent[gate.UniqueIntentID] = gate
+		}
 	}
 
 	result := Result{Refinements: make([]Record, 0)}
+	for index := range archiveEntries {
+		draft := archiveEntries[index].Record
+		gate := expansionGateByIntent[draft.UniqueIntentID]
+		if gate.UniqueIntentID == "" {
+			gate = archiveGateFromDraft(draft)
+		}
+		refined, record, changed, shouldRecord, report := refreshArchiveDraft(gate, draft)
+		issues = append(issues, report.Issues...)
+		if report.Passed() && changed {
+			archiveEntries[index].Record = refined
+			result.ArchiveRefined++
+			if shouldRecord && !finalIntentIDs[draft.UniqueIntentID] {
+				result.Refinements = append(result.Refinements, record)
+			}
+		}
+	}
+
 	for _, entry := range gates {
 		gate := entry.Record
-		if !needsRefinement(gate.PaidIntentStatus) {
+		if gate.GateScope != paidintent.FinalDraftGateScope {
 			continue
 		}
-		switch gate.GateScope {
-		case paidintent.FinalDraftGateScope:
-			index, ok := finalIndexByIntent[gate.UniqueIntentID]
-			if !ok {
-				issues = append(issues, Issue{Code: "paid_intent_refinement_missing_final_draft", Message: gate.UniqueIntentID})
-				continue
-			}
-			refined, record, report := refineFinalDraft(gate, finalEntries[index].Record)
-			issues = append(issues, report.Issues...)
-			if report.Passed() {
-				finalEntries[index].Record = refined
-				result.Refinements = append(result.Refinements, record)
-				result.FinalRefined++
-			}
-		case paidintent.ExpansionReadinessGateScope:
-			index, ok := archiveIndexByIntent[gate.UniqueIntentID]
-			if !ok {
-				issues = append(issues, Issue{Code: "paid_intent_refinement_missing_archive_draft", Message: gate.UniqueIntentID})
-				continue
-			}
-			refined, record, report := refineArchiveDraft(gate, archiveEntries[index].Record)
-			issues = append(issues, report.Issues...)
-			if report.Passed() {
-				archiveEntries[index].Record = refined
-				result.Refinements = append(result.Refinements, record)
-				result.ArchiveRefined++
-			}
-		default:
-			issues = append(issues, Issue{Code: "paid_intent_refinement_invalid_scope", Message: gate.UniqueIntentID + ":" + gate.GateScope})
+		index, ok := finalIndexByIntent[gate.UniqueIntentID]
+		if !ok {
+			issues = append(issues, Issue{Code: "paid_intent_refinement_missing_final_draft", Message: gate.UniqueIntentID})
+			continue
+		}
+		currentGate := paidintent.EvaluateDraft(finalEntries[index].Record)
+		if !needsRefinement(currentGate.PaidIntentStatus) {
+			continue
+		}
+		currentGate.SourceMatrixID = gate.SourceMatrixID
+		refined, record, report := refineFinalDraft(currentGate, finalEntries[index].Record)
+		issues = append(issues, report.Issues...)
+		if report.Passed() {
+			finalEntries[index].Record = refined
+			result.Refinements = append(result.Refinements, record)
+			result.FinalRefined++
 		}
 	}
 	if len(issues) > 0 {
 		return result, Report{Issues: issues}
 	}
-	if len(result.Refinements) == 0 {
+	if len(result.Refinements) == 0 && result.ArchiveRefined == 0 && result.FinalRefined == 0 {
 		return result, Report{}
 	}
 	sort.Slice(result.Refinements, func(left int, right int) bool {
@@ -208,14 +217,24 @@ func RefineRepository(root string) (Result, Report) {
 		}
 		return result.Refinements[left].UniqueIntentID < result.Refinements[right].UniqueIntentID
 	})
-	if err := writeArchiveEntries(root, archiveEntries); err != nil {
-		return result, Report{Issues: []Issue{{Code: "paid_intent_refinement_write_archive_failed", Message: err.Error()}}}
+	if result.ArchiveRefined > 0 {
+		if err := writeArchiveEntries(root, archiveEntries); err != nil {
+			return result, Report{Issues: []Issue{{Code: "paid_intent_refinement_write_archive_failed", Message: err.Error()}}}
+		}
 	}
-	if err := writeFinalEntries(root, finalEntries); err != nil {
-		return result, Report{Issues: []Issue{{Code: "paid_intent_refinement_write_final_failed", Message: err.Error()}}}
+	if result.FinalRefined > 0 {
+		if err := writeFinalEntries(root, finalEntries); err != nil {
+			return result, Report{Issues: []Issue{{Code: "paid_intent_refinement_write_final_failed", Message: err.Error()}}}
+		}
 	}
-	if err := WriteRecords(root, result.Refinements); err != nil {
-		return result, Report{Issues: []Issue{{Code: "paid_intent_refinement_write_records_failed", Message: err.Error()}}}
+	if len(result.Refinements) > 0 {
+		records, mergeReport := mergeExistingRecords(root, result.Refinements)
+		if !mergeReport.Passed() {
+			return result, Report{Issues: mergeReport.Issues}
+		}
+		if err := WriteRecords(root, records); err != nil {
+			return result, Report{Issues: []Issue{{Code: "paid_intent_refinement_write_records_failed", Message: err.Error()}}}
+		}
 	}
 	return result, Report{}
 }
@@ -351,6 +370,27 @@ func refineArchiveDraft(gate paidintent.Record, draft batchdrafts.Record) (batch
 	return lastDraft, lastRecord, lastReport
 }
 
+func refreshArchiveDraft(gate paidintent.Record, draft batchdrafts.Record) (batchdrafts.Record, Record, bool, bool, Report) {
+	cleaned := draft
+	cleaned.DigitalAction = removeKnownRefinementSentences(cleaned.DigitalAction)
+	score := humanscore.ScoreText(cleaned.FullText())
+	cleaned.HumanScore = score.HumanScore
+	cleaned.AILikeScore = score.AILikeScore
+	currentGate := paidintent.EvaluateArchiveDraft(cleaned)
+	if gate.CheckedAt != "" {
+		currentGate.CheckedAt = gate.CheckedAt
+	}
+	if !needsRefinement(currentGate.PaidIntentStatus) {
+		return cleaned, Record{}, archiveDraftChanged(draft, cleaned), false, Report{}
+	}
+	refined, record, report := refineArchiveDraft(currentGate, cleaned)
+	return refined, record, archiveDraftChanged(draft, refined), true, report
+}
+
+func archiveGateFromDraft(draft batchdrafts.Record) paidintent.Record {
+	return paidintent.EvaluateArchiveDraft(draft)
+}
+
 func refineFinalDraft(gate paidintent.Record, draft batchfinaldrafts.Record) (batchfinaldrafts.Record, Record, Report) {
 	var lastRecord Record
 	var lastReport Report
@@ -414,7 +454,7 @@ func validatePlanResult(gate paidintent.Record, evaluated paidintent.Record, sco
 }
 
 func needsRefinement(status string) bool {
-	return status == paidintent.MissingPaidSignalStatus || status == paidintent.CTAOnlyBlockedStatus
+	return status == paidintent.MissingPaidSignalStatus || status == paidintent.CTAOnlyBlockedStatus || status == paidintent.LowBusinessScoreStatus
 }
 
 func appendSentence(value string, sentence string) string {
@@ -428,14 +468,76 @@ func appendSentence(value string, sentence string) string {
 	return value + ". " + sentence
 }
 
+func removeKnownRefinementSentences(value string) string {
+	cleaned := strings.TrimSpace(value)
+	for _, sentence := range knownRefinementSentences() {
+		cleaned = strings.ReplaceAll(cleaned, sentence, "")
+	}
+	cleaned = strings.Join(strings.Fields(cleaned), " ")
+	for strings.Contains(cleaned, ". .") {
+		cleaned = strings.ReplaceAll(cleaned, ". .", ".")
+	}
+	cleaned = strings.TrimSpace(cleaned)
+	cleaned = strings.TrimPrefix(cleaned, ". ")
+	cleaned = strings.TrimPrefix(cleaned, ".")
+	return strings.TrimSpace(cleaned)
+}
+
+func archiveDraftChanged(left batchdrafts.Record, right batchdrafts.Record) bool {
+	return left.DigitalAction != right.DigitalAction || left.HumanScore != right.HumanScore || left.AILikeScore != right.AILikeScore
+}
+
 func orderedRefinements(intentID string, legalArea string) []refinementText {
 	templates := refinementTemplates()
 	start := stableIndex(intentID+"-"+legalArea, len(templates))
 	ordered := make([]refinementText, 0, len(templates))
+	preferred := preferredRefinementStrategy(intentID)
+	if preferred != "" {
+		for _, template := range templates {
+			if template.Strategy == preferred {
+				ordered = append(ordered, template)
+				break
+			}
+		}
+	}
 	for offset := 0; offset < len(templates); offset++ {
-		ordered = append(ordered, templates[(start+offset)%len(templates)])
+		template := templates[(start+offset)%len(templates)]
+		if template.Strategy == preferred {
+			continue
+		}
+		ordered = append(ordered, template)
 	}
 	return ordered
+}
+
+func preferredRefinementStrategy(intentID string) string {
+	preferences := []struct {
+		Token    string
+		Strategy string
+	}{
+		{"fonte-primaria", "body_private_hiring_source_boundary"},
+		{"linha-do-tempo", "body_private_lawyer_timeline"},
+		{"documento-minimo", "body_fee_quote_document_boundary"},
+		{"prova-de-negativa", "body_fee_scope_negative_proof"},
+		{"parte-responsavel", "body_private_client_evidence_value"},
+		{"risco-economico", "body_paid_service_scope"},
+		{"competencia-digital", "body_private_hiring_source_boundary"},
+		{"estado-do-processo", "body_paid_consultation_decision_point"},
+		{"prova-medica-ou-tecnica", "body_paid_document_review"},
+		{"conflito-de-versoes", "body_paid_triage_risk_window"},
+		{"custo-de-inercia", "body_paid_service_scope"},
+		{"evidencia-de-boa-fe", "body_private_client_evidence_value"},
+		{"vulnerabilidade", "body_paid_consultation_scope"},
+		{"negociacao-previa", "body_private_service_budget"},
+		{"prazo-e-urgencia", "body_paid_triage_risk_window"},
+		{"prova-digital", "body_hiring_intent_documents"},
+	}
+	for _, preference := range preferences {
+		if strings.Contains(intentID, preference.Token) {
+			return preference.Strategy
+		}
+	}
+	return ""
 }
 
 func refinementTemplates() []refinementText {
@@ -443,29 +545,80 @@ func refinementTemplates() []refinementText {
 		{
 			Signal:   "contratar advogado",
 			Strategy: "body_hiring_intent_documents",
-			Sentence: "O roteiro tambem verifica se a pessoa quer contratar advogado particular online para revisar documentos e receber analise paga antes de qualquer medida.",
+			Sentence: "O roteiro identifica quando o leitor quer contratar advogado particular online, revisar documentos e receber analise paga antes de qualquer medida.",
 		},
 		{
 			Signal:   "atendimento particular",
 			Strategy: "body_private_service_budget",
-			Sentence: "Para atendimento particular declarado, a triagem separa documentos, valor envolvido e duvidas para orcamento de honorarios antes de avancar.",
+			Sentence: "Para atendimento particular declarado, a triagem separa contrato, valor envolvido e duvidas para orcamento de honorarios antes de avancar.",
 		},
 		{
 			Signal:   "analise paga",
 			Strategy: "body_paid_document_review",
-			Sentence: "Cliente particular que busca analise paga dos documentos precisa ter custo e escopo definidos antes da conversa juridica.",
+			Sentence: "Cliente particular que busca analise paga precisa reunir comprovante, protocolo e resposta formal para definir custo e escopo.",
 		},
 		{
 			Signal:   "servico juridico pago",
 			Strategy: "body_paid_service_scope",
-			Sentence: "Se houver interesse em servico juridico pago, a etapa digital organiza valor discutido, urgencia e prova minima para evitar atendimento sem escopo.",
+			Sentence: "Se houver interesse em servico juridico pago, a etapa digital organiza valor da causa, urgencia e prova minima antes da conversa.",
 		},
 		{
 			Signal:   "consulta paga",
 			Strategy: "body_paid_consultation_scope",
-			Sentence: "Consulta paga, quando cabivel, deve ficar limitada a documentos, riscos e viabilidade do caso, com escopo combinado previamente.",
+			Sentence: "Consulta paga, quando cabivel, fica limitada a documentos, riscos e viabilidade do caso, com escopo combinado previamente.",
+		},
+		{
+			Signal:   "honorarios",
+			Strategy: "body_fee_scope_negative_proof",
+			Sentence: "A leitura de honorarios depende de negativa formal, comprovante de envio e documentos que mostrem responsabilidade antes da analise.",
+		},
+		{
+			Signal:   "advogado particular",
+			Strategy: "body_private_lawyer_timeline",
+			Sentence: "Quem procura advogado particular precisa organizar data do fato, protocolo, documentos e valor pago para uma triagem objetiva.",
+		},
+		{
+			Signal:   "triagem paga",
+			Strategy: "body_paid_triage_risk_window",
+			Sentence: "Triagem paga so faz sentido quando ha risco concreto, prazo identificado, documento principal e pergunta juridica delimitada.",
+		},
+		{
+			Signal:   "orcamento de honorarios",
+			Strategy: "body_fee_quote_document_boundary",
+			Sentence: "Orcamento de honorarios exige fronteira clara entre documento conferido, providencia esperada e etapa digital possivel.",
+		},
+		{
+			Signal:   "cliente particular",
+			Strategy: "body_private_client_evidence_value",
+			Sentence: "Cliente particular deve informar valor envolvido, comprovantes, tentativa anterior e responsavel indicado no documento.",
+		},
+		{
+			Signal:   "contratacao particular",
+			Strategy: "body_private_hiring_source_boundary",
+			Sentence: "Contratacao particular exige fonte especifica, contrato ou protocolo e prova documental suficiente para estimar trabalho juridico.",
+		},
+		{
+			Signal:   "consulta paga",
+			Strategy: "body_paid_consultation_decision_point",
+			Sentence: "Antes de consulta paga, o material separa decisao recebida, contrato, recibo e duvida que precisa de leitura tecnica.",
 		},
 	}
+}
+
+func knownRefinementSentences() []string {
+	known := make([]string, 0)
+	for _, refinement := range refinementTemplates() {
+		known = append(known, refinement.Sentence)
+	}
+	known = append(known,
+		"O roteiro tambem verifica se a pessoa quer contratar advogado particular online para revisar documentos e receber analise paga antes de qualquer medida.",
+		"Para atendimento particular declarado, a triagem separa documentos, valor envolvido e duvidas para orcamento de honorarios antes de avancar.",
+		"Cliente particular que busca analise paga dos documentos precisa ter custo e escopo definidos antes da conversa juridica.",
+		"Se houver interesse em servico juridico pago, a etapa digital organiza valor discutido, urgencia e prova minima para evitar atendimento sem escopo.",
+		"Consulta paga, quando cabivel, deve ficar limitada a documentos, riscos e viabilidade do caso, com escopo combinado previamente.",
+		"Contratacao particular exige fonte especifica, limite de atuacao online e prova documental suficiente para estimar trabalho juridico.",
+	)
+	return known
 }
 
 func stableIndex(value string, length int) int {
@@ -501,6 +654,34 @@ func convertArchiveIssues(report batchdraftarchive.Report) []Issue {
 		issues = append(issues, Issue{Code: "paid_intent_refinement_archive_" + issue.Code, Message: issue.Message})
 	}
 	return issues
+}
+
+func mergeExistingRecords(root string, updates []Record) ([]Record, Report) {
+	entries, loadReport := LoadRecords(root)
+	if !loadReport.Passed() {
+		return updates, loadReport
+	}
+	byIntent := make(map[string]Record)
+	for _, entry := range entries {
+		byIntent[entry.Record.UniqueIntentID] = entry.Record
+	}
+	for _, update := range updates {
+		byIntent[update.UniqueIntentID] = update
+	}
+	merged := make([]Record, 0, len(byIntent))
+	for _, record := range byIntent {
+		merged = append(merged, record)
+	}
+	sort.Slice(merged, func(left int, right int) bool {
+		if merged[left].BatchID != merged[right].BatchID {
+			return merged[left].BatchID < merged[right].BatchID
+		}
+		if merged[left].GateScope != merged[right].GateScope {
+			return merged[left].GateScope < merged[right].GateScope
+		}
+		return merged[left].UniqueIntentID < merged[right].UniqueIntentID
+	})
+	return merged, Report{}
 }
 
 func WriteRecords(root string, records []Record) error {

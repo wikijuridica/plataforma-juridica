@@ -659,9 +659,9 @@ Motivos:
 
 Consequencia: `data/editorial/batch_final_authorial_drafts.jsonl`, `internal/batchfinaldrafts`, `internal/paidintent`, `./tools/check-batch-final-authorial-drafts`, `./tools/check-paid-intent`, `internal/checks`, `content/storage_contract.json` e `tools/lab-cycle` entram no laboratorio. Todos os 7 rascunhos seguem `noindex`, sem render, sem sitemap, sem publicação e sem `public_path`; o gate pago deve ser refinado quando surgir falso positivo/negativo antes de escalar.
 
-## 2026-06-09 — Agentes auxiliares sem concorrência crítica
+## 2026-06-09 — Agentes auxiliares planejados sem concorrência crítica
 
-Decisao: no próximo ciclo e nos seguintes, usar agentes auxiliares quando houver trabalho independente, especialmente pesquisa de fontes oficiais, matriz de proveniência, testes, conteúdo bloqueado e debugging, mas sem concorrência no estado do repositório.
+Decisao: no próximo ciclo e nos seguintes, usar agentes auxiliares é obrigatório quando houver duas ou mais frentes independentes, especialmente pesquisa de fontes oficiais, matriz de proveniência, testes, conteúdo bloqueado e debugging, mas sem concorrência no estado do repositório.
 
 Motivos:
 - a meta massiva exige acelerar pesquisa e produção sem perder validação;
@@ -669,7 +669,7 @@ Motivos:
 - concorrência no mesmo arquivo, gate, commit, fonte jurídica ou decisão crítica aumenta risco de conflito e mascaramento;
 - o Codex principal deve manter responsabilidade por arquitetura, P0/P1, integração, validação, checkpoint e commit.
 
-Consequencia: agentes devem produzir pesquisa, evidência ou rascunho em escopo isolado. Se houver escrita, ela precisa ser disjunta e só entra no repo após validação do Codex principal. O Codex principal valida evidência, revisa o diff, roda os checks relevantes, registra checkpoint e não publica nada sem gate. Para não perder contexto em compactação, todo agente usado em ciclo deve virar registro em `.agents/agent_context_ledger.jsonl` antes do checkpoint/commit.
+Consequencia: agentes devem produzir pesquisa, evidência, teste, edição disjunta ou rascunho em escopo isolado. Se houver escrita, ela precisa ser disjunta e só entra no repo após validação do Codex principal. O Codex principal valida evidência, revisa o diff, roda os checks relevantes, registra checkpoint e não publica nada sem gate. Para não perder contexto em compactação, todo agente usado em ciclo deve virar registro em `.agents/agent_context_ledger.jsonl` antes do checkpoint/commit.
 
 ## 2026-06-09 — Ledger persistente contra perda de contexto de agentes
 
@@ -681,7 +681,9 @@ Motivos:
 - agente auxiliar não pode virar prova invisível nem autorização implícita;
 - o Codex principal precisa conseguir retomar sem refazer pesquisa ou confiar em memória solta.
 
-Consequencia: cada agente usado deve registrar ciclo, ID, apelido, tipo de tarefa, escopo, status, política de uso, resumo, evidências, riscos, decisão de integração e flags `repo_write_allowed=false`, `codex_validation_required=true`, `closed_before_checkpoint=true`. `internal/agentcontext` valida o ledger; `check-all` e `lab-cycle` passam a incluir esse gate.
+Consequencia: cada agente usado deve registrar ciclo, ID real, apelido, tipo de tarefa, escopo, status, política de uso, resumo, evidências, riscos, decisão de integração e flags `repo_write_allowed`, `codex_validation_required=true`, `closed_before_checkpoint=true`. A política padrão é `reference_only_no_repo_write`; escrita por agente só é válida com `delegated_repo_write_codex_validated`, escopo disjunto, evidência do diff, riscos, fechamento antes do checkpoint e validação/integração pelo Codex principal. `internal/agentcontext` valida o ledger; `check-all` e `lab-cycle` passam a incluir esse gate.
+
+Adendo do ciclo 46: em ciclo de escala com duas ou mais frentes independentes, usar agentes auxiliares em paralelo deixa de ser opcional. O Codex principal deve acionar o máximo permitido e pertinente pela OpenAI para pesquisa, teste, auditoria, documentação, conteúdo bloqueado ou edição disjunta, mantendo a chefia técnica nos críticos. Todo agente precisa deixar contexto durável em `.agents/agent_context_ledger.jsonl`; compactação, memória do chat ou checkpoint genérico não bastam.
 
 ## 2026-06-09 — Timing e otimização obrigatórios antes de commit
 
@@ -755,3 +757,27 @@ Motivos:
 - a meta de 10k/milhoes exige ferramenta idempotente, nao ajuste manual lento.
 
 Consequencia: `./tools/expand-batch-candidate-gates` seleciona 168 intenções pagas bloqueadas; `./tools/refresh-batch-candidate-pipeline` materializa 168 revisoes, 168 prepublication gates, 168 resolucoes de fonte e 168 manifestos, preservando 5 rascunhos finais elegiveis e bloqueando 163 por fonte especifica. Todos permanecem `noindex`, sem render, sitemap, publicacao ou `public_path`.
+
+## 2026-06-09 — Expansao 318 com current separado do next target
+
+Decisao: `batch_candidate_expansion_readiness` pode carregar o próximo alvo planejado pela estratégia, mas `batch_candidate_gates` só deve materializar o `current_candidate_count` da estratégia no ciclo atual.
+
+Motivos:
+- readiness com alvo 90 por família precisa existir para o próximo ciclo e para gerar paid gates antecipados;
+- selecionar todos os paid-passed da readiness no mesmo ciclo saltaria de 318 para 468 candidatos sem checkpoint próprio;
+- `ApplyStrategy` não pode trocar IDs sem recomputar paid counts, blockers, status e current count;
+- expansão agressiva precisa ser rápida, mas cada salto de escala deve ser rastreável, validado e bloqueado para publicação.
+
+Consequencia: `internal/batchexpansionapply` passou a recalcular cada readiness record após aplicar a estratégia; `internal/batchcandidatepromotion` limita a seleção ao `strategy.CurrentCandidateCount`; `batch_paid_intent_gates` cobre 480 registros incluindo próximos alvos; `batch_candidate_gates` permanece com 318 candidatos materializados; reviews, prepublication, source-specificity, public manifest e final drafts permanecem em 318, todos `noindex`, sem render, sitemap, publicação ou `public_path`. O próximo ciclo deve promover o alvo 90 das cinco famílias prontas para nova materialização validada, mantendo previdenciário bloqueado por paid-intent.
+
+## 2026-06-09 — Lane previdenciaria informativa bloqueada
+
+Decisao: previdenciario pode crescer por uma lane informativa/curiosa bloqueada, sem exigir alta intencao de pagamento, desde que a excecao fique restrita a `batch-previdenciario-digital` e nunca publique, renderize, entre em sitemap ou crie `public_path`.
+
+Motivos:
+- temas previdenciarios como BPC/LOAS, CadUnico, exigencia do INSS e autoatendimento podem ter utilidade humana e demanda real mesmo quando nao mostram alta intencao paga;
+- tratar essa demanda como lixo comercial reduziria crescimento de familia juridica relevante;
+- afrouxar a regra global criaria risco de spam, funil de gratuidade e selecao fraca nas familias comerciais;
+- a excecao precisa ser status proprio, auditavel e bloqueada, nao mascaramento de paid-intent aprovado.
+
+Consequencia: `internal/paidintent` cria `paid_intent_flexible_previdenciario_informational_blocked_publication` e centraliza elegibilidade em `paidintent.AllowsExpansion`, que aceita o status apenas em `batch-previdenciario-digital` e com flags publicas falsas. `internal/batchexpansionapply`, `internal/batchcandidateexpansion`, `internal/batchcandidatepromotion` e `internal/batchcandidatepipeline` usam esse helper. `batch_candidate_gates` sobe para 330 candidatos internos bloqueados; `batch_paid_intent_gates` cobre 510 alvos de laboratorio, com 42 previdenciarios informativos bloqueados; `batch_expansion_strategy` planeja proximo crescimento para 510 current total, sendo 90 nas cinco familias comerciais e 60 em previdenciario. Gratuidade explicita, defensoria/justica gratuita, "sem pagar", promessa de beneficio, promessa de resultado ou substituicao de canal publico continuam bloqueios P0.

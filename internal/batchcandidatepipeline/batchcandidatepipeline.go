@@ -100,19 +100,19 @@ func Refresh(root string) (Result, Report) {
 		finalByIntent[entry.Record.UniqueIntentID] = entry.Record
 	}
 
-	paidStatusByIntent := make(map[string]string)
+	paidByIntent := make(map[string]paidintent.Record)
 	for _, entry := range paidEntries {
-		paidStatusByIntent[entry.Record.UniqueIntentID] = entry.Record.PaidIntentStatus
+		paidByIntent[entry.Record.UniqueIntentID] = entry.Record
 	}
 
 	selected := selectedCandidates(candidateIndex)
 	sourceLockedByIntent := make(map[string]bool)
 	for _, candidate := range selected {
-		status := paidStatusByIntent[candidate.UniqueIntentID]
-		if status == "" {
+		gate, ok := paidByIntent[candidate.UniqueIntentID]
+		if !ok {
 			continue
 		}
-		if status == paidintent.PassedBlockedStatus && len(specificSourceURLsByMatrix[candidate.SourceMatrixID]) > 0 {
+		if paidintent.AllowsExpansion(gate) && len(specificSourceURLsByMatrix[candidate.SourceMatrixID]) > 0 {
 			sourceLockedByIntent[candidate.UniqueIntentID] = true
 		}
 	}
@@ -583,7 +583,7 @@ func candidateTitle(term string, previous string) string {
 	if validTitle(previous) {
 		return previous
 	}
-	title := uppercaseFirst(strings.TrimSpace(term))
+	title := titleFromTerm(term)
 	if title == "" {
 		title = "Tema jurídico para triagem online"
 	}
@@ -591,7 +591,7 @@ func candidateTitle(term string, previous string) string {
 		title = strings.TrimSpace(title + " jurídico online")
 	}
 	if len([]rune(title)) > seo.TitleMaxCharacters {
-		title = trimRunesAtWord(title, seo.TitleMaxCharacters)
+		title = trimTitleAtWord(title, seo.TitleMaxCharacters)
 	}
 	return title
 }
@@ -601,9 +601,10 @@ func candidateMeta(term string, previous string) string {
 	if validMeta(previous) {
 		return previous
 	}
-	meta := "Organize documentos, datas, protocolos e fonte oficial antes da triagem jurídica online sobre " + strings.TrimSpace(term) + "."
+	subject := metaSubject(term)
+	meta := "Organize documentos, datas, protocolos e fonte oficial antes da triagem jurídica online sobre " + subject + "."
 	if len([]rune(meta)) > seo.MetaDescriptionMaxCharacters {
-		meta = "Organize documentos, datas e fonte oficial antes da triagem jurídica online: " + trimRunesAtWord(term, 72) + "."
+		meta = "Organize documentos, datas e fonte oficial antes da triagem jurídica online: " + trimRunesAtWord(subject, 72) + "."
 	}
 	if len([]rune(meta)) > seo.MetaDescriptionMaxCharacters {
 		meta = "Organize documentos, datas e fonte oficial antes da triagem jurídica online do caso."
@@ -616,12 +617,12 @@ func candidateMeta(term string, previous string) string {
 
 func validTitle(value string) bool {
 	length := len([]rune(value))
-	return length >= seo.TitleMinCharacters && length <= seo.TitleMaxCharacters
+	return length >= seo.TitleMinCharacters && length <= seo.TitleMaxCharacters && !looksTruncatedFocus(value)
 }
 
 func validMeta(value string) bool {
 	length := len([]rune(value))
-	return length >= seo.MetaDescriptionMinCharacters && length <= seo.MetaDescriptionMaxCharacters
+	return length >= seo.MetaDescriptionMinCharacters && length <= seo.MetaDescriptionMaxCharacters && !looksTruncatedFocus(value)
 }
 
 func uppercaseFirst(value string) string {
@@ -632,6 +633,67 @@ func uppercaseFirst(value string) string {
 	runes := []rune(value)
 	runes[0] = unicode.ToUpper(runes[0])
 	return string(runes)
+}
+
+func titleFromTerm(term string) string {
+	term = strings.TrimSpace(term)
+	if term == "" {
+		return ""
+	}
+	separator := " com foco em "
+	if index := strings.LastIndex(strings.ToLower(term), separator); index > 0 {
+		base := strings.TrimSpace(term[:index])
+		focus := strings.TrimSpace(term[index+len(separator):])
+		if base != "" && focus != "" {
+			title := uppercaseFirst(base) + ": " + focus
+			if len([]rune(title)) <= seo.TitleMaxCharacters {
+				return title
+			}
+			availableBase := seo.TitleMaxCharacters - len([]rune(": "+focus))
+			if availableBase >= seo.TitleMinCharacters {
+				return trimRunesAtWord(uppercaseFirst(base), availableBase) + ": " + focus
+			}
+		}
+	}
+	return uppercaseFirst(term)
+}
+
+func metaSubject(term string) string {
+	subject := titleFromTerm(term)
+	if subject == "" {
+		return "o caso"
+	}
+	return lowercaseFirst(subject)
+}
+
+func lowercaseFirst(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return ""
+	}
+	runes := []rune(value)
+	runes[0] = unicode.ToLower(runes[0])
+	return string(runes)
+}
+
+func trimTitleAtWord(value string, limit int) string {
+	trimmed := trimRunesAtWord(value, limit)
+	if !looksTruncatedFocus(trimmed) {
+		return trimmed
+	}
+	cleaned := strings.TrimSpace(strings.TrimSuffix(trimmed, "com foco em"))
+	cleaned = strings.TrimSpace(strings.TrimSuffix(cleaned, "com foco"))
+	cleaned = strings.TrimRight(cleaned, " :-")
+	if len([]rune(cleaned)) >= seo.TitleMinCharacters {
+		return cleaned
+	}
+	return trimmed
+}
+
+func looksTruncatedFocus(value string) bool {
+	normalized := strings.ToLower(strings.TrimSpace(value))
+	normalized = strings.TrimRight(normalized, ".:;- ")
+	return strings.HasSuffix(normalized, "com foco em") || strings.HasSuffix(normalized, "com foco")
 }
 
 func trimRunesAtWord(value string, limit int) string {

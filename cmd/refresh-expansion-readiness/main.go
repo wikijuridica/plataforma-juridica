@@ -7,6 +7,7 @@ import (
 	"path/filepath"
 
 	"portaljuridico/internal/batchcandidateexpansion"
+	"portaljuridico/internal/batchexpansionapply"
 )
 
 func main() {
@@ -18,6 +19,13 @@ func main() {
 	records, report := batchcandidateexpansion.RefreshRecords(root)
 	if !report.Passed() {
 		for _, message := range report.Messages() {
+			fmt.Println("refresh-expansion-readiness: " + message)
+		}
+		os.Exit(1)
+	}
+	records, applyReport := batchexpansionapply.ApplyStrategy(root, records)
+	if !applyReport.Passed() {
+		for _, message := range applyReport.Messages() {
 			fmt.Println("refresh-expansion-readiness: " + message)
 		}
 		os.Exit(1)

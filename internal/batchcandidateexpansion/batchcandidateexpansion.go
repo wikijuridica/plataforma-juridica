@@ -87,6 +87,7 @@ type ExpansionIndex struct {
 	CurrentCandidateCountByBatch map[string]int
 	SourceBlockersByBatch        map[string][]string
 	MaxSimilarity                float64
+	MaxSimilarityPair            batchdrafts.SimilarityPair
 }
 
 type Issue struct {
@@ -140,8 +141,9 @@ func BuildExpansionIndex(root string) (ExpansionIndex, Report) {
 		ArchiveCountByBatch:          make(map[string]int),
 		CurrentCandidateCountByBatch: make(map[string]int),
 		SourceBlockersByBatch:        make(map[string][]string),
-		MaxSimilarity:                batchdrafts.MaximumPairSimilarity(archiveEntries),
+		MaxSimilarityPair:            batchdrafts.MaximumPairSimilarityDetail(archiveEntries),
 	}
+	index.MaxSimilarity = index.MaxSimilarityPair.Score
 	for _, entry := range archiveEntries {
 		record := entry.Record
 		index.ArchiveByIntent[record.UniqueIntentID] = ArchiveDraft{
@@ -273,7 +275,7 @@ func ValidateRecordAgainstIndex(record Record, index ExpansionIndex) Report {
 		issues = append(issues, Issue{Code: "batch_candidate_expansion_similarity_observed_too_high", Message: fmt.Sprintf("%.4f", record.MaxSimilarityObserved)})
 	}
 	if index.MaxSimilarity > record.MaxSimilarityAllowed+0.0001 {
-		issues = append(issues, Issue{Code: "batch_candidate_expansion_archive_similarity_too_high", Message: fmt.Sprintf("%.4f", index.MaxSimilarity)})
+		issues = append(issues, Issue{Code: "batch_candidate_expansion_archive_similarity_too_high", Message: fmt.Sprintf("%.4f left=%s right=%s", index.MaxSimilarity, index.MaxSimilarityPair.LeftID, index.MaxSimilarityPair.RightID)})
 	}
 	if record.MinimumHumanScore < 88 {
 		issues = append(issues, Issue{Code: "batch_candidate_expansion_minimum_score_too_low", Message: fmt.Sprintf("%d", record.MinimumHumanScore)})
@@ -340,26 +342,29 @@ func RefreshRecords(root string) ([]Record, Report) {
 
 	refreshed := make([]Record, 0, len(entries))
 	for _, entry := range entries {
-		record := entry.Record
-		paidPassed, paidBlocked, paidMissing := classifyPaidIntent(record.ExpansionCandidateIntentIDs, index.PaidIntentByIntent)
-		record.PaidIntentPassedCount = len(paidPassed)
-		record.PaidIntentBlockedCount = len(paidBlocked)
-		record.PaidIntentMissingCount = len(paidMissing)
-		record.PaidIntentMissingIntentIDs = paidMissing
-		record.PaidIntentBlockedIntentIDs = paidBlocked
-		record.KnownSourceBlockerIntentIDs = append([]string{}, index.SourceBlockersByBatch[record.BatchID]...)
-		record.CurrentCandidateCount = index.CurrentCandidateCountByBatch[record.BatchID]
-		record.ActionableBlockers = expectedActionableBlockers(len(paidMissing), len(paidBlocked), len(record.KnownSourceBlockerIntentIDs))
-		if len(paidMissing) > 0 {
-			record.ReadinessStatus = PaidGateMissingStatus
-		} else if len(paidBlocked) > 0 {
-			record.ReadinessStatus = PaidGateBlockedStatus
-		} else {
-			record.ReadinessStatus = ReadyBlockedStatus
-		}
-		refreshed = append(refreshed, record)
+		refreshed = append(refreshed, RefreshRecordAgainstIndex(entry.Record, index))
 	}
 	return refreshed, Report{}
+}
+
+func RefreshRecordAgainstIndex(record Record, index ExpansionIndex) Record {
+	paidPassed, paidBlocked, paidMissing := classifyPaidIntent(record.ExpansionCandidateIntentIDs, index.PaidIntentByIntent)
+	record.PaidIntentPassedCount = len(paidPassed)
+	record.PaidIntentBlockedCount = len(paidBlocked)
+	record.PaidIntentMissingCount = len(paidMissing)
+	record.PaidIntentMissingIntentIDs = paidMissing
+	record.PaidIntentBlockedIntentIDs = paidBlocked
+	record.KnownSourceBlockerIntentIDs = append([]string{}, index.SourceBlockersByBatch[record.BatchID]...)
+	record.CurrentCandidateCount = index.CurrentCandidateCountByBatch[record.BatchID]
+	record.ActionableBlockers = expectedActionableBlockers(len(paidMissing), len(paidBlocked), len(record.KnownSourceBlockerIntentIDs))
+	if len(paidMissing) > 0 {
+		record.ReadinessStatus = PaidGateMissingStatus
+	} else if len(paidBlocked) > 0 {
+		record.ReadinessStatus = PaidGateBlockedStatus
+	} else {
+		record.ReadinessStatus = ReadyBlockedStatus
+	}
+	return record
 }
 
 func LoadRecords(root string) ([]Entry, Report) {
@@ -440,7 +445,7 @@ func classifyPaidIntent(intentIDs []string, paidByIntent map[string]paidintent.R
 			missing = append(missing, intentID)
 			continue
 		}
-		if record.PaidIntentStatus == paidintent.PassedBlockedStatus && !record.RenderAllowed && !record.SitemapAllowed && !record.PublicationAllowed && record.PublicPath == "" {
+		if paidintent.AllowsExpansion(record) {
 			passed = append(passed, intentID)
 			continue
 		}

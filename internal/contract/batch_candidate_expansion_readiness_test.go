@@ -41,6 +41,9 @@ func TestBatchCandidateExpansionReadinessUsesArchiveWithoutPublishing(t *testing
 		if record.TargetCandidateCount < 30 {
 			t.Fatalf("line=%d target=%d, want at least 30", entry.Line, record.TargetCandidateCount)
 		}
+		if record.ReadinessStatus == batchcandidateexpansion.ReadyBlockedStatus && record.TargetCandidateCount < 60 {
+			t.Fatalf("line=%d ready target=%d, want at least 60 from expansion strategy", entry.Line, record.TargetCandidateCount)
+		}
 		if len(record.ExpansionCandidateIntentIDs) < record.TargetCandidateCount {
 			t.Fatalf("line=%d selected=%d target=%d", entry.Line, len(record.ExpansionCandidateIntentIDs), record.TargetCandidateCount)
 		}

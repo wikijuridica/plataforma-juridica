@@ -20,17 +20,18 @@ type Mode string
 const RequirePaidSignal Mode = "require_paid_signal"
 
 const (
-	minimumPaidBusinessScore      = 4
-	FinalDraftGateScope           = "final_draft"
-	ExpansionReadinessGateScope   = "expansion_readiness"
-	PassedBlockedStatus           = "paid_intent_passed_blocked_publication"
-	PublicAssistanceBlockedStatus = "paid_intent_blocked_public_assistance_free_risk"
-	AdminSelfServiceBlockedStatus = "paid_intent_blocked_admin_self_service_risk"
-	FreeServiceBlockedStatus      = "paid_intent_blocked_free_service_signal"
-	ResearchOnlyBlockedStatus     = "paid_intent_blocked_research_only_signal"
-	CTAOnlyBlockedStatus          = "paid_intent_blocked_cta_only_paid_signal"
-	MissingPaidSignalStatus       = "paid_intent_blocked_missing_paid_signal"
-	LowBusinessScoreStatus        = "paid_intent_blocked_low_business_score"
+	minimumPaidBusinessScore          = 4
+	FinalDraftGateScope               = "final_draft"
+	ExpansionReadinessGateScope       = "expansion_readiness"
+	PassedBlockedStatus               = "paid_intent_passed_blocked_publication"
+	PublicAssistanceBlockedStatus     = "paid_intent_blocked_public_assistance_free_risk"
+	AdminSelfServiceBlockedStatus     = "paid_intent_blocked_admin_self_service_risk"
+	FreeServiceBlockedStatus          = "paid_intent_blocked_free_service_signal"
+	ResearchOnlyBlockedStatus         = "paid_intent_blocked_research_only_signal"
+	CTAOnlyBlockedStatus              = "paid_intent_blocked_cta_only_paid_signal"
+	MissingPaidSignalStatus           = "paid_intent_blocked_missing_paid_signal"
+	LowBusinessScoreStatus            = "paid_intent_blocked_low_business_score"
+	PrevidenciarioInformationalStatus = "paid_intent_flexible_previdenciario_informational_blocked_publication"
 )
 
 type Record struct {
@@ -467,6 +468,10 @@ func evaluateParts(input EvaluationInput) Record {
 		status = LowBusinessScoreStatus
 		routing = "commercial_publication_blocked_low_business_score"
 	}
+	if isPrevidenciarioInformationalFlex(input, status) {
+		status = PrevidenciarioInformationalStatus
+		routing = "informational_previdenciario_blocked_publication"
+	}
 	return Record{
 		PaidIntentGateID:   "paid-intent-" + input.UniqueIntentID,
 		GateScope:          input.GateScope,
@@ -552,6 +557,16 @@ func ValidateTextParts(coreText string, ctaText string, mode Mode) Report {
 	return Report{Issues: issues}
 }
 
+func AllowsExpansion(record Record) bool {
+	if record.RenderAllowed || record.SitemapAllowed || record.PublicationAllowed || record.PublicPath != "" {
+		return false
+	}
+	if record.PaidIntentStatus == PassedBlockedStatus {
+		return true
+	}
+	return record.BatchID == "batch-previdenciario-digital" && record.PaidIntentStatus == PrevidenciarioInformationalStatus
+}
+
 func scoreText(text string) textScore {
 	normalized := normalize(text)
 	paid := matchedSignals(normalized, paidServiceSignals)
@@ -613,6 +628,7 @@ func compareGateToEvaluation(record Record, expected Record) []Issue {
 func validStatus(value string) bool {
 	switch value {
 	case PassedBlockedStatus,
+		PrevidenciarioInformationalStatus,
 		PublicAssistanceBlockedStatus,
 		AdminSelfServiceBlockedStatus,
 		FreeServiceBlockedStatus,
@@ -620,6 +636,18 @@ func validStatus(value string) bool {
 		CTAOnlyBlockedStatus,
 		MissingPaidSignalStatus,
 		LowBusinessScoreStatus:
+		return true
+	default:
+		return false
+	}
+}
+
+func isPrevidenciarioInformationalFlex(input EvaluationInput, status string) bool {
+	if input.BatchID != "batch-previdenciario-digital" {
+		return false
+	}
+	switch status {
+	case PublicAssistanceBlockedStatus, AdminSelfServiceBlockedStatus, ResearchOnlyBlockedStatus, CTAOnlyBlockedStatus, MissingPaidSignalStatus, LowBusinessScoreStatus:
 		return true
 	default:
 		return false

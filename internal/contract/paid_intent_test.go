@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"portaljuridico/internal/batchcandidateexpansion"
+	"portaljuridico/internal/batchdrafts"
 	"portaljuridico/internal/paidintent"
 )
 
@@ -79,6 +80,66 @@ func TestPaidIntentRejectsCTAOnlyPaidSignal(t *testing.T) {
 	}
 }
 
+func TestPaidIntentPrevidenciarioInformationalFlexDoesNotRelaxOtherFamilies(t *testing.T) {
+	previdenciario := paidintent.EvaluateArchiveDraft(batchdrafts.Record{
+		BatchID:         "batch-previdenciario-digital",
+		UniqueIntentID:  "previdenciario-bpc-loas-cadunico-renda",
+		Term:            "BPC LOAS negado por CadÚnico e renda familiar",
+		ReaderProblem:   "Leitor quer entender documentos, prazo e motivo administrativo do INSS.",
+		SourceHook:      "Fonte oficial previdenciária específica será conferida antes de qualquer publicação.",
+		DocumentContext: "CadÚnico, carta do INSS, comprovantes e protocolo.",
+		RiskContext:     "Risco de perder prazo ou juntar documento incompleto.",
+		DigitalAction:   "Organizar documentos para triagem informativa online.",
+		CTAContext:      "Origem: previdenciario-bpc-loas-cadunico-renda; Intent: previdenciario-bpc-loas-cadunico-renda; Documentos: carta do INSS e CadÚnico.",
+		CheckedAt:       "2026-06-09",
+	})
+	if previdenciario.PaidIntentStatus != paidintent.PrevidenciarioInformationalStatus {
+		t.Fatalf("previdenciario status=%q, want informational lane", previdenciario.PaidIntentStatus)
+	}
+	if !paidintent.AllowsExpansion(previdenciario) {
+		t.Fatalf("previdenciario informational lane should allow blocked internal expansion")
+	}
+
+	otherFamily := paidintent.EvaluateArchiveDraft(batchdrafts.Record{
+		BatchID:         "batch-consumidor-financeiro-digital",
+		UniqueIntentID:  "consumidor-exemplo-assistencia-publica",
+		Term:            "dúvida sobre justiça gratuita e defensoria pública",
+		ReaderProblem:   "Leitor quer atendimento gratuito e orientação sem pagar.",
+		SourceHook:      "Fonte oficial será conferida.",
+		DocumentContext: "Documentos gerais.",
+		RiskContext:     "Risco jurídico genérico.",
+		DigitalAction:   "Pesquisar informação.",
+		CTAContext:      "Origem: consumidor-exemplo-assistencia-publica; Intent: consumidor-exemplo-assistencia-publica; Documentos: gerais.",
+		CheckedAt:       "2026-06-09",
+	})
+	if paidintent.AllowsExpansion(otherFamily) {
+		t.Fatalf("non-previdenciario public-assistance/free lane must not allow expansion")
+	}
+	if paidintent.AllowsExpansion(paidintent.Record{
+		BatchID:          "batch-consumidor-financeiro-digital",
+		PaidIntentStatus: paidintent.PrevidenciarioInformationalStatus,
+		IndexPolicy:      "noindex",
+	}) {
+		t.Fatalf("forged previdenciario informational status outside previdenciario batch must not allow expansion")
+	}
+
+	freePrevidenciario := paidintent.EvaluateArchiveDraft(batchdrafts.Record{
+		BatchID:         "batch-previdenciario-digital",
+		UniqueIntentID:  "previdenciario-advogado-gratuito",
+		Term:            "advogado gratuito previdenciário",
+		ReaderProblem:   "Leitor procura serviço jurídico gratuito sem pagar.",
+		SourceHook:      "Fonte oficial será conferida.",
+		DocumentContext: "Documentos gerais.",
+		RiskContext:     "Risco jurídico genérico.",
+		DigitalAction:   "Pesquisar informação.",
+		CTAContext:      "Origem: previdenciario-advogado-gratuito; Intent: previdenciario-advogado-gratuito; Documentos: gerais.",
+		CheckedAt:       "2026-06-09",
+	})
+	if freePrevidenciario.PaidIntentStatus == paidintent.PrevidenciarioInformationalStatus || paidintent.AllowsExpansion(freePrevidenciario) {
+		t.Fatalf("explicit free-service previdenciario text must remain blocked, got %q", freePrevidenciario.PaidIntentStatus)
+	}
+}
+
 func TestPaidIntentCoversExpansionReadinessTargetsWithoutPublishing(t *testing.T) {
 	report := paidintent.Validate(".")
 	if !report.Passed() {
@@ -95,8 +156,8 @@ func TestPaidIntentCoversExpansionReadinessTargetsWithoutPublishing(t *testing.T
 			targets[intentID] = true
 		}
 	}
-	if len(targets) != 180 {
-		t.Fatalf("readiness targets=%d, want 180 unique expansion intents", len(targets))
+	if len(targets) < 330 {
+		t.Fatalf("readiness targets=%d, want at least 330 strategy expansion intents", len(targets))
 	}
 
 	paidRecords, loadReport := paidintent.LoadRecords(".")
@@ -140,8 +201,8 @@ func TestPaidIntentRepositoryGatesBlockWeakCommercialDrafts(t *testing.T) {
 		}
 	}
 	for intent, status := range map[string]string{
-		"previdenciario-bpc-loas-cadunico-renda":      paidintent.PublicAssistanceBlockedStatus,
-		"previdenciario-cumprimento-exigencia-parado": paidintent.AdminSelfServiceBlockedStatus,
+		"previdenciario-bpc-loas-cadunico-renda":      paidintent.PrevidenciarioInformationalStatus,
+		"previdenciario-cumprimento-exigencia-parado": paidintent.PrevidenciarioInformationalStatus,
 	} {
 		if statusByIntent[intent] != status {
 			t.Fatalf("intent=%s status=%q, want %q", intent, statusByIntent[intent], status)
