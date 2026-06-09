@@ -8,6 +8,7 @@ Estado inicial:
 - Senado Dados Abertos: documentado preliminarmente em `docs/data-sources/senado-dados-abertos.md`, sem ingestao automatica.
 - LexML: documentado preliminarmente em `docs/data-sources/lexml.md`, sem ingestao automatica.
 - CNJ/Datajud: documentado preliminarmente em `docs/data-sources/cnj-datajud.md`, sem ingestao automatica.
+- CNJ Atos / Resolução 35/2007: documentado em `docs/data-sources/cnj-atos-resolucao-35.md`, usado apenas como referência oficial específica para atos notariais de família/sucessório, sem ingestão automática.
 - STF: documentado preliminarmente em `docs/data-sources/stf.md`, sem ingestao automatica.
 - STJ: documentado preliminarmente em `docs/data-sources/stj.md`, sem ingestao automatica.
 - CJF: documentado preliminarmente em `docs/data-sources/cjf.md`, sem ingestao automatica.
@@ -83,6 +84,8 @@ Métricas de geração/refino em lote ficam em `data/editorial/batch_generation_
 Matriz de fontes por lote fica em `data/editorial/batch_source_matrix.jsonl`. Cada registro conecta um subtema de alta intenção a URLs oficiais usadas como referência/proveniência, com política `reference_only_no_scraping`. A matriz não autoriza cópia de texto oficial, não faz scraping e não cria página pública.
 
 Auditoria URL-level da matriz fica em `data/source-audit/batch_source_urls.jsonl`, separada do conteúdo editorial. Cada registro cobre uma URL oficial única com hash `urlsha256`, `matrix_ids`, robots/termos revisados, política `reference_only_no_scraping_no_ingestion` e bloqueio explícito de scraping, ingestão, render, sitemap e publicação.
+
+No ciclo atual, `https://atos.cnj.jus.br/atos/detalhar/179` foi auditada como URL específica da Resolução CNJ 35/2007 e vinculada aos subtemas de divórcio/partilha/inventário extrajudicial. A fonte aumenta especificidade da matriz, mas continua referência: não autoriza copiar texto oficial, fazer scraping, ingerir payload, renderizar página ou publicar sitemap.
 
 Resolucao de especificidade por candidato fica em `data/editorial/batch_source_specificity_resolutions.jsonl`. Cada registro cobre um candidato de `batch_prepublication_gates` e decide se a fonte auditada ja e especifica o bastante para referencia final (`final_source_locked_reference_only`) ou se continua bloqueada por fonte ampla (`final_source_blocked_needs_specific_url`). Mesmo fonte travada nao autoriza scraping, ingestao, render, sitemap, publicacao ou `public_path`.
 

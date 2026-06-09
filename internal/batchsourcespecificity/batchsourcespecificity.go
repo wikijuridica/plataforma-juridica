@@ -190,6 +190,66 @@ func BuildSourceIndex(root string) (SourceIndex, Report) {
 	return index, Report{Issues: issues}
 }
 
+func BuildSpecificSourceURLsByMatrix(root string) (map[string][]string, Report) {
+	auditEntries, auditLoadReport := batchsourceaudit.LoadRecords(root)
+	issues := convertSourceAuditIssues(auditLoadReport)
+	issues = append(issues, convertSourceAuditIssues(batchsourceaudit.Validate(root))...)
+
+	urlsByMatrix := make(map[string][]string)
+	seenByMatrix := make(map[string]map[string]bool)
+	for _, entry := range auditEntries {
+		record := entry.Record
+		source := AuditedSource{
+			SourceURL:          record.SourceURL,
+			MatrixIDs:          append([]string{}, record.MatrixIDs...),
+			OfficialHost:       record.OfficialHost,
+			AuditStatus:        record.AuditStatus,
+			UsePolicy:          record.UsePolicy,
+			SourceType:         record.SourceType,
+			ScrapingAllowed:    record.ScrapingAllowed,
+			IngestionAllowed:   record.IngestionAllowed,
+			RenderAllowed:      record.RenderAllowed,
+			SitemapAllowed:     record.SitemapAllowed,
+			PublicationAllowed: record.PublicationAllowed,
+			PublicPath:         record.PublicPath,
+		}
+		if !IsSpecificAuditedSource(source) {
+			continue
+		}
+		for _, matrixID := range record.MatrixIDs {
+			matrixID = strings.TrimSpace(matrixID)
+			if matrixID == "" {
+				continue
+			}
+			if seenByMatrix[matrixID] == nil {
+				seenByMatrix[matrixID] = make(map[string]bool)
+			}
+			if seenByMatrix[matrixID][record.SourceURL] {
+				continue
+			}
+			seenByMatrix[matrixID][record.SourceURL] = true
+			urlsByMatrix[matrixID] = append(urlsByMatrix[matrixID], record.SourceURL)
+		}
+	}
+	for matrixID := range urlsByMatrix {
+		sort.Strings(urlsByMatrix[matrixID])
+	}
+	return urlsByMatrix, Report{Issues: issues}
+}
+
+func IsSpecificAuditedSource(source AuditedSource) bool {
+	if !source.OfficialHost || !isOfficialURL(source.SourceURL) {
+		return false
+	}
+	if source.AuditStatus != "source_url_audited_reference_only_blocked" || source.UsePolicy != UsePolicy {
+		return false
+	}
+	if source.ScrapingAllowed || source.IngestionAllowed || source.RenderAllowed || source.SitemapAllowed || source.PublicationAllowed || source.PublicPath != "" {
+		return false
+	}
+	return !isBroadSource(source)
+}
+
 func ValidateRecordAgainstSourceIndex(record Record, index SourceIndex) Report {
 	issues := make([]Issue, 0)
 	for _, id := range []struct {
@@ -384,6 +444,7 @@ func isOfficialURL(url string) bool {
 		"https://www.gov.br/",
 		"https://www.planalto.gov.br/",
 		"https://www.cnj.jus.br/",
+		"https://atos.cnj.jus.br/",
 		"https://www.bcb.gov.br/",
 		"https://www.tst.jus.br/",
 		"https://www.stj.jus.br/",

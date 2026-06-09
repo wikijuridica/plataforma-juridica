@@ -244,6 +244,7 @@ func isOfficialURL(url string) bool {
 		"https://www.gov.br/",
 		"https://www.planalto.gov.br/",
 		"https://www.cnj.jus.br/",
+		"https://atos.cnj.jus.br/",
 		"https://www.bcb.gov.br/",
 		"https://www.tst.jus.br/",
 	}

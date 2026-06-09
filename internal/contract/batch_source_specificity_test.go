@@ -44,6 +44,42 @@ func TestBatchSourceSpecificityCoversPrepublicationWithoutPublishing(t *testing.
 	}
 }
 
+func TestBatchSourceSpecificityPromotesAuditedSpecificMatricesAtScale(t *testing.T) {
+	records, loadReport := batchsourcespecificity.LoadRecords(".")
+	if !loadReport.Passed() {
+		t.Fatalf("could not load batch source specificity resolutions: %v", loadReport.Messages())
+	}
+
+	lockedByIntent := make(map[string]batchsourcespecificity.Record)
+	for _, entry := range records {
+		record := entry.Record
+		if record.SourceSpecificityStatus == batchsourcespecificity.LockedStatus {
+			lockedByIntent[record.UniqueIntentID] = record
+		}
+	}
+
+	if len(lockedByIntent) < 100 {
+		t.Fatalf("source-locked candidates=%d, want at least 100 candidates promoted by audited specific official URLs", len(lockedByIntent))
+	}
+
+	for _, intentID := range []string{
+		"consumidor-financeiro-pix-fraude-resposta-banco-documento-minimo",
+		"familia-divorcio-consensual-filhos-bens-fonte-primaria",
+		"previdenciario-auxilio-incapacidade-pericia-fonte-primaria",
+		"saude-suplementar-prazo-consulta-especialista-competencia-digital",
+		"sucessorio-inventario-extrajudicial-consenso-documento-minimo",
+		"trabalhista-acidente-trabalho-estabilidade-documento-minimo",
+	} {
+		record, ok := lockedByIntent[intentID]
+		if !ok {
+			t.Fatalf("intent %q stayed blocked even though its matrix has audited specific official source URLs", intentID)
+		}
+		if len(record.SelectedSourceURLs) == 0 {
+			t.Fatalf("intent %q locked without selected source URLs", intentID)
+		}
+	}
+}
+
 func TestBatchSourceSpecificityRejectsUnauditedOrPublicResolution(t *testing.T) {
 	index := batchsourcespecificity.SourceIndex{
 		BaseURL: "https://wikijuridica.com.br",

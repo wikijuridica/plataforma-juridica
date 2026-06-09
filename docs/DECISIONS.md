@@ -180,6 +180,17 @@ Motivos:
 
 Consequencia: Nada deve ser deixado para o futuro por conveniencia. Tudo que estiver no escopo e para esta sessao. Alternativa so e valida quando resolve o requisito ou produz prova executavel que desbloqueia o requisito; artefato que nao sera usado nao conta como entrega. Se a rede do sandbox falhar e a rede for necessaria, o agente deve repetir o comando com `sandbox_permissions=require_escalated` e justificativa objetiva pela ferramenta, sem perguntar no chat. Se o escalonamento for negado, a negativa vira bloqueio real com evidencia, nao pendencia mascarada.
 
+## 2026-06-09 — Fonte especifica por matriz auditada destrava lote bloqueado
+
+Decisao: `refresh-batch-candidate-pipeline` deve promover fonte travada por matriz quando existir URL oficial especifica auditada, em vez de depender de rascunho final preexistente por intent.
+
+Motivos:
+- o comportamento anterior travava artificialmente variantes de um mesmo subtema que ja tinham fonte especifica;
+- escala massiva exige destravar por prova de fonte e paid-intent, nao por edicao manual de cada pagina;
+- a Resolução CNJ 35/2007 foi verificada no portal de atos do CNJ e cobre atos notariais de inventario, partilha, divorcio consensual e uniao estavel por via administrativa.
+
+Consequencia: `batch_source_specificity_resolutions` passou a usar `BuildSpecificSourceURLsByMatrix`; fontes amplas como Codigo Civil, CDC, CLT, raiz de orgao ou home institucional continuam bloqueadas sem URL especifica. O ciclo promoveu 102 candidatos para fonte travada e 102 rascunhos finais bloqueados, mantendo `noindex`, sem render, sem sitemap, sem publicacao e sem scraping/ingestao.
+
 ## 2026-06-09 — Banco leve separado para ingestao de termos
 
 Decisao: ingestao de termos juridicos pode iniciar conteudos apenas como semente de rascunho, usando banco leve proprio em JSONL e camadas separadas.

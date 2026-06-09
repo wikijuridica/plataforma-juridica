@@ -123,7 +123,7 @@ Camadas obrigatorias:
 - `batch_source_matrix`: matriz de fontes oficiais por subtema, usada como referência/proveniência sem scraping e sem publicação;
 - `batch_source_url_audits`: auditoria das URLs da matriz, separada da camada editorial, exigindo cobertura de cada URL por `matrix_id` antes de escalar rascunhos;
 
-Ferramentas operacionais de escala: `./tools/expand-batch-candidate-gates` recalcula a seleção a partir de `batch_candidate_expansion_readiness` e `batch_paid_intent_gates`; `./tools/refresh-batch-candidate-pipeline` propaga a seleção para revisões, pre-publicação, fonte específica, manifesto e rascunhos finais bloqueados. A ferramenta deve ser idempotente e não pode publicar: ela preserva somente rascunhos finais ainda elegíveis pelo paid gate e mantém os demais candidatos em `final_source_blocked_needs_specific_url`.
+Ferramentas operacionais de escala: `./tools/expand-batch-candidate-gates` recalcula a seleção a partir de `batch_candidate_expansion_readiness` e `batch_paid_intent_gates`; `./tools/refresh-batch-candidate-pipeline` propaga a seleção para revisões, pre-publicação, fonte específica, manifesto e rascunhos finais bloqueados. A ferramenta deve ser idempotente e não pode publicar: ela trava fonte por matriz quando existe URL oficial específica auditada, gera rascunhos finais bloqueados para manifests elegíveis, preserva apenas rascunhos antigos que ainda passam score/qualidade e mantém os demais candidatos em `final_source_blocked_needs_specific_url`.
 - `published_manifest`: manifesto leve de conteudo aprovado, sem substituir o renderizador.
 
 Camada operacional fora do banco de conteúdo:

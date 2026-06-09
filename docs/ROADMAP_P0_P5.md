@@ -23,6 +23,7 @@
 - Continuar P0: transformar as métricas de `batch_generation_metrics` em gate para pré-publicação bloqueada por lote, sem publicar até fonte específica, revisão jurídica, SEO/crawl e render leve passarem.
 - Continuar P0: expandir `batch_source_matrix` com URLs oficiais por subtema, revisão de robots e estratégia sem scraping para cada família de alta intenção digital.
 - Continuar P0: usar `expand-batch-candidate-gates` e `refresh-batch-candidate-pipeline` para subir candidatos bloqueados de 168 para milhares, preservando paid-intent, fonte específica, revisão, CTA contextual e flags públicas falsas.
+- Continuar P0: reduzir os 66 candidatos ainda bloqueados por fonte ampla pesquisando URLs oficiais específicas por subtema, começando por trabalhista/TST, consumidor financeiro/BCB e família que ainda depende só de fonte geral.
 - Continuar P0: transformar autocrítica pré-commit e validação massiva em contrato testável, para impedir commit tratado como conclusão do `/goal`.
 - Continuar P0 em laboratorio: validar, refinar, testar novamente e inspecionar artefatos.
 - P2: ampliar contratos de tipos de pagina e fontes oficiais.
