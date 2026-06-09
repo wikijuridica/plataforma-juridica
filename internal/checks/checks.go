@@ -14,6 +14,7 @@ import (
 	"portaljuridico/internal/batchdraftarchive"
 	"portaljuridico/internal/batchdraftgen"
 	"portaljuridico/internal/batchdrafts"
+	"portaljuridico/internal/batchfinaldrafts"
 	"portaljuridico/internal/batchprepublication"
 	"portaljuridico/internal/batchpublicmanifest"
 	"portaljuridico/internal/batchsourceaudit"
@@ -28,6 +29,7 @@ import (
 	"portaljuridico/internal/humanscore"
 	"portaljuridico/internal/legalreviews"
 	"portaljuridico/internal/manualresearch"
+	"portaljuridico/internal/paidintent"
 	"portaljuridico/internal/prepublication"
 	"portaljuridico/internal/publicationblockers"
 	"portaljuridico/internal/quality"
@@ -79,6 +81,8 @@ var Names = []string{
 	"batch-prepublication-gates",
 	"batch-source-specificity",
 	"batch-public-manifest-gates",
+	"batch-final-authorial-drafts",
+	"paid-intent",
 	"batch-draft-generation",
 	"batch-source-url-audits",
 	"batch-source-matrix",
@@ -152,6 +156,10 @@ func Run(name string, root string) []string {
 		return checkBatchSourceSpecificity(root)
 	case "batch-public-manifest-gates":
 		return checkBatchPublicManifestGates(root)
+	case "batch-final-authorial-drafts":
+		return checkBatchFinalAuthorialDrafts(root)
+	case "paid-intent":
+		return checkPaidIntent(root)
 	case "batch-draft-generation":
 		return checkBatchDraftGeneration(root)
 	case "batch-source-url-audits":
@@ -397,6 +405,14 @@ func checkBatchSourceSpecificity(root string) []string {
 
 func checkBatchPublicManifestGates(root string) []string {
 	return batchpublicmanifest.Validate(root).Messages()
+}
+
+func checkBatchFinalAuthorialDrafts(root string) []string {
+	return batchfinaldrafts.Validate(root).Messages()
+}
+
+func checkPaidIntent(root string) []string {
+	return paidintent.Validate(root).Messages()
 }
 
 func checkBatchDraftGeneration(root string) []string {

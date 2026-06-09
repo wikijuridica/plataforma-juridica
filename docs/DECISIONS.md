@@ -612,3 +612,28 @@ Motivos:
 - manifesto publico real deve ser posterior e mais restrito que este gate bloqueado.
 
 Consequencia: `data/editorial/batch_public_manifest_gates.jsonl`, `internal/batchpublicmanifest`, `./tools/check-batch-public-manifest-gates`, `internal/checks`, `content/storage_contract.json` e `tools/lab-cycle` entram no laboratorio. O gate exige 18 registros, 7 com `public_manifest_blocked_seo_review_pending` e 11 com `public_manifest_blocked_source_specificity`, mantendo `index_policy=noindex`, `manifest_allowed=false`, `render_allowed=false`, `sitemap_allowed=false`, `publication_allowed=false` e `public_path=""`.
+
+## 2026-06-09 — Rascunho autoral final bloqueado e intenção paga
+
+Decisao: criar `batch_final_authorial_drafts` apenas para os candidatos com fonte travada e manifesto SEO pendente, e adicionar `paid-intent` como gate de negócio para impedir funil de gratuidade, curiosidade ou baixa intenção de contratação.
+
+Motivos:
+- rascunho final não é publicação, mas precisa virar artefato permanente para escalar conteúdo;
+- CTA WhatsApp deve carregar origem, intenção, documentos e sinal de contratação particular;
+- serviço jurídico comercial precisa priorizar busca com honorários/orçamento, valor envolvido, urgência e documentos concretos;
+- termos de gratuidade, defensoria, justiça gratuita, estudo acadêmico, modelo pronto ou curiosidade não devem alimentar o lote comercial;
+- inferência aceitável é textual e jurídico-econômica do termo/caso, não perfil pessoal sensível.
+
+Consequencia: `data/editorial/batch_final_authorial_drafts.jsonl`, `internal/batchfinaldrafts`, `internal/paidintent`, `./tools/check-batch-final-authorial-drafts`, `./tools/check-paid-intent`, `internal/checks`, `content/storage_contract.json` e `tools/lab-cycle` entram no laboratorio. Todos os 7 rascunhos seguem `noindex`, sem render, sem sitemap, sem publicação e sem `public_path`; o gate pago deve ser refinado quando surgir falso positivo/negativo antes de escalar.
+
+## 2026-06-09 — Agentes auxiliares sem concorrência crítica
+
+Decisao: no próximo ciclo e nos seguintes, usar agentes auxiliares em paralelo quando houver trabalho independente, especialmente pesquisa de fontes oficiais, matriz de proveniência, testes, conteúdo bloqueado e debugging.
+
+Motivos:
+- a meta massiva exige acelerar pesquisa e produção sem perder validação;
+- fontes oficiais e conteúdo por subtema podem ser divididos por área/fonte;
+- concorrência no mesmo arquivo, gate ou decisão crítica aumenta risco de conflito e mascaramento;
+- o Codex principal deve manter responsabilidade por arquitetura, P0/P1, integração, validação, checkpoint e commit.
+
+Consequencia: tarefas paralelas devem ser particionadas por fonte, área, subtema, pacote ou teste. Agentes podem ajudar a escrever e debugar, mas o Codex principal valida evidência, revisa o diff, roda os checks relevantes e não publica nada sem gate.

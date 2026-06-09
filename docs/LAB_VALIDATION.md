@@ -6,6 +6,8 @@ O projeto deve operar como laboratorio: testar, validar, refinar, testar novamen
 
 Laboratorio deve usar engenharia agressiva inteligente. O agente deve planejar a hipótese do ciclo, rodar validação em massa quando o escopo for massa, usar CPU disponível para acelerar prova e refinar algoritmo antes de expor qualquer conteúdo público. Passividade, pergunta desnecessária, commit sem autocrítica e validação pequena para decisão massiva são falhas de laboratório.
 
+O agente principal pode acionar o máximo de agentes auxiliares que fizer sentido para acelerar pesquisa de fontes oficiais, matriz de proveniência, criação de conteúdo bloqueado, testes, edição localizada, revisão documental e debugging. A paralelização deve ser por tarefas independentes, sem concorrência desordenada no mesmo arquivo, gate ou decisão crítica. O agente principal valida, integra, revisa diff, roda os checks relevantes, atualiza checkpoint e commita.
+
 Validação deve ser proporcional ao risco. Validação global completa é cara em tempo e só deve rodar quando houver alteração ampla, mudança em contrato central, risco P0/P1 crítico, modificação de HTML/sitemap/canonical/robots/indexação/performance, gerador em massa, preparação de publicação ou falha que possa contaminar várias camadas. Em ciclo pequeno/localizado, use teste focado, check específico, inspeção do diff/artefato e `git diff --check`.
 
 ## Comando global
@@ -35,6 +37,8 @@ Esse comando combina:
 - `./tools/check-batch-prepublication-gates`;
 - `./tools/check-batch-source-specificity`;
 - `./tools/check-batch-public-manifest-gates`;
+- `./tools/check-batch-final-authorial-drafts`;
+- `./tools/check-paid-intent`;
 - `./tools/check-batch-draft-generation`;
 - `./tools/check-batch-source-url-audits`;
 - `./tools/check-batch-source-matrix`;
@@ -107,6 +111,8 @@ Antes de qualquer rota candidata de lote se aproximar de renderização, rodar `
 Antes de qualquer manifesto público bloqueado por lote, rodar `./tools/check-batch-source-specificity`. Esse gate cobre todos os candidatos de pré-publicação e separa `final_source_locked_reference_only` de `final_source_blocked_needs_specific_url`. Fonte ampla não pode ser mascarada como pronta; fonte travada continua apenas referência, sem scraping, ingestão, render, sitemap, publicação ou `public_path`.
 
 Antes de gerar rascunho final ou revisão SEO de candidato de lote, rodar `./tools/check-batch-public-manifest-gates`. Esse gate nao publica: ele apenas separa candidatos com fonte travada que ainda precisam SEO/conteudo final de candidatos bloqueados por fonte ampla. Candidato com `final_source_blocked_needs_specific_url` nao pode entrar em revisão SEO como se a fonte estivesse pronta.
+
+Antes de ampliar rascunhos finais de lote, rodar `./tools/check-batch-final-authorial-drafts` e `./tools/check-paid-intent`. O primeiro gate exige rascunho autoral natural, fonte travada, CTA contextual, aviso informativo e bloqueio total de render/sitemap/publicação. O segundo gate exige intenção comercial paga: contratação particular online, honorários/orçamento e contexto jurídico-econômico, bloqueando gratuidade, curiosidade, estudo ou modelo pronto.
 
 Antes de ampliar subtemas, rodar `./tools/check-batch-source-matrix`. A matriz deve provar fonte oficial específica por subtema, política sem scraping e cobertura de cada draft gerado. Se a fonte estiver genérica, ausente ou sem revisão de robots, o lote fica bloqueado.
 

@@ -20,6 +20,8 @@ Regra literal de engenharia agressiva inteligente: Codex deve usar engenharia ag
 
 Codex deve ser autônomo. Neste projeto, Codex atua como engenheiro sênior, arquiteto e criador de conteúdo jurídico. Se existe algo a fazer dentro do escopo, deve continuar até terminar. Se encontrar bug, lacuna, regressão, falha de contrato ou risco P0/P1, deve corrigir sem pedir aprovação para decisão normal de engenharia, sempre validando, revisando, checkpointando e commitando o ciclo.
 
+Regra de agentes paralelos: no próximo ciclo e nos ciclos seguintes, o Codex pode usar o máximo de agentes auxiliares que julgar pertinente para adiantar trabalho quando houver tarefas independentes. Agentes auxiliares podem pesquisar contexto, pesquisar fontes oficiais, montar matriz de proveniência, criar rascunhos/conteúdo bloqueado, escrever testes, editar código localizado, debugar falhas, revisar documentos e levantar evidências. Não pode haver concorrência desordenada no mesmo arquivo, mesma decisão crítica ou mesmo gate; dividir por fonte, área, subtema, pacote ou teste e integrar depois. O Codex principal continua responsável pelas partes críticas: decisões P0/P1, contrato de produto, arquitetura, fonte jurídica, integração final, validação, revisão do diff, checkpoint e commit. Agente paralelo não substitui prova, não autoriza publicação e não pode mascarar pendência.
+
 Antes de alterar código:
 1. Investigue o repositório.
 2. Leia documentação existente.
@@ -72,6 +74,8 @@ Regra de URL oficial travada: o domínio oficial do projeto é `wikijuridica.com
 
 Regra de CTA WhatsApp contextual: todo WhatsApp futuro deve carregar mensagem contextual de origem. A mensagem deve identificar pagina ou rota candidata, `unique_intent_id` ou termo, e contexto/documentos esperados, para o atendimento saber de onde a pessoa veio e qual triagem juridica inicial deve seguir. CTA sem origem rastreavel deve reprovar.
 
+Regra de intenção comercial paga: o projeto é jurídico comercial, não serviço gratuito. O algoritmo deve priorizar termos, rascunhos e CTAs com sinal de contratação particular online, honorários, orçamento, consulta/triagem paga, valor envolvido, urgência econômica ou risco jurídico concreto. Deve reprovar sinais explícitos de gratuidade, não pagamento, defensoria/justiça gratuita, curiosidade, estudo acadêmico, modelo pronto ou pesquisa sem intenção de contratar. A inferência permitida é de intenção de negócio a partir do texto, termo, documentos, valor e contexto jurídico-econômico do caso; não usar atributo protegido, estereótipo pessoal ou perfil sensível. Gate fraco deve ser melhorado e testado antes de escalar.
+
 Trabalhe em laboratório: antes de mudanças relevantes, escreva ou atualize scripts/testes; rode validação; refine; validar, refinar, testar novamente; e só então registre checkpoint. Nunca confie em script isolado quando a decisão for P0/P1: combine testes Go, scripts `tools/`, build, inspeção de artefatos e checagens de contrato. Nada de mudar no chute.
 
 Regra de CPU no laboratório: o laboratório, testes, auditorias, build e validações em massa podem usar CPU de forma agressiva quando isso acelera prova, descoberta de falha, refinamento de algoritmo ou geração validada. Não atrasar ciclo por medo de CPU no laboratório. A restrição de CPU baixo vale para runtime público/produção e caminhos que atendem tráfego legítimo, Googlebot, OAI-SearchBot e bots valiosos.
@@ -101,6 +105,7 @@ Regra de score humano e reescrita automatica: todo texto gerado em massa deve re
 - É obrigatório usar engenharia agressiva inteligente: planejar, executar, validar em massa, refinar algoritmo e seguir sem passividade quando o contrato já define o objetivo.
 - É obrigatório construir pipeline de geração massiva com validação em lote. Passividade, conteúdo um a um como gargalo, revisão manual repetitiva e baixa produção operacional são falhas de estratégia.
 - É obrigatório gerar páginas informativas com intenção comercial implícita e responsável: sem apelo comercial agressivo no corpo, mas com CTA WhatsApp contextual quando cabível e com origem rastreável.
+- É obrigatório filtrar intenção comercial paga: termos e CTAs que induzam gratuidade, não pagamento, curiosidade, estudo ou modelo pronto devem reprovar; termos com contratação particular online, honorários/orçamento, valor envolvido, urgência econômica e documentos concretos devem ter prioridade de negócio.
 - Não usar Next.js.
 - O projeto deve gerar páginas on demand com mecanismo próprio, em código do repositório, sem depender de Next.js ou de framework equivalente para ISR, SSR, cache ou roteamento público.
 - Não usar frameworks frontend pesados em páginas públicas.

@@ -36,6 +36,8 @@ O projeto usa Go e biblioteca padrao como base tecnica. A escolha privilegia bin
 - `internal/batchcandidategates`: selecao bloqueada de candidatos a partir do arquivo permanente, com base URL configuravel e publicacao falsa.
 - `internal/batchcandidatereviews`: revisao juridico-editorial bloqueada de candidatos de lote, com CTA WhatsApp contextual e matriz de fonte auditada.
 - `internal/batchprepublication`: gates de pre-publicacao bloqueada por candidato revisado, com canonical oficial e `noindex`.
+- `internal/batchfinaldrafts`: rascunhos autorais finais bloqueados para candidatos com fonte travada e manifesto SEO pendente.
+- `internal/paidintent`: gate de intenção comercial paga, bloqueando gratuidade/curiosidade e exigindo contratação particular online com sinal de honorários, orçamento e contexto jurídico-econômico.
 - `cmd/refresh-editorial-drafts`: regeneracao segura de rascunhos persistidos quando o algoritmo de escrita e refinado.
 - `internal/provenance`: contrato de proveniencia por payload antes de qualquer conteudo.
 - `internal/architecture`: validacao de estrutura e proibicoes P0.
@@ -109,6 +111,7 @@ Camadas obrigatorias:
 - `batch_prepublication_gates`: pre-publicacao bloqueada de candidatos revisados, com canonical oficial, title/meta, `noindex` e fonte final ainda pendente;
 - `batch_source_specificity_resolutions`: resolucao de fonte por candidato pre-publicado, marcando URL especifica auditada ou bloqueio explicito por fonte ampla, sem liberar render/sitemap/publicacao;
 - `batch_public_manifest_gates`: manifesto publico bloqueado por candidato, permitindo SEO/conteudo pendente apenas quando a fonte esta travada e mantendo fonte ampla bloqueada;
+- `batch_final_authorial_drafts`: rascunhos autorais finais bloqueados, com fonte travada, score humano/naturalidade, CTA contextual e intenção comercial paga, ainda sem render, sitemap ou publicação;
 - `batch_generation_metrics`: métricas agregadas de geração/refino por lote, provando volume, reescrita, score e similaridade sem criar URL pública;
 - `batch_source_matrix`: matriz de fontes oficiais por subtema, usada como referência/proveniência sem scraping e sem publicação;
 - `batch_source_url_audits`: auditoria das URLs da matriz, separada da camada editorial, exigindo cobertura de cada URL por `matrix_id` antes de escalar rascunhos;

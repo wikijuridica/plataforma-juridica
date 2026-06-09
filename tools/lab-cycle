@@ -30,6 +30,8 @@ go test -count=1 ./...
 ./tools/check-batch-prepublication-gates
 ./tools/check-batch-source-specificity
 ./tools/check-batch-public-manifest-gates
+./tools/check-batch-final-authorial-drafts
+./tools/check-paid-intent
 ./tools/check-batch-draft-generation
 ./tools/check-batch-source-url-audits
 ./tools/check-batch-source-matrix

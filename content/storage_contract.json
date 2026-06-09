@@ -307,6 +307,18 @@
       "description": "Gate bloqueado de manifesto publico por candidato de lote; separa fonte travada de fonte bloqueada, sem render, sitemap ou publicacao."
     },
     {
+      "name": "batch_final_authorial_drafts",
+      "path": "data/editorial/batch_final_authorial_drafts.jsonl",
+      "record_type": "batch_final_authorial_draft_blocked",
+      "record_max_bytes": 32768,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": true,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Rascunhos autorais finais bloqueados por candidato com fonte travada, score humano, CTA contextual e intencao paga, sem render, sitemap ou publicacao."
+    },
+    {
       "name": "batch_generation_metrics",
       "path": "data/editorial/batch_generation_metrics.jsonl",
       "record_type": "batch_generation_scored_blocked",
