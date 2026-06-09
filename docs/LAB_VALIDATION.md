@@ -16,6 +16,7 @@ Esse comando combina:
 - `./tools/check-term-seeds`;
 - `./tools/check-editorial-drafts`;
 - `./tools/check-review-queue`;
+- `./tools/check-approvals`;
 - `./tools/lab-term-draft`;
 - `./tools/check-google-search-appearance`;
 - `./tools/check-mechanical-content`;
@@ -37,6 +38,8 @@ O gate `./tools/check-performance-budget` deve reprovar HTML publico pesado, `<s
 `./tools/persist-term-drafts` e ferramenta de ciclo para gravar rascunho validado na camada `editorial_drafts`; `./tools/check-editorial-drafts` e o gate permanente no laboratorio para garantir que o draft persistido continua fora da publicacao.
 
 `./tools/queue-editorial-review` move rascunhos persistidos para fila de revisao `needs_review`, sem publicacao. `./tools/check-review-queue` exige `publication_allowed=false`, `public_path` vazio, fonte, autoria e historico.
+
+`./tools/approve-editorial-review` registra aprovacao editorial de laboratorio; `./tools/check-approvals` garante que essa aprovacao nao cria rota publica nem libera indexacao.
 
 ## Politica
 

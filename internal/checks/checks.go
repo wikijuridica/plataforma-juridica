@@ -6,6 +6,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"portaljuridico/internal/approvals"
 	"portaljuridico/internal/architecture"
 	"portaljuridico/internal/build"
 	"portaljuridico/internal/content"
@@ -36,6 +37,7 @@ var Names = []string{
 	"term-seeds",
 	"editorial-drafts",
 	"review-queue",
+	"approvals",
 	"sitemaps",
 	"canonicals",
 	"no-duplicate-content",
@@ -66,6 +68,8 @@ func Run(name string, root string) []string {
 		return checkEditorialDrafts(root)
 	case "review-queue":
 		return checkReviewQueue(root)
+	case "approvals":
+		return checkApprovals(root)
 	case "sitemaps":
 		return checkSitemaps(root)
 	case "canonicals":
@@ -225,6 +229,10 @@ func checkEditorialDrafts(root string) []string {
 
 func checkReviewQueue(root string) []string {
 	return reviewqueue.Validate(root).Messages()
+}
+
+func checkApprovals(root string) []string {
+	return approvals.Validate(root).Messages()
 }
 
 func checkSitemaps(root string) []string {

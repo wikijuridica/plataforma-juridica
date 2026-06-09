@@ -254,3 +254,14 @@ Motivos:
 - a meta de 10 mil paginas exige processo repetivel, nao improviso por pagina.
 
 Consequencia: `internal/reviewqueue`, `./tools/queue-editorial-review` e `./tools/check-review-queue` validam a fila. Nenhuma entrada da fila cria URL publica, sitemap, canonical ou CTA.
+
+## 2026-06-09 — Aprovacao editorial ainda nao publica
+
+Decisao: aprovacao editorial de laboratorio fica em `data/editorial/approved_drafts.jsonl` e continua com `publication_allowed=false`, `public_path` vazio e `noindex`.
+
+Motivos:
+- aprovacao de texto nao equivale a publicacao tecnica;
+- publicacao publica exige fonte especifica, revisao juridica completa, SEO, CTA, sitemap, canonical, robots e escala segura;
+- separar aprovacao editorial de manifesto publicado evita salto indevido do laboratorio para Googlebot.
+
+Consequencia: `internal/approvals`, `./tools/approve-editorial-review` e `./tools/check-approvals` validam aprovacao sem publicacao. O proximo contrato deve preparar manifest de publicacao bloqueado antes de qualquer URL publica.

@@ -293,3 +293,24 @@
 - plano de continuidade: continuar P0 no ciclo 15; criar contrato de aprovacao editorial `approved` em camada separada, ainda sem publicacao, exigindo revisor, motivo, fonte e qualidade; depois preparar manifest de publicacao bloqueado.
 - proximo ciclo: P0 aprovacao editorial sem publicacao e sem URL publica.
 - riscos: fila tem um item e ainda nao tem revisao juridica real; aprovacao futura precisa continuar bloqueando publicacao ate fonte especifica, revisao e escala segura.
+
+## 2026-06-09 — Ciclo 15 — P0 aprovacao editorial ainda sem publicacao
+
+- data/hora local conferida antes do commit: `2026-06-09 09:38:15 -03`.
+- ciclo: 15
+- prioridade: P0
+- objetivo: continuar sem parada; criar aprovacao editorial separada de publicacao, com revisor/motivo/historico e `publication_allowed=false`.
+- natureza do checkpoint: rastreabilidade operacional para continuar; nenhum ciclo e final e parada; nao e aceite final, nao e ordem de parada.
+- continuidade: continuar P0; proximo ciclo deve preparar manifesto de publicacao bloqueado e validar que aprovacao editorial nao entra em rotas publicas.
+- entregas registradas no ciclo: camada `approved_drafts` em `content/storage_contract.json`; arquivo `data/editorial/approved_drafts.jsonl`; modulo `internal/approvals`; teste `internal/contract/editorial_approval_test.go`; comando `cmd/approve-editorial-review`; tools `./tools/approve-editorial-review` e `./tools/check-approvals`; integracao ao `./tools/lab-cycle`; docs de aprovacao sem publicacao.
+- arquivos alterados: `AGENTS.md`, `GOAL.md`, `CHECKPOINT.md`, `cmd/approve-editorial-review/`, `content/storage_contract.json`, `data/editorial/approved_drafts.jsonl`, `docs/ARCHITECTURE.md`, `docs/CONTENT_QUALITY.md`, `docs/DATA_SOURCES.md`, `docs/DECISIONS.md`, `docs/LAB_VALIDATION.md`, `internal/approvals/`, `internal/architecture/architecture.go`, `internal/checks/checks.go`, `internal/contract/editorial_approval_test.go`, `internal/contract/editorial_draft_store_test.go`, `tools/approve-editorial-review`, `tools/check-approvals`, `tools/lab-cycle`.
+- decisoes: aprovacao editorial de laboratorio nao e publicacao; `approved_drafts` continua `noindex`, `public_path=""`, `publication_allowed=false`; publicacao futura exige contrato separado, fonte especifica, revisao juridica completa, SEO, CTA e escala segura.
+- comandos executados: `env GOCACHE=/tmp/wiki-go-build-cache go test -count=1 ./internal/contract`; `env GOCACHE=/tmp/wiki-go-build-cache go test -count=1 ./internal/approvals`; `./tools/approve-editorial-review`; `./tools/check-approvals`; `./tools/lab-cycle`; `git diff -- content/pages.json public/sitemap.xml public/sitemaps/pages-0001.xml public/index.html`; `date '+%Y-%m-%d %H:%M:%S %Z'`.
+- resultados: `./tools/lab-cycle` passou; `approvals: pass`; `approved=responsabilidade-civil editorial_status=approved publication_allowed=false`; build continuou `generated_pages=3 indexable_pages=1 output_dir=public`; diff publico sem output.
+- falhas: RED inicial apontou ausencia de `internal/approvals`; primeira tentativa de executar `./tools/approve-editorial-review` falhou por corrida com `chmod` em chamada paralela, corrigida por execucao sequencial.
+- correcoes: `approvals.Approve`, `Validate`, `ValidateRecord` implementados; ferramenta idempotente criada; `lab-cycle` passou a cobrir `approvals`.
+- provas: `editorial_approval_test.go` exige `editorial_status=approved`, `publication_allowed=false`, `public_path=""`, revisor e evento `approved_editorial_only`; teste negativo reprova registro publicavel; `lab-cycle` cobre `approvals`.
+- commit: este ciclo deve ser persistido em Git apos validacao final desta entrada.
+- plano de continuidade: continuar P0 no ciclo 16; criar `publication_manifest_blocked` ou contrato equivalente para preparar promocao publica sem liberar URL, medindo requisitos ausentes para publicar em escala; depois avançar para blueprint finito de lotes aprovaveis.
+- proximo ciclo: P0 manifesto de publicacao bloqueado e lista de requisitos faltantes para URL publica.
+- riscos: aprovacao e de laboratorio, nao revisao juridica real; nao satisfaz meta de 10 mil paginas publicas; goal permanece ativo.

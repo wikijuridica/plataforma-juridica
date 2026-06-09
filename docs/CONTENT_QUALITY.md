@@ -47,6 +47,8 @@ Termos juridicos podem ser usados para iniciar pauta e rascunho, mas nao podem v
 
 `./tools/queue-editorial-review` coloca drafts persistidos em `data/editorial/review_queue.jsonl` com `needs_review`, historico e `publication_allowed=false`. `./tools/check-review-queue` bloqueia qualquer fila que crie URL publica, permita publicacao ou perca autoria/historico.
 
+`./tools/approve-editorial-review` registra aprovacao editorial em `data/editorial/approved_drafts.jsonl`, mas ainda com `publication_allowed=false`, `public_path` vazio e `noindex`. Aprovacao editorial nao e publicacao.
+
 ## Conteúdo mecânico
 
 Conteúdo raso ou mecânico deve ser detectado antes de qualquer exposição ao Googlebot. O laboratório `./tools/lab-content-quality` cria textos temporários em `/tmp`: um texto natural em PT-BR e um texto mecânico de permutação de palavras-chave. O detector precisa aprovar o texto natural e reprovar o mecânico.

@@ -67,6 +67,18 @@
       "description": "Fila editorial de revisao com historico; nao publica, nao indexa e nao cria URL publica."
     },
     {
+      "name": "approved_drafts",
+      "path": "data/editorial/approved_drafts.jsonl",
+      "record_type": "editorial_approval_record",
+      "record_max_bytes": 8192,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": false,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Aprovacao editorial ainda sem publicacao; nao indexa, nao cria URL e nao entra em sitemap."
+    },
+    {
       "name": "published_manifest",
       "path": "data/editorial/published_manifest.jsonl",
       "record_type": "published_content_manifest",

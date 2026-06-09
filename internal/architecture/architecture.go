@@ -9,6 +9,7 @@ import (
 
 var requiredModules = map[string]string{
 	"render":          "internal/render",
+	"approvals":       "internal/approvals",
 	"router":          "internal/router",
 	"ondemand":        "internal/ondemand",
 	"scale":           "internal/scale",

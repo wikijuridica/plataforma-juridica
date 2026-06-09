@@ -10,6 +10,7 @@ go test -count=1 ./...
 ./tools/check-term-seeds
 ./tools/check-editorial-drafts
 ./tools/check-review-queue
+./tools/check-approvals
 ./tools/lab-term-draft
 ./tools/check-google-search-appearance
 ./tools/check-mechanical-content
