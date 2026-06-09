@@ -10,6 +10,8 @@ O projeto usa Go e biblioteca padrao como base tecnica. A escolha privilegia bin
 - `cmd/check`: executa validadores locais.
 - `cmd/server`: entrega paginas com geracao on demand propria.
 - `internal/content`: modelos e carregamento do manifesto de paginas.
+- `internal/manualresearch`: banco leve de pesquisa editorial manual de termos de alta intencao digital.
+- `internal/contentbriefs`: briefs editoriais iniciais, nao-template e nao publicaveis.
 - `internal/scale`: plano finito de blueprints para pelo menos 10 mil paginas sem publicar conteudo durante P0.
 - `internal/cta`: politica propria de CTA WhatsApp subordinada a fonte, revisao e aprovacao editorial.
 - `internal/router`: rotas canonicas limpas e mapeamento para cache/saida.
@@ -70,10 +72,12 @@ Ingestao de termos juridicos e valida para iniciar conteudos somente como sement
 Camadas obrigatorias:
 - `term_seeds`: termos juridicos para iniciar rascunhos, sem texto oficial bruto e sem texto editorial publico;
 - `term_intent_candidates`: candidatos priorizados por demanda humana e contratacao online, ainda sem publicacao;
+- `manual_keyword_research`: pesquisa editorial manual de alta intencao digital, com Trends como orientacao e fontes oficiais como autoridade;
 - `term_seeds` promovidos: seeds com `candidate_id`, evidencia de demanda, modo `digital_only` e CTA alto, mas ainda `draft_only`;
 - `source_audits`: auditoria de robots, termos de uso, alcance HTTP e decisao de bloqueio;
 - `source_snapshots`: snapshots autorizados, pequenos, com hash e proveniencia;
 - `editorial_drafts`: texto editorial proprio em PT-BR, sempre noindex ate aprovacao;
+- `content_briefs`: brief inicial natural e especifico por termo, sem URL publica;
 - `source_specificity_blockers`: manifesto que impede aprovacao/publicacao quando o termo ainda precisa fonte primaria, norma especifica ou recorte juridico;
 - `published_manifest`: manifesto leve de conteudo aprovado, sem substituir o renderizador.
 

@@ -341,3 +341,15 @@ Motivos:
 - bloquear aprovacao evita que rascunho de laboratorio vire conteudo publico por engano.
 
 Consequencia: `data/editorial/source_blockers.jsonl` registra `approval_allowed=false`, `publication_allowed=false`, `public_path=""`, requisitos faltantes e proxima pesquisa por termo. `./tools/check-source-specificity-blockers` entra no laboratorio.
+
+## 2026-06-09 — Pesquisa editorial manual antes de scripts de termo
+
+Decisao: a estrategia principal para escolher termos de alta intencao passa a ser pesquisa editorial manual na web, nao script conservador ou gerador de termos.
+
+Motivos:
+- termos juridicos de contratacao digital dependem de leitura de intencao humana, nao apenas heuristica;
+- Google Trends e util como orientacao direcional, mas nao substitui julgamento editorial;
+- fontes oficiais dao autoridade, mas nao sao fonte de demanda nem autorizam clone;
+- a meta de 10 mil paginas exige uma base leve, organizada e escalavel sem template mecanico.
+
+Consequencia: `data/research/high_intent_terms.jsonl` vira o banco leve de pesquisa manual; `data/editorial/content_briefs.jsonl` inicia conteudos como briefs nao publicaveis; `./tools/check-manual-keyword-research` e `./tools/check-content-briefs` entram no laboratorio. Nenhum brief vira pagina publica sem fonte especifica, revisao, qualidade, SEO, CTA e nova validacao.

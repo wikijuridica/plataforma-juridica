@@ -32,6 +32,10 @@ As sementes iniciais ficam em `data/terms/legal_terms.jsonl` e sao validadas por
 
 Os candidatos de alta intencao ficam em `data/terms/intent_candidates.jsonl` e sao validados por `./tools/check-term-intent-candidates`. Cada candidato precisa separar demanda humana, fonte juridica oficial, adequacao a atendimento 100% digital e bloqueio de publicacao.
 
+A pesquisa editorial manual fica em `data/research/high_intent_terms.jsonl` e e validada por `./tools/check-manual-keyword-research`. Ela registra termos de alta intencao de contratacao juridica digital, usando Google Trends como orientacao direcional e fontes oficiais como autoridade/proveniencia. Isso substitui dependencia de script fraco para descoberta de termos.
+
+Briefs iniciais de conteudo ficam em `data/editorial/content_briefs.jsonl` e sao validados por `./tools/check-content-briefs`. Eles iniciam a construcao de conteudo, mas nao publicam, nao criam URL, nao entram em sitemap e nao autorizam CTA publico.
+
 Quando um candidato e promovido para `term_seeds`, ele deve preservar `candidate_id`, URL de evidencia de demanda, grupo de consulta, modo `digital_only` e intencao alta de CTA WhatsApp. Essa promocao nao cria pagina, nao cria CTA publico e nao libera sitemap.
 
 Bloqueios de fonte especifica ficam em `data/editorial/source_blockers.jsonl` e sao validados por `./tools/check-source-specificity-blockers`. Eles registram a fonte atual, os tipos de fonte ainda exigidos e a proxima direcao de pesquisa para cada termo priorizado.

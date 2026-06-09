@@ -10,9 +10,11 @@ import (
 	"portaljuridico/internal/architecture"
 	"portaljuridico/internal/build"
 	"portaljuridico/internal/content"
+	"portaljuridico/internal/contentbriefs"
 	"portaljuridico/internal/crawl"
 	"portaljuridico/internal/editorial"
 	"portaljuridico/internal/editorialdrafts"
+	"portaljuridico/internal/manualresearch"
 	"portaljuridico/internal/publicationblockers"
 	"portaljuridico/internal/quality"
 	"portaljuridico/internal/reviewqueue"
@@ -38,9 +40,11 @@ var Names = []string{
 	"crawlability",
 	"sources",
 	"storage-contract",
+	"manual-keyword-research",
 	"term-seeds",
 	"term-intent-candidates",
 	"term-seed-promotions",
+	"content-briefs",
 	"editorial-drafts",
 	"review-queue",
 	"approvals",
@@ -70,12 +74,16 @@ func Run(name string, root string) []string {
 		return checkSources(root)
 	case "storage-contract":
 		return checkStorageContract(root)
+	case "manual-keyword-research":
+		return checkManualKeywordResearch(root)
 	case "term-seeds":
 		return checkTermSeeds(root)
 	case "term-intent-candidates":
 		return checkTermIntentCandidates(root)
 	case "term-seed-promotions":
 		return checkTermSeedPromotions(root)
+	case "content-briefs":
+		return checkContentBriefs(root)
 	case "editorial-drafts":
 		return checkEditorialDrafts(root)
 	case "review-queue":
@@ -235,6 +243,10 @@ func checkStorageContract(root string) []string {
 	return storage.Validate(root).Messages()
 }
 
+func checkManualKeywordResearch(root string) []string {
+	return manualresearch.Validate(root).Messages()
+}
+
 func checkTermSeeds(root string) []string {
 	return terms.ValidateSeeds(root).Messages()
 }
@@ -245,6 +257,10 @@ func checkTermIntentCandidates(root string) []string {
 
 func checkTermSeedPromotions(root string) []string {
 	return termpromotion.ValidatePromotedSeeds(root, 6).Messages()
+}
+
+func checkContentBriefs(root string) []string {
+	return contentbriefs.Validate(root).Messages()
 }
 
 func checkEditorialDrafts(root string) []string {

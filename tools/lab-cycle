@@ -7,9 +7,11 @@ go test -count=1 ./...
 ./tools/check-all
 ./tools/check-sources
 ./tools/check-storage-contract
+./tools/check-manual-keyword-research
 ./tools/check-term-seeds
 ./tools/check-term-intent-candidates
 ./tools/check-promoted-term-seeds
+./tools/check-content-briefs
 ./tools/check-editorial-drafts
 ./tools/check-review-queue
 ./tools/check-approvals

@@ -50,11 +50,13 @@ func copyStorageFixture(t *testing.T) string {
 	writeTestFile(t, filepath.Join(root, "go.mod"), "module fixture\n")
 	for _, path := range []string{
 		"content/storage_contract.json",
+		"data/research/high_intent_terms.jsonl",
 		"data/terms/legal_terms.jsonl",
 		"data/terms/intent_candidates.jsonl",
 		"data/source-audit/robots_terms.jsonl",
 		"data/source-snapshots/payloads.jsonl",
 		"data/editorial/drafts.jsonl",
+		"data/editorial/content_briefs.jsonl",
 		"data/editorial/review_queue.jsonl",
 		"data/editorial/approved_drafts.jsonl",
 		"data/editorial/publication_blockers.jsonl",
@@ -65,7 +67,7 @@ func copyStorageFixture(t *testing.T) string {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if path == "data/editorial/drafts.jsonl" || path == "data/editorial/review_queue.jsonl" || path == "data/editorial/approved_drafts.jsonl" || path == "data/editorial/publication_blockers.jsonl" || path == "data/editorial/source_blockers.jsonl" {
+		if path == "data/editorial/drafts.jsonl" || path == "data/editorial/content_briefs.jsonl" || path == "data/editorial/review_queue.jsonl" || path == "data/editorial/approved_drafts.jsonl" || path == "data/editorial/publication_blockers.jsonl" || path == "data/editorial/source_blockers.jsonl" {
 			data = []byte{}
 		}
 		writeTestFile(t, filepath.Join(root, path), string(data))

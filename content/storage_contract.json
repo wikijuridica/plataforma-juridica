@@ -31,6 +31,18 @@
       "description": "Candidatos de termos com evidencia de demanda humana, fonte oficial e adequacao a contratacao juridica digital; nao publica."
     },
     {
+      "name": "manual_keyword_research",
+      "path": "data/research/high_intent_terms.jsonl",
+      "record_type": "manual_high_intent_legal_service_term",
+      "record_max_bytes": 16384,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": false,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Pesquisa editorial manual de termos de alta intencao digital; Google Trends orienta demanda e fontes oficiais dao autoridade."
+    },
+    {
       "name": "source_audits",
       "path": "data/source-audit/robots_terms.jsonl",
       "record_type": "source_audit_event",
@@ -65,6 +77,18 @@
       "requires_source_provenance": true,
       "requires_quality_state": true,
       "description": "Rascunhos editoriais proprios em PT-BR, sempre noindex ate revisao, fonte e qualidade passarem."
+    },
+    {
+      "name": "content_briefs",
+      "path": "data/editorial/content_briefs.jsonl",
+      "record_type": "content_research_brief",
+      "record_max_bytes": 32768,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": true,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Briefs editoriais iniciais, naturais e nao-template, ainda sem publicacao e sem URL publica."
     },
     {
       "name": "review_queue",

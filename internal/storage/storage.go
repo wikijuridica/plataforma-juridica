@@ -128,7 +128,7 @@ func (c Contract) Validate() Report {
 		issues = append(issues, Issue{Code: "content_start_policy_not_draft_only", Message: "termos so podem iniciar rascunhos bloqueados para indexacao"})
 	}
 
-	required := []string{"term_seeds", "term_intent_candidates", "source_audits", "source_snapshots", "editorial_drafts", "source_specificity_blockers", "published_manifest"}
+	required := []string{"term_seeds", "term_intent_candidates", "manual_keyword_research", "source_audits", "source_snapshots", "editorial_drafts", "content_briefs", "source_specificity_blockers", "published_manifest"}
 	paths := make(map[string]string)
 	for _, name := range required {
 		layer, ok := c.LayerByName(name)
@@ -181,9 +181,19 @@ func (c Contract) validateLayer(layer Layer, paths map[string]string) []Issue {
 			issues = append(issues, Issue{Code: "term_intent_missing_guards", Message: "term_intent_candidates exige proveniencia e estado de qualidade"})
 		}
 	}
+	if layer.Name == "manual_keyword_research" {
+		if layer.AllowsRawOfficialText || layer.AllowsEditorialContent {
+			issues = append(issues, Issue{Code: "manual_research_payload_too_broad", Message: "manual_keyword_research guarda pesquisa, nao texto oficial bruto nem conteudo publico"})
+		}
+	}
 	if layer.Name == "editorial_drafts" {
 		if !layer.AllowsEditorialContent || layer.AllowsRawOfficialText {
 			issues = append(issues, Issue{Code: "editorial_draft_layer_invalid", Message: "drafts guardam texto editorial proprio, nao payload oficial bruto"})
+		}
+	}
+	if layer.Name == "content_briefs" {
+		if !layer.AllowsEditorialContent || layer.AllowsRawOfficialText {
+			issues = append(issues, Issue{Code: "content_brief_layer_invalid", Message: "briefs guardam conteudo editorial inicial, nao payload oficial bruto"})
 		}
 	}
 	return issues
