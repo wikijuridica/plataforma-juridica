@@ -235,6 +235,18 @@
       "description": "Metricas agregadas de geracao/refino em lote, sempre bloqueadas para render, sitemap e publicacao."
     },
     {
+      "name": "batch_source_matrix",
+      "path": "data/editorial/batch_source_matrix.jsonl",
+      "record_type": "batch_source_matrix_blocked",
+      "record_max_bytes": 16384,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": false,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Matriz de fontes oficiais por subtema de lote, para referencia e proveniencia, sem scraping, render, sitemap ou publicacao."
+    },
+    {
       "name": "published_manifest",
       "path": "data/editorial/published_manifest.jsonl",
       "record_type": "published_content_manifest",

@@ -83,6 +83,10 @@ Antes de ampliar produção, registrar `batch_drafts` e rodar `./tools/check-bat
 
 Antes de considerar o gerador pronto para volume maior, rodar `./tools/check-batch-draft-generation` e `./tools/generate-batch-drafts`. O gerador deve ser determinístico, produzir amostras temporárias em `/tmp`, persistir apenas métricas agregadas, provar reescrita automática e manter `render_allowed=false`, `sitemap_allowed=false`, `publication_allowed=false` e `public_path=""`.
 
+Antes de ampliar subtemas, rodar `./tools/check-batch-source-matrix`. A matriz deve provar fonte oficial específica por subtema, política sem scraping e cobertura de cada draft gerado. Se a fonte estiver genérica, ausente ou sem revisão de robots, o lote fica bloqueado.
+
+Se a similaridade subir em volume maior, investigar a semântica: verificar se os textos diferem em problema, documento, fonte, risco e ação digital. Não resolver similaridade com troca mecânica de palavras ou redução de limite.
+
 ## Politica
 
 Nenhum script isolado e prova suficiente para mudanca P0/P1. Use o laboratorio como conjunto minimo e inspecione os artefatos quando a mudanca afetar HTML, sitemap, robots, canonical, indexacao, qualidade ou conteudo.

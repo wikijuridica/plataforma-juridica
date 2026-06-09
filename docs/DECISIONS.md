@@ -466,3 +466,16 @@ Motivos:
 - CTA WhatsApp precisa nascer com origem de `unique_intent_id` para triagem digital.
 
 Consequencia: `internal/batchdraftgen`, `cmd/generate-batch-drafts`, `./tools/generate-batch-drafts` e `./tools/check-batch-draft-generation` entram no laboratório. `data/editorial/batch_generation_metrics.jsonl` registra 6 métricas de geração bloqueada; o comando gera 30 rascunhos temporários, cinco por família, todos reescritos e com similaridade máxima 0.27 no laboratório. O próximo ciclo deve aumentar o volume por família, cruzar fonte específica por subtema e preparar gate de pré-publicação bloqueada por lote sem publicar.
+
+## 2026-06-09 — Escala semântica com matriz de fontes por subtema
+
+Decisao: ampliar o gerador para 10 amostras por família e criar `batch_source_matrix` como matriz leve de fontes oficiais por subtema, mantendo uso apenas referencial e sem scraping.
+
+Motivos:
+- escala maior revelou que similaridade pode subir quando o algoritmo repete vocabulário operacional de laboratório;
+- o projeto exige boa semântica por tema/subtema, não mecanização de palavras;
+- cada draft de lote precisa carregar fonte oficial específica, documento, risco, ação digital e CTA de origem;
+- métricas de escala precisam registrar cobertura de fonte, risco estrutural e custo estimado de laboratório;
+- publicar sem matriz de fonte específica criaria risco jurídico e risco de conteúdo raso.
+
+Consequencia: `internal/batchsourcematrix`, `data/editorial/batch_source_matrix.jsonl` e `./tools/check-batch-source-matrix` entram no laboratório. `batchdraftgen` passa a gerar 60 drafts temporários com `source_matrix_id`, cobertura de matriz, risco estrutural e estimativa de CPU de laboratório; a similaridade máxima validada caiu para 0.52 após refinamento semântico. O próximo ciclo deve ampliar a matriz e o gerador para centenas de amostras por família, mantendo fonte específica e publicação bloqueada.

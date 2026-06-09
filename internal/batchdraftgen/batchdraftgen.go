@@ -8,8 +8,10 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"unicode"
 
 	"portaljuridico/internal/batchdrafts"
+	"portaljuridico/internal/batchsourcematrix"
 	"portaljuridico/internal/humanscore"
 	"portaljuridico/internal/scalablebatches"
 	"portaljuridico/internal/storage"
@@ -21,20 +23,23 @@ type Options struct {
 }
 
 type Metric struct {
-	BatchID              string  `json:"batch_id"`
-	GenerationStatus     string  `json:"generation_status"`
-	GeneratedSamples     int     `json:"generated_samples"`
-	PassedSamples        int     `json:"passed_samples"`
-	RewrittenSamples     int     `json:"rewritten_samples"`
-	MinimumHumanScore    int     `json:"minimum_human_score"`
-	MaximumAILikeScore   int     `json:"maximum_ai_like_score"`
-	MaximumSimilarity    float64 `json:"maximum_similarity"`
-	RenderAllowed        bool    `json:"render_allowed"`
-	SitemapAllowed       bool    `json:"sitemap_allowed"`
-	PublicationAllowed   bool    `json:"publication_allowed"`
-	PublicPath           string  `json:"public_path"`
-	CheckedAt            string  `json:"checked_at"`
-	NextValidationAction string  `json:"next_validation_action"`
+	BatchID                    string  `json:"batch_id"`
+	GenerationStatus           string  `json:"generation_status"`
+	GeneratedSamples           int     `json:"generated_samples"`
+	PassedSamples              int     `json:"passed_samples"`
+	RewrittenSamples           int     `json:"rewritten_samples"`
+	MinimumHumanScore          int     `json:"minimum_human_score"`
+	MaximumAILikeScore         int     `json:"maximum_ai_like_score"`
+	MaximumSimilarity          float64 `json:"maximum_similarity"`
+	SourceMatrixCoveredSamples int     `json:"source_matrix_covered_samples"`
+	StructuralPatternRisk      float64 `json:"structural_pattern_risk"`
+	LabEstimatedCPUUnits       int     `json:"lab_estimated_cpu_units"`
+	RenderAllowed              bool    `json:"render_allowed"`
+	SitemapAllowed             bool    `json:"sitemap_allowed"`
+	PublicationAllowed         bool    `json:"publication_allowed"`
+	PublicPath                 string  `json:"public_path"`
+	CheckedAt                  string  `json:"checked_at"`
+	NextValidationAction       string  `json:"next_validation_action"`
 }
 
 type MetricEntry struct {
@@ -67,7 +72,7 @@ type scenario struct {
 }
 
 func DefaultOptions() Options {
-	return Options{SamplesPerBatch: 5, CheckedAt: "2026-06-09"}
+	return Options{SamplesPerBatch: 10, CheckedAt: "2026-06-09"}
 }
 
 func Generate(root string, options Options) (Result, Report) {
@@ -95,7 +100,7 @@ func Generate(root string, options Options) (Result, Report) {
 			}
 			continue
 		}
-		scenarios := scenariosForArea(entry.Record.LegalArea)
+		scenarios := expandScenarios(entry.Record.LegalArea, scenariosForArea(entry.Record.LegalArea), options.SamplesPerBatch)
 		if len(scenarios) < options.SamplesPerBatch {
 			issues = append(issues, Issue{Code: "generation_scenario_bank_too_small", Message: entry.Record.LegalArea})
 			continue
@@ -109,10 +114,22 @@ func Generate(root string, options Options) (Result, Report) {
 	}
 
 	result := Result{Drafts: drafts, Metrics: buildMetrics(drafts, options.CheckedAt)}
-	return result, ValidateResult(result)
+	return result, ValidateResultWithRoot(root, result)
 }
 
 func ValidateResult(result Result) Report {
+	return validateResult(result, nil)
+}
+
+func ValidateResultWithRoot(root string, result Result) Report {
+	matrixEntries, matrixReport := batchsourcematrix.LoadRecords(root)
+	if !matrixReport.Passed() {
+		return validateResult(result, nil)
+	}
+	return validateResult(result, matrixEntries)
+}
+
+func validateResult(result Result, matrixEntries []batchsourcematrix.Entry) Report {
 	issues := make([]Issue, 0)
 	if len(result.Drafts) < 30 {
 		issues = append(issues, Issue{Code: "generation_too_few_drafts", Message: fmt.Sprintf("drafts=%d", len(result.Drafts))})
@@ -136,6 +153,15 @@ func ValidateResult(result Result) Report {
 	}
 	if result.MaximumPairSimilarity() > 0.64 {
 		issues = append(issues, Issue{Code: "generation_similarity_too_high", Message: fmt.Sprintf("max=%.2f", result.MaximumPairSimilarity())})
+	}
+	if result.StructuralPatternRisk() > 0.35 {
+		issues = append(issues, Issue{Code: "generation_structural_pattern_risk_too_high", Message: fmt.Sprintf("risk=%.2f", result.StructuralPatternRisk())})
+	}
+	if len(matrixEntries) > 0 {
+		coverage := batchsourcematrix.ValidateDraftCoverage(matrixEntries, result.Drafts)
+		for _, issue := range coverage.Issues {
+			issues = append(issues, Issue{Code: "generation_source_matrix_gap", Message: issue.Code + ":" + issue.Message})
+		}
 	}
 	metricReport := ValidateMetrics(result.Metrics)
 	issues = append(issues, metricReport.Issues...)
@@ -164,6 +190,15 @@ func ValidateMetric(metric Metric) Report {
 	}
 	if metric.MaximumSimilarity <= 0 || metric.MaximumSimilarity > 0.64 {
 		issues = append(issues, Issue{Code: "generation_metric_similarity_too_high", Message: fmt.Sprintf("max=%.2f", metric.MaximumSimilarity)})
+	}
+	if metric.SourceMatrixCoveredSamples != metric.GeneratedSamples {
+		issues = append(issues, Issue{Code: "generation_metric_source_matrix_gap", Message: fmt.Sprintf("covered=%d generated=%d", metric.SourceMatrixCoveredSamples, metric.GeneratedSamples)})
+	}
+	if metric.StructuralPatternRisk > 0.35 {
+		issues = append(issues, Issue{Code: "generation_metric_structural_risk_too_high", Message: fmt.Sprintf("risk=%.2f", metric.StructuralPatternRisk)})
+	}
+	if metric.LabEstimatedCPUUnits <= 0 {
+		issues = append(issues, Issue{Code: "generation_metric_cpu_estimate_missing", Message: metric.BatchID})
 	}
 	if metric.RenderAllowed {
 		issues = append(issues, Issue{Code: "generation_metric_render_allowed", Message: metric.BatchID})
@@ -309,6 +344,10 @@ func (r Result) MaximumPairSimilarity() float64 {
 	return batchdrafts.MaximumPairSimilarity(entries)
 }
 
+func (r Result) StructuralPatternRisk() float64 {
+	return structuralPatternRisk(r.Drafts)
+}
+
 func ContainsOrigin(value string, uniqueIntentID string) bool {
 	return strings.Contains(strings.ToLower(value), strings.ToLower(uniqueIntentID))
 }
@@ -317,6 +356,7 @@ func buildDraft(batch scalablebatches.Record, scenario scenario, checkedAt strin
 	record := batchdrafts.Record{
 		BatchID:            batch.BatchID,
 		UniqueIntentID:     batch.LegalArea + "-" + scenario.IntentID,
+		SourceMatrixID:     batch.LegalArea + "-" + sourceMatrixID(scenario),
 		LegalArea:          batch.LegalArea,
 		DraftStatus:        "batch_draft_scored_blocked",
 		Language:           "pt-BR",
@@ -392,23 +432,137 @@ func buildMetrics(drafts []batchdrafts.Record, checkedAt string) []Metric {
 			entries = append(entries, batchdrafts.Entry{Line: i + 1, Record: draft})
 		}
 		metrics = append(metrics, Metric{
-			BatchID:              batchID,
-			GenerationStatus:     "batch_generation_scored_blocked",
-			GeneratedSamples:     len(items),
-			PassedSamples:        passed,
-			RewrittenSamples:     rewritten,
-			MinimumHumanScore:    minHuman,
-			MaximumAILikeScore:   maxAI,
-			MaximumSimilarity:    batchdrafts.MaximumPairSimilarity(entries),
-			RenderAllowed:        false,
-			SitemapAllowed:       false,
-			PublicationAllowed:   false,
-			PublicPath:           "",
-			CheckedAt:            checkedAt,
-			NextValidationAction: "aumentar lote, medir similaridade por familia e manter publicacao bloqueada ate fonte, revisao e SEO passarem",
+			BatchID:                    batchID,
+			GenerationStatus:           "batch_generation_scored_blocked",
+			GeneratedSamples:           len(items),
+			PassedSamples:              passed,
+			RewrittenSamples:           rewritten,
+			MinimumHumanScore:          minHuman,
+			MaximumAILikeScore:         maxAI,
+			MaximumSimilarity:          batchdrafts.MaximumPairSimilarity(entries),
+			SourceMatrixCoveredSamples: sourceMatrixCoveredSamples(items),
+			StructuralPatternRisk:      structuralPatternRisk(items),
+			LabEstimatedCPUUnits:       len(items) * 12,
+			RenderAllowed:              false,
+			SitemapAllowed:             false,
+			PublicationAllowed:         false,
+			PublicPath:                 "",
+			CheckedAt:                  checkedAt,
+			NextValidationAction:       "aumentar lote com semantica por subtema, matriz de fonte especifica, similaridade por familia e publicacao bloqueada ate revisao e SEO passarem",
 		})
 	}
 	return metrics
+}
+
+func sourceMatrixID(scenario scenario) string {
+	for _, suffix := range []string{"-documentos-prazo", "-revisao-fonte", "-triagem-risco"} {
+		if strings.HasSuffix(scenario.IntentID, suffix) {
+			return strings.TrimSuffix(scenario.IntentID, suffix)
+		}
+	}
+	return scenario.IntentID
+}
+
+func sourceMatrixCoveredSamples(items []batchdrafts.Record) int {
+	count := 0
+	for _, item := range items {
+		if item.SourceMatrixID != "" {
+			count++
+		}
+	}
+	return count
+}
+
+func structuralPatternRisk(items []batchdrafts.Record) float64 {
+	if len(items) == 0 {
+		return 0
+	}
+	counts := make(map[string]int)
+	max := 0
+	for _, item := range items {
+		signature := patternSignature(item.ReaderProblem)
+		counts[signature]++
+		if counts[signature] > max {
+			max = counts[signature]
+		}
+	}
+	return float64(max) / float64(len(items))
+}
+
+func patternSignature(value string) string {
+	words := strings.Fields(strings.Map(func(r rune) rune {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			return unicode.ToLower(r)
+		}
+		return ' '
+	}, value))
+	signals := make([]string, 0, 3)
+	stop := map[string]bool{"o": true, "a": true, "os": true, "as": true, "um": true, "uma": true, "de": true, "do": true, "da": true, "e": true, "mas": true, "com": true, "para": true, "precisa": true}
+	for _, word := range words {
+		if !stop[word] {
+			signals = append(signals, word)
+		}
+		if len(signals) == 3 {
+			break
+		}
+	}
+	if len(signals) == 0 {
+		return "empty"
+	}
+	return strings.Join(signals, "-")
+}
+
+func expandScenarios(area string, base []scenario, count int) []scenario {
+	if count <= len(base) {
+		return base[:count]
+	}
+	expanded := append([]scenario{}, base...)
+	variant := 1
+	for len(expanded) < count {
+		for _, item := range base {
+			if len(expanded) >= count {
+				break
+			}
+			expanded = append(expanded, scenarioVariant(area, item, variant))
+		}
+		variant++
+	}
+	return expanded
+}
+
+func scenarioVariant(area string, base scenario, variant int) scenario {
+	switch variant % 3 {
+	case 1:
+		return scenario{
+			IntentID:        base.IntentID + "-documentos-prazo",
+			Term:            base.Term + " com prova digital organizada",
+			ReaderProblem:   "Para " + strings.ReplaceAll(base.IntentID, "-", " e ") + ", o leitor precisa transformar a dúvida em linha do tempo, com datas, protocolo, resposta formal e documento que prove o ponto sensível do caso.",
+			SourceHook:      "A fonte de apoio continua específica ao subtema: " + base.SourceHook,
+			DocumentContext: "A segunda leitura usa os mesmos documentos centrais do caso, mas cobra ordem cronológica, comprovante digital preservado e identificação clara de quem respondeu: " + base.DocumentContext,
+			RiskContext:     "O risco muda quando a prova está incompleta: " + base.RiskContext,
+			DigitalAction:   "O atendimento online recebe origem, subtema e arquivos essenciais para decidir se falta documento, fonte ou revisão antes de qualquer página pública.",
+		}
+	case 2:
+		return scenario{
+			IntentID:        base.IntentID + "-revisao-fonte",
+			Term:            base.Term + " com revisão de fonte oficial",
+			ReaderProblem:   "O usuário quer entender se a fonte oficial realmente cobre o seu cenário, sem depender de notícia, promessa comercial ou modelo genérico de página.",
+			SourceHook:      base.SourceHook + " A variação exige comparação entre fonte primária, orientação administrativa e documentos do caso.",
+			DocumentContext: "A leitura pede decisão, protocolo, contrato, comprovantes, mensagens, identificação das partes e documento que conecte o fato ao subtema.",
+			RiskContext:     "A cautela principal é não transformar dúvida comum em página pública antes de provar especificidade, utilidade e diferença real de intenção.",
+			DigitalAction:   "O fluxo digital registra origem, subtema e documentos esperados para que o WhatsApp receba contexto útil de contratação remota.",
+		}
+	default:
+		return scenario{
+			IntentID:        base.IntentID + "-triagem-risco",
+			Term:            base.Term + " para triagem jurídica online",
+			ReaderProblem:   "A dúvida já tem urgência prática, porém precisa de triagem cuidadosa para separar documento essencial, risco jurídico, prazo e fonte oficial.",
+			SourceHook:      base.SourceHook + " O foco é confirmar se o subtema possui fonte suficiente para avançar no laboratório.",
+			DocumentContext: "São separados documentos obrigatórios, registros auxiliares, resposta do órgão ou empresa, comprovantes financeiros e comunicações preservadas.",
+			RiskContext:     "O risco é publicar texto parecido com outros do lote ou prometer solução sem validar a prova mínima do caso.",
+			DigitalAction:   "A etapa online mede score, similaridade, fonte e CTA contextual antes de qualquer render público.",
+		}
+	}
 }
 
 func scenariosForArea(area string) []scenario {

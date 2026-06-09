@@ -84,6 +84,8 @@ Heurísticas simples são permitidas somente como etapa inicial comprovada. Quan
 
 Regra de algoritmo editorial: antes de iniciar lote de conteudo, refinar o algoritmo de triagem. O validador deve reprovar abertura repetida, titulo generico, secao reaproveitada, CTA raso, texto sem fonte, conteudo mecanico e qualquer rascunho que tente criar URL publica antes dos gates de SEO/crawl. Contagem de palavras isolada nao basta.
 
+Regra de semântica por tema/subtema: algoritmos de geração, score e similaridade devem trabalhar com boa semântica e contexto real, não com mecanização de palavras. Cada tema ou subtema precisa carregar problema humano, fonte oficial específica, documento esperado, risco jurídico, ação digital e CTA de origem. É proibido gerar variações por troca mecânica de palavras; quando a similaridade falhar, refinar intenção, faceta semântica e contexto do subtema antes de reduzir gate.
+
 Regra de score humano e reescrita automatica: todo texto gerado em massa deve receber score de naturalidade e risco IA-like/mecanico. O score deve considerar diversidade lexical, repeticao de n-gramas, estrutura de secoes, abertura/conclusao, frases genericas, densidade de palavra-chave, ausencia de detalhe juridico, falta de documentos concretos, CTA sem contexto e similaridade com outros textos do lote. Texto abaixo do limite deve ser reescrito automaticamente pelo pipeline e revalidado. A meta e maximizar naturalidade e utilidade para humanos e Googlebot, nao mascarar spam.
 
 ## Prioridades
@@ -431,6 +433,7 @@ Criar aliases ou scripts equivalentes:
 - `./tools/check-scalable-content-batches`
 - `./tools/check-batch-drafts`
 - `./tools/check-batch-draft-generation`
+- `./tools/check-batch-source-matrix`
 - `./tools/check-sitemaps`
 - `./tools/check-canonicals`
 - `./tools/check-no-duplicate-content`

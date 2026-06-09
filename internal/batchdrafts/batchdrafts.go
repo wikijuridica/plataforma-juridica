@@ -17,6 +17,7 @@ import (
 type Record struct {
 	BatchID            string   `json:"batch_id"`
 	UniqueIntentID     string   `json:"unique_intent_id"`
+	SourceMatrixID     string   `json:"source_matrix_id,omitempty"`
 	LegalArea          string   `json:"legal_area"`
 	DraftStatus        string   `json:"draft_status"`
 	Language           string   `json:"language"`
@@ -207,9 +208,9 @@ func RewrittenCount(entries []Entry) int {
 func MaximumPairSimilarity(entries []Entry) float64 {
 	max := 0.0
 	for i := 0; i < len(entries); i++ {
-		left := signalSet(entries[i].Record.FullText())
+		left := semanticSignalSet(entries[i].Record)
 		for j := i + 1; j < len(entries); j++ {
-			right := signalSet(entries[j].Record.FullText())
+			right := semanticSignalSet(entries[j].Record)
 			score := jaccard(left, right)
 			if score > max {
 				max = score
@@ -233,24 +234,85 @@ func validBatchIDs(root string) map[string]bool {
 	return valid
 }
 
+func semanticSignalSet(record Record) map[string]bool {
+	set := make(map[string]bool)
+	addSemanticWords(set, "term", record.Term)
+	addSemanticWords(set, "problem", record.ReaderProblem)
+	addSemanticWords(set, "source", record.SourceHook)
+	addSemanticWords(set, "document", record.DocumentContext)
+	addSemanticWords(set, "risk", record.RiskContext)
+	addSemanticWords(set, "action", record.DigitalAction)
+	for _, token := range strings.Split(record.UniqueIntentID, "-") {
+		if len(token) > 3 && !isOperationalToken(token) {
+			set["intent:"+token] = true
+		}
+	}
+	for _, token := range strings.Split(record.SourceMatrixID, "-") {
+		if len(token) > 3 && !isOperationalToken(token) {
+			set["matrix:"+token] = true
+		}
+	}
+	return set
+}
+
+func addSemanticWords(set map[string]bool, field string, value string) {
+	for _, word := range normalizedSignalWords(value) {
+		if isOperationalToken(word) {
+			continue
+		}
+		set[field+":"+word] = true
+		if semanticCategory := categoryFor(word); semanticCategory != "" {
+			set["category:"+semanticCategory] = true
+		}
+	}
+}
+
 func signalSet(value string) map[string]bool {
-	words := strings.Fields(strings.Map(func(r rune) rune {
+	set := make(map[string]bool)
+	for _, word := range normalizedSignalWords(value) {
+		if !isOperationalToken(word) {
+			set[word] = true
+		}
+	}
+	return set
+}
+
+func normalizedSignalWords(value string) []string {
+	return strings.Fields(strings.Map(func(r rune) rune {
 		if unicode.IsLetter(r) || unicode.IsDigit(r) {
 			return unicode.ToLower(r)
 		}
 		return ' '
 	}, value))
+}
+
+func isOperationalToken(word string) bool {
+	if len(word) <= 3 {
+		return true
+	}
 	stop := map[string]bool{
 		"para": true, "com": true, "que": true, "uma": true, "por": true, "dos": true, "das": true, "pelo": true, "pela": true,
-		"origem": true, "fonte": true, "documentos": true, "whatsapp": true, "triagem": true, "digital": true, "juridica": true, "jurídica": true,
+		"origem": true, "fonte": true, "fontes": true, "oficial": true, "oficiais": true, "documentos": true, "documento": true,
+		"whatsapp": true, "triagem": true, "digital": true, "online": true, "juridica": true, "jurídica": true, "protocolo": true,
+		"resposta": true, "leitor": true, "caso": true, "subtema": true, "linha": true, "tempo": true, "datas": true, "prova": true,
+		"atendimento": true, "publica": true, "pública": true, "laboratorio": true, "laboratório": true, "revisao": true, "revisão": true,
+		"prazo": true, "prazos": true, "arquivo": true, "arquivos": true, "contexto": true,
 	}
-	set := make(map[string]bool)
-	for _, word := range words {
-		if len(word) > 3 && !stop[word] {
-			set[word] = true
-		}
+	return stop[word]
+}
+
+func categoryFor(word string) string {
+	categories := map[string]string{
+		"contrato": "contrato", "carteirinha": "contrato", "plano": "contrato", "clausula": "contrato",
+		"negativa": "recusa", "recusa": "recusa", "indeferimento": "recusa", "cessado": "recusa",
+		"médico": "saude", "medico": "saude", "laudo": "saude", "exames": "saude", "medicamento": "saude", "cirurgia": "saude",
+		"ans": "regulador", "inss": "previdenciario", "previdência": "previdenciario", "previdencia": "previdenciario", "cnis": "previdenciario",
+		"clt": "trabalhista", "holerites": "trabalhista", "jornada": "trabalhista", "rescisão": "trabalhista", "rescisao": "trabalhista",
+		"guarda": "familia", "pensão": "familia", "pensao": "familia", "divórcio": "familia", "divorcio": "familia", "filhos": "familia",
+		"pix": "financeiro", "banco": "financeiro", "cartão": "financeiro", "cartao": "financeiro", "consignado": "financeiro",
+		"inventário": "sucessorio", "inventario": "sucessorio", "herdeiros": "sucessorio", "espólio": "sucessorio", "espolio": "sucessorio",
 	}
-	return set
+	return categories[word]
 }
 
 func jaccard(left map[string]bool, right map[string]bool) float64 {

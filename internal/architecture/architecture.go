@@ -18,6 +18,7 @@ var requiredModules = map[string]string{
 	"content":             "internal/content",
 	"batchdraftgen":       "internal/batchdraftgen",
 	"batchdrafts":         "internal/batchdrafts",
+	"batchsourcematrix":   "internal/batchsourcematrix",
 	"authorialdrafts":     "internal/authorialdrafts",
 	"contentbriefs":       "internal/contentbriefs",
 	"legal":               "internal/legal",

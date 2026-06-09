@@ -129,3 +129,7 @@ Publicação só pode avançar quando o texto atingir score alto, motivos de rep
 `./tools/check-batch-drafts` valida amostras de drafts em lote: mínimo por família, score humano aplicado, reescrita automática quando houve falha inicial, baixa similaridade e bloqueio total de publicação.
 
 `./tools/check-batch-draft-generation` valida que o gerador/refinador em lote produz pelo menos 30 amostras determinísticas, cinco por família, com score calculado, reescrita automática, CTA WhatsApp com origem e métricas agregadas persistidas. `./tools/generate-batch-drafts` deve escrever amostras temporárias em `/tmp`; só `batch_generation_metrics` fica persistido como rastreabilidade, sem render, sitemap, publicação ou `public_path`.
+
+`./tools/check-batch-source-matrix` valida a matriz de fonte oficial por subtema. Cada subtema precisa ter pelo menos duas URLs oficiais, tipos de fonte, score de especificidade, revisão de robots exigida, política `reference_only_no_scraping` e publicação bloqueada. O gerador só pode escalar amostras quando cada draft tiver `source_matrix_id` coberto por essa matriz.
+
+Similaridade e score devem operar por semântica de intenção, não por troca mecânica de palavras. O algoritmo deve separar sinais fortes de tema, subtema, documento, risco e fonte de termos operacionais de laboratório. Se uma amostra falhar por repetição, a correção correta é enriquecer faceta e contexto do subtema, não baixar o limite.

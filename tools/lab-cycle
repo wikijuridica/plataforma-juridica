@@ -25,7 +25,8 @@ go test -count=1 ./...
 ./tools/check-scalable-content-batches
 ./tools/check-batch-drafts
 ./tools/check-batch-draft-generation
-./tools/generate-batch-drafts --samples-per-batch 5 --checked-at 2026-06-09
+./tools/check-batch-source-matrix
+./tools/generate-batch-drafts --samples-per-batch 10 --checked-at 2026-06-09
 ./tools/lab-term-draft
 ./tools/check-google-search-appearance
 ./tools/check-mechanical-content

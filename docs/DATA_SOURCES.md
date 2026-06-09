@@ -76,6 +76,8 @@ Rascunhos de lote ficam em `data/editorial/batch_drafts.jsonl`. Eles podem guard
 
 Métricas de geração/refino em lote ficam em `data/editorial/batch_generation_metrics.jsonl`. Elas registram quantidade gerada, amostras aprovadas, reescritas, menor score humano, maior risco IA-like, similaridade máxima e próximo passo de validação. Esse arquivo é banco leve de rastreabilidade, não manifesto público.
 
+Matriz de fontes por lote fica em `data/editorial/batch_source_matrix.jsonl`. Cada registro conecta um subtema de alta intenção a URLs oficiais usadas como referência/proveniência, com política `reference_only_no_scraping`. A matriz não autoriza cópia de texto oficial, não faz scraping e não cria página pública.
+
 Termos em massa não podem nascer de combinação infinita de cidade, palavra-chave e área. A escala deve vir de problemas jurídicos reais, etapas processuais/administrativas, documentos, riscos, fontes e intenções digitais distintas.
 
 Pesquisa de fonte em escala deve ser planejada por famílias e subtemas, nao improvisada por página. O lote deve carregar mapa de fontes suficientes para cada grupo de intenção, com fonte oficial/proveniência antes de rascunho público. Ausência de fonte específica bloqueia o lote, mesmo que a demanda e o CTA sejam fortes.

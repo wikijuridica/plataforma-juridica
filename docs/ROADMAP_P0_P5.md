@@ -21,6 +21,7 @@
 - Continuar P0: expandir `scalable_content_batches` e `human_content_score` para sair de rascunho unitário, gerar lotes de drafts em massa e validar reescrita automática antes de qualquer publicação.
 - Continuar P0: ampliar `batchdraftgen` de 5 amostras por família para centenas e depois milhares por família, medindo similaridade, fonte específica por subtema, CTA contextual e custo de laboratório.
 - Continuar P0: transformar as métricas de `batch_generation_metrics` em gate para pré-publicação bloqueada por lote, sem publicar até fonte específica, revisão jurídica, SEO/crawl e render leve passarem.
+- Continuar P0: expandir `batch_source_matrix` com URLs oficiais por subtema, revisão de robots e estratégia sem scraping para cada família de alta intenção digital.
 - Continuar P0: transformar autocrítica pré-commit e validação massiva em contrato testável, para impedir commit tratado como conclusão do `/goal`.
 - Continuar P0 em laboratorio: validar, refinar, testar novamente e inspecionar artefatos.
 - P2: ampliar contratos de tipos de pagina e fontes oficiais.
