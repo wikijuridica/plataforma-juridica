@@ -1,0 +1,116 @@
+package contract_test
+
+import (
+	"testing"
+
+	"portaljuridico/internal/batchsourcespecificity"
+)
+
+func TestBatchSourceSpecificityCoversPrepublicationWithoutPublishing(t *testing.T) {
+	report := batchsourcespecificity.Validate(".")
+	if !report.Passed() {
+		t.Fatalf("batch source specificity failed contract: %v", report.Messages())
+	}
+
+	records, loadReport := batchsourcespecificity.LoadRecords(".")
+	if !loadReport.Passed() {
+		t.Fatalf("could not load batch source specificity resolutions: %v", loadReport.Messages())
+	}
+	if len(records) != 18 {
+		t.Fatalf("source specificity resolutions=%d, want one record for each prepublication gate", len(records))
+	}
+
+	for _, entry := range records {
+		record := entry.Record
+		if record.CandidateRobots != "noindex,follow" {
+			t.Fatalf("line=%d robots=%q, want noindex,follow", entry.Line, record.CandidateRobots)
+		}
+		if record.UsePolicy != "reference_only_no_scraping_no_ingestion" {
+			t.Fatalf("line=%d use_policy=%q", entry.Line, record.UsePolicy)
+		}
+		if record.ScrapingAllowed || record.IngestionAllowed || record.RenderAllowed || record.SitemapAllowed || record.PublicationAllowed || record.PublicPath != "" {
+			t.Fatalf("line=%d record escaped blocked contract: scraping=%t ingestion=%t render=%t sitemap=%t publication=%t path=%q", entry.Line, record.ScrapingAllowed, record.IngestionAllowed, record.RenderAllowed, record.SitemapAllowed, record.PublicationAllowed, record.PublicPath)
+		}
+		if record.SourceSpecificityStatus == "final_source_blocked_needs_specific_url" && (record.BlockingReason == "" || record.NeededSourceDetail == "") {
+			t.Fatalf("line=%d blocked resolution must explain reason and needed detail", entry.Line)
+		}
+	}
+}
+
+func TestBatchSourceSpecificityRejectsUnauditedOrPublicResolution(t *testing.T) {
+	index := batchsourcespecificity.SourceIndex{
+		BaseURL: "https://wikijuridica.com.br",
+		PrepublicationByIntent: map[string]batchsourcespecificity.PrepublicationCandidate{
+			"familia-divorcio-consensual-filhos-bens": {
+				PrepublicationID:      "prepub-familia-divorcio-consensual-filhos-bens",
+				ReviewID:              "review-familia-divorcio-consensual-filhos-bens",
+				BatchID:               "batch-familia-digital",
+				UniqueIntentID:        "familia-divorcio-consensual-filhos-bens",
+				SourceMatrixID:        "familia-divorcio-consensual-filhos-bens",
+				Term:                  "divórcio consensual online com filhos e bens",
+				CandidatePath:         "/temas/familia-divorcio-consensual-filhos-bens/",
+				CandidateCanonicalURL: "https://wikijuridica.com.br/temas/familia-divorcio-consensual-filhos-bens/",
+				CandidateRobots:       "noindex,follow",
+			},
+		},
+		AuditsByURL: map[string]batchsourcespecificity.AuditedSource{
+			"https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm": {
+				SourceURL:    "https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm",
+				MatrixIDs:    []string{"familia-divorcio-consensual-filhos-bens"},
+				OfficialHost: true,
+				AuditStatus:  "source_url_audited_reference_only_blocked",
+				UsePolicy:    "reference_only_no_scraping_no_ingestion",
+			},
+		},
+	}
+
+	record := batchsourcespecificity.Record{
+		ResolutionID:            "bad-source-specificity",
+		PrepublicationID:        "prepub-familia-divorcio-consensual-filhos-bens",
+		ReviewID:                "review-familia-divorcio-consensual-filhos-bens",
+		BatchID:                 "batch-familia-digital",
+		UniqueIntentID:          "familia-divorcio-consensual-filhos-bens",
+		SourceMatrixID:          "fonte-errada",
+		Term:                    "divórcio consensual online com filhos e bens",
+		CandidatePath:           "/temas/familia-divorcio-consensual-filhos-bens/?utm=1",
+		CandidateCanonicalURL:   "https://portal-juridico.example/temas/familia-divorcio-consensual-filhos-bens/",
+		CandidateRobots:         "index,follow",
+		SourceSpecificityStatus: "final_source_locked_reference_only",
+		SelectedSourceURLs: []string{
+			"https://www.planalto.gov.br/ccivil_03/leis/2002/l10406compilada.htm",
+			"https://www.exemplo.invalid/fonte",
+		},
+		UsePolicy:          "copy_or_scrape",
+		ScrapingAllowed:    true,
+		IngestionAllowed:   true,
+		RenderAllowed:      true,
+		SitemapAllowed:     true,
+		PublicationAllowed: true,
+		PublicPath:         "/temas/familia-divorcio-consensual-filhos-bens/",
+		CheckedAt:          "2026-06-09",
+	}
+
+	report := batchsourcespecificity.ValidateRecordAgainstSourceIndex(record, index)
+	if report.Passed() {
+		t.Fatal("ValidateRecordAgainstSourceIndex passed, want blocked source-specificity failures")
+	}
+	for _, code := range []string{
+		"batch_source_specificity_source_matrix_mismatch",
+		"batch_source_specificity_candidate_path_not_clean",
+		"batch_source_specificity_canonical_mismatch",
+		"batch_source_specificity_not_noindex",
+		"batch_source_specificity_source_url_not_audited",
+		"batch_source_specificity_source_url_not_linked",
+		"batch_source_specificity_invalid_use_policy",
+		"batch_source_specificity_scraping_allowed",
+		"batch_source_specificity_ingestion_allowed",
+		"batch_source_specificity_render_allowed",
+		"batch_source_specificity_sitemap_allowed",
+		"batch_source_specificity_publication_allowed",
+		"batch_source_specificity_has_public_path",
+	} {
+		if !report.HasIssue(code) {
+			t.Fatalf("missing issue %q in %v", code, report.Codes())
+		}
+	}
+}

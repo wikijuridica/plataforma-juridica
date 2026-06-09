@@ -17,6 +17,7 @@ import (
 	"portaljuridico/internal/batchprepublication"
 	"portaljuridico/internal/batchsourceaudit"
 	"portaljuridico/internal/batchsourcematrix"
+	"portaljuridico/internal/batchsourcespecificity"
 	"portaljuridico/internal/build"
 	"portaljuridico/internal/content"
 	"portaljuridico/internal/contentbriefs"
@@ -75,6 +76,7 @@ var Names = []string{
 	"batch-candidate-gates",
 	"batch-candidate-reviews",
 	"batch-prepublication-gates",
+	"batch-source-specificity",
 	"batch-draft-generation",
 	"batch-source-url-audits",
 	"batch-source-matrix",
@@ -144,6 +146,8 @@ func Run(name string, root string) []string {
 		return checkBatchCandidateReviews(root)
 	case "batch-prepublication-gates":
 		return checkBatchPrepublicationGates(root)
+	case "batch-source-specificity":
+		return checkBatchSourceSpecificity(root)
 	case "batch-draft-generation":
 		return checkBatchDraftGeneration(root)
 	case "batch-source-url-audits":
@@ -381,6 +385,10 @@ func checkBatchCandidateReviews(root string) []string {
 
 func checkBatchPrepublicationGates(root string) []string {
 	return batchprepublication.Validate(root).Messages()
+}
+
+func checkBatchSourceSpecificity(root string) []string {
+	return batchsourcespecificity.Validate(root).Messages()
 }
 
 func checkBatchDraftGeneration(root string) []string {

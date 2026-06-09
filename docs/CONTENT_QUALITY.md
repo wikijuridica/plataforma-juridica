@@ -138,6 +138,8 @@ Publicação só pode avançar quando o texto atingir score alto, motivos de rep
 
 `./tools/check-batch-prepublication-gates` valida `data/editorial/batch_prepublication_gates.jsonl`. Cada candidato revisado deve ter canonical oficial em `https://wikijuridica.com.br`, `candidate_robots=noindex,follow`, title/meta dentro do orçamento interno e fonte final marcada como pendente. Essa camada não renderiza, não entra em sitemap e não publica.
 
+`./tools/check-batch-source-specificity` valida `data/editorial/batch_source_specificity_resolutions.jsonl`. Cada candidato de pré-publicação precisa ter resolução de fonte: `final_source_locked_reference_only` quando a URL oficial auditada é específica o bastante para referência final, ou `final_source_blocked_needs_specific_url` quando a fonte ainda é ampla. O gate impede mascarar fonte genérica como pronta e mantém `scraping_allowed=false`, `ingestion_allowed=false`, `render_allowed=false`, `sitemap_allowed=false`, `publication_allowed=false` e `public_path=""`.
+
 `./tools/check-batch-source-matrix` valida a matriz de fonte oficial por subtema. Cada subtema precisa ter pelo menos duas URLs oficiais, tipos de fonte, score de especificidade, revisão de robots exigida, política `reference_only_no_scraping` e publicação bloqueada. O gerador só pode escalar amostras quando cada draft tiver `source_matrix_id` coberto por essa matriz.
 
 `./tools/check-batch-source-url-audits` valida a auditoria URL-level da matriz. Cada URL oficial usada por subtema precisa ter hash, robots/termos revisados, status bloqueado, política `reference_only_no_scraping_no_ingestion`, `scraping_allowed=false`, `ingestion_allowed=false`, `publication_allowed=false` e vínculo com todos os `matrix_id` que a usam.

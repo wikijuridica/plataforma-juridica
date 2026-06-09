@@ -84,6 +84,8 @@ Matriz de fontes por lote fica em `data/editorial/batch_source_matrix.jsonl`. Ca
 
 Auditoria URL-level da matriz fica em `data/source-audit/batch_source_urls.jsonl`, separada do conteúdo editorial. Cada registro cobre uma URL oficial única com hash `urlsha256`, `matrix_ids`, robots/termos revisados, política `reference_only_no_scraping_no_ingestion` e bloqueio explícito de scraping, ingestão, render, sitemap e publicação.
 
+Resolucao de especificidade por candidato fica em `data/editorial/batch_source_specificity_resolutions.jsonl`. Cada registro cobre um candidato de `batch_prepublication_gates` e decide se a fonte auditada ja e especifica o bastante para referencia final (`final_source_locked_reference_only`) ou se continua bloqueada por fonte ampla (`final_source_blocked_needs_specific_url`). Mesmo fonte travada nao autoriza scraping, ingestao, render, sitemap, publicacao ou `public_path`.
+
 Termos em massa não podem nascer de combinação infinita de cidade, palavra-chave e área. A escala deve vir de problemas jurídicos reais, etapas processuais/administrativas, documentos, riscos, fontes e intenções digitais distintas.
 
 Pesquisa de fonte em escala deve ser planejada por famílias e subtemas, nao improvisada por página. O lote deve carregar mapa de fontes suficientes para cada grupo de intenção, com fonte oficial/proveniência antes de rascunho público. Ausência de fonte específica bloqueia o lote, mesmo que a demanda e o CTA sejam fortes.

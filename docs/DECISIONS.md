@@ -588,3 +588,15 @@ Motivos:
 - pre-publicacao em lote precisa ser validada por candidato, nao por suposicao global.
 
 Consequencia: `data/editorial/batch_prepublication_gates.jsonl`, `internal/batchprepublication`, `./tools/check-batch-prepublication-gates`, `internal/checks` e `tools/lab-cycle` entram no laboratorio. O ciclo usa validacao focada por politica proporcional: teste do contrato novo, tool especifica, storage contract, checks internos e diff check; validacao global fica reservada para alteracao ampla ou risco critico.
+
+## 2026-06-09 — Especificidade de fonte por candidato pre-publicado
+
+Decisao: criar `batch_source_specificity_resolutions` como camada obrigatoria depois de `batch_prepublication_gates`, cobrindo cada candidato com fonte final travada como referencia ou bloqueio explicito por fonte ampla.
+
+Motivos:
+- matriz de fonte auditada nao basta para dizer que todo candidato esta pronto;
+- fonte institucional ampla nao pode ser mascarada como fonte final;
+- candidatos com URL oficial especifica podem avancar para o proximo gate bloqueado sem scraping, ingestao ou publicacao;
+- candidatos com fonte ampla precisam registrar motivo, detalhe necessario e permanecer fora de render/sitemap/publicacao.
+
+Consequencia: `data/editorial/batch_source_specificity_resolutions.jsonl`, `internal/batchsourcespecificity`, `./tools/check-batch-source-specificity`, `internal/checks`, `content/storage_contract.json` e `tools/lab-cycle` entram no laboratorio. O gate exige 18 resolucoes, uma por candidato pre-publicado, fonte URL-level auditada, politica `reference_only_no_scraping_no_ingestion`, `candidate_robots=noindex,follow`, canonical oficial e flags publicas falsas. O ciclo usa validacao proporcional focada; `check-all` e `lab-cycle` ficam reservados para alteracao ampla ou risco transversal.

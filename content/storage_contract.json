@@ -283,6 +283,18 @@
       "description": "Gates de pre-publicacao bloqueada dos candidatos de lote revisados, com canonical oficial, noindex e publicacao falsa."
     },
     {
+      "name": "batch_source_specificity_resolutions",
+      "path": "data/editorial/batch_source_specificity_resolutions.jsonl",
+      "record_type": "batch_source_specificity_resolution_blocked",
+      "record_max_bytes": 16384,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": false,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Resolucao de especificidade de fonte por candidato de lote pre-publicado, com fonte auditada ou bloqueio explicito, sem scraping, render, sitemap ou publicacao."
+    },
+    {
       "name": "batch_generation_metrics",
       "path": "data/editorial/batch_generation_metrics.jsonl",
       "record_type": "batch_generation_scored_blocked",
