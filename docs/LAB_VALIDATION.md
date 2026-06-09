@@ -12,6 +12,9 @@ Esse comando combina:
 - `go test -count=1 ./...`;
 - `./tools/check-all`;
 - `./tools/check-sources`;
+- `./tools/check-storage-contract`;
+- `./tools/check-term-seeds`;
+- `./tools/lab-term-draft`;
 - `./tools/check-google-search-appearance`;
 - `./tools/check-mechanical-content`;
 - `./tools/check-cpu-budget`;
@@ -26,6 +29,8 @@ O gate `./tools/check-performance-budget` deve reprovar HTML publico pesado, `<s
 `./tools/lab-content-quality` usa arquivos temporarios em `/tmp` para validar texto natural versus texto mecanico. Isso e laboratorio, nao publicacao. Ele deve detectar conteudo raso, keyword stuffing e permutacao antes que qualquer pagina seja exposta ao Googlebot.
 
 `./tools/check-cpu-budget` vale para runtime publico/producao. Ele nao proibe testes, build, laboratorio ou auditorias mais pesadas quando forem necessarias para provar qualidade; ele impede que caminhos de atendimento publico gastem CPU com execucao externa, rede, sleeps ou loops sem limite.
+
+`./tools/lab-term-draft` usa seeds juridicas aprovadas pelo contrato de `term_seeds` para criar rascunho temporario em `/tmp`. O rascunho deve ser `draft/noindex`, nao pode escrever em `content/pages.json`, nao pode entrar em sitemap e nao pode receber CTA.
 
 ## Politica
 

@@ -8,6 +8,7 @@ go test -count=1 ./...
 ./tools/check-sources
 ./tools/check-storage-contract
 ./tools/check-term-seeds
+./tools/lab-term-draft
 ./tools/check-google-search-appearance
 ./tools/check-mechanical-content
 ./tools/check-cpu-budget

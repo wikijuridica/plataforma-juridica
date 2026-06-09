@@ -230,3 +230,24 @@
 - plano de continuidade: continuar P0 no ciclo 12; criar gerador de rascunho temporario em `/tmp` a partir de seed valida, com texto natural PT-BR, fonte citada, aviso informativo e reprova mecanico/raso antes de qualquer exposicao publica.
 - proximo ciclo: P0 laboratorio de rascunho editorial temporario a partir de `term_seeds`, sem publicacao.
 - riscos: a seed usa LexML como referencia acessivel, mas ainda nao autoriza conteudo indexavel; proximo ciclo deve manter rascunho em `/tmp` e fora do manifesto publico.
+
+## 2026-06-09 — Ciclo 12 — P0 rascunho temporario em laboratorio
+
+- data/hora local conferida antes do commit: `2026-06-09 09:22:19 -03`.
+- ciclo: 12
+- prioridade: P0
+- objetivo: continuar sem parada; gerar rascunho temporario natural a partir de `term_seeds`, somente em `/tmp`, sem publicar pagina e sem alterar sitemap.
+- natureza do checkpoint: rastreabilidade operacional para continuar; nao e aceite final, nao e ordem de parada.
+- continuidade: continuar P0; proximo ciclo deve tornar o rascunho persistivel em camada editorial `editorial_drafts` sem virar pagina publica.
+- entregas registradas no ciclo: `internal/draftlab`; teste `internal/contract/term_draft_lab_test.go`; comando `cmd/term-draft-lab`; ferramenta `./tools/lab-term-draft`; integracao ao `./tools/lab-cycle`; docs e contratos para rascunho `draft/noindex` em `/tmp`.
+- arquivos alterados: `AGENTS.md`, `GOAL.md`, `CHECKPOINT.md`, `cmd/term-draft-lab/`, `docs/CONTENT_QUALITY.md`, `docs/DECISIONS.md`, `docs/LAB_VALIDATION.md`, `internal/contract/term_draft_lab_test.go`, `internal/draftlab/`, `internal/terms/terms.go`, `tools/lab-term-draft`, `tools/lab-cycle`.
+- decisoes: seed valida pode gerar rascunho temporario, mas nao recebe `PublicPath`, nao altera `content/pages.json`, nao entra em sitemap, nao recebe CTA e precisa passar `quality.AnalyzeText`.
+- comandos executados: `env GOCACHE=/tmp/wiki-go-build-cache go test -count=1 ./internal/contract`; `./tools/lab-term-draft`; `./tools/lab-cycle`; `git diff -- content/pages.json`; `date '+%Y-%m-%d %H:%M:%S %Z'`.
+- resultados: `./tools/lab-cycle` passou; `lab-term-draft` gerou `draft=responsabilidade-civil status=draft index=noindex source=lexml path=/tmp/.../responsabilidade-civil.txt`; `content/pages.json` sem diff; build continuou `generated_pages=3 indexable_pages=1 output_dir=public`.
+- falhas: RED inicial apontou ausencia de `internal/draftlab`; patch de docs falhou por contexto antigo em `docs/LAB_VALIDATION.md`.
+- correcoes: `internal/draftlab.Build` implementado com texto proprio PT-BR e gate de qualidade; comando grava apenas em `/tmp`; patch documental reaplicado em partes menores.
+- provas: `term_draft_lab_test.go` exige `draft/noindex`, ausencia de rota publica, fonte LexML, aviso informativo e qualidade natural; `lab-cycle` inclui `lab-term-draft`; `git diff -- content/pages.json` sem output.
+- commit: este ciclo deve ser persistido em Git apos validacao final desta entrada.
+- plano de continuidade: continuar P0 no ciclo 13; criar append validado de `editorial_drafts` para persistir rascunho aprovado pelo laboratorio, mantendo `noindex` e sem rota publica; depois validar fluxo seed -> draft -> quality -> editorial state.
+- proximo ciclo: P0 persistencia de rascunho editorial em `data/editorial/drafts.jsonl`, sem publicacao.
+- riscos: texto de laboratorio ainda e rascunho generico; antes de conteudo publico real, precisa pesquisa de fonte especifica, autoria/revisao e ajuste humano natural por tema.

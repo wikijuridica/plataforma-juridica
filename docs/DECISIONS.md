@@ -210,3 +210,14 @@ Motivos:
 - um termo publicado direto seria spam ou thin content.
 
 Consequencia: `internal/terms` e `./tools/check-term-seeds` validam as seeds. O laboratorio pode usar essas seeds para rascunhos temporarios, mas nenhuma seed vira pagina publica, CTA ou URL indexavel sem passar pelos demais gates.
+
+## 2026-06-09 — Rascunho temporario antes de pagina publica
+
+Decisao: seed valida pode gerar rascunho temporario em `/tmp` por `./tools/lab-term-draft`, sempre `draft/noindex` e fora do manifesto publico.
+
+Motivos:
+- permite testar escrita natural, fonte e aviso informativo antes de tocar o pipeline publico;
+- impede que uma seed vire pagina mecanica ou thin content;
+- preserva baixo CPU e HTML leve em producao, deixando o experimento no laboratorio.
+
+Consequencia: `internal/draftlab` gera rascunho proprio em PT-BR e roda `quality.AnalyzeText`. O rascunho nao recebe URL publica, nao entra em sitemap, nao recebe CTA e nao altera `content/pages.json`.

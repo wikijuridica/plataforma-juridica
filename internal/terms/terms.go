@@ -35,19 +35,45 @@ type Report struct {
 var termIDPattern = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
 
 func ValidateSeeds(root string) Report {
+	seeds, report := LoadSeeds(root)
+	if !report.Passed() {
+		return report
+	}
+	issues := make([]Issue, 0)
+	seen := make(map[string]bool)
+	for _, entry := range seeds {
+		report := ValidateSeed(entry.Seed)
+		for _, issue := range report.Issues {
+			issue.Message = fmt.Sprintf("line=%d %s", entry.Line, issue.Message)
+			issues = append(issues, issue)
+		}
+		if seen[entry.Seed.TermID] {
+			issues = append(issues, Issue{Code: "duplicate_term_id", Message: entry.Seed.TermID})
+		}
+		seen[entry.Seed.TermID] = true
+	}
+	return Report{Issues: issues}
+}
+
+type SeedEntry struct {
+	Line int
+	Seed Seed
+}
+
+func LoadSeeds(root string) ([]SeedEntry, Report) {
 	projectRoot, err := findProjectRoot(root)
 	if err != nil {
-		return Report{Issues: []Issue{{Code: "project_root_not_found", Message: err.Error()}}}
+		return nil, Report{Issues: []Issue{{Code: "project_root_not_found", Message: err.Error()}}}
 	}
 	path := filepath.Join(projectRoot, "data", "terms", "legal_terms.jsonl")
 	file, err := os.Open(path)
 	if err != nil {
-		return Report{Issues: []Issue{{Code: "term_seed_file_missing", Message: err.Error()}}}
+		return nil, Report{Issues: []Issue{{Code: "term_seed_file_missing", Message: err.Error()}}}
 	}
 	defer file.Close()
 
 	issues := make([]Issue, 0)
-	seen := make(map[string]bool)
+	seeds := make([]SeedEntry, 0)
 	scanner := bufio.NewScanner(file)
 	lineNumber := 0
 	for scanner.Scan() {
@@ -61,20 +87,12 @@ func ValidateSeeds(root string) Report {
 			issues = append(issues, Issue{Code: "term_seed_invalid_json", Message: fmt.Sprintf("line=%d %s", lineNumber, err.Error())})
 			continue
 		}
-		report := ValidateSeed(seed)
-		for _, issue := range report.Issues {
-			issue.Message = fmt.Sprintf("line=%d %s", lineNumber, issue.Message)
-			issues = append(issues, issue)
-		}
-		if seen[seed.TermID] {
-			issues = append(issues, Issue{Code: "duplicate_term_id", Message: seed.TermID})
-		}
-		seen[seed.TermID] = true
+		seeds = append(seeds, SeedEntry{Line: lineNumber, Seed: seed})
 	}
 	if err := scanner.Err(); err != nil {
 		issues = append(issues, Issue{Code: "term_seed_scan_failed", Message: err.Error()})
 	}
-	return Report{Issues: issues}
+	return seeds, Report{Issues: issues}
 }
 
 func ValidateSeed(seed Seed) Report {

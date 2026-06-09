@@ -42,6 +42,8 @@ Regra de rede e escalonamento: É para usar rede quando a rede for necessária p
 
 Regra de banco leve e ingestão de termos: se for para ingestão de termos jurídicos, isso é válido para começar conteúdos apenas como semente de rascunho, nunca como publicação ou página indexável automática. É obrigatório manter um banco de dados leve e organizado, próprio, em camadas separadas, com `term_seeds`, `source_audits`, `source_snapshots`, `editorial_drafts` e `published_manifest`. Regra literal: separar ingestão de termos, auditoria de fonte, fonte bruta, rascunho editorial e conteúdo publicado; não misturar fonte bruta, auditoria de fonte, rascunho editorial e conteúdo publicado. A política de início por termos deve ser `draft_only` até passar fonte, revisão, qualidade, SEO, CTA e checkpoint.
 
+Regra de laboratório de rascunho: seed válida pode gerar rascunho temporário somente em `/tmp`, com estado `draft/noindex`, fonte, aviso informativo e qualidade natural comprovada. Esse rascunho não pode alterar `content/pages.json`, não pode criar URL pública, não pode entrar em sitemap e não pode receber CTA.
+
 Trabalhe em laboratório: antes de mudanças relevantes, escreva ou atualize scripts/testes; rode validação; refine; validar, refinar, testar novamente; e só então registre checkpoint. Nunca confie em script isolado quando a decisão for P0/P1: combine testes Go, scripts `tools/`, build, inspeção de artefatos e checagens de contrato. Nada de mudar no chute.
 
 Sempre revisar e validar. Validar sozinho não basta: revisar diff, artefatos gerados, contratos e riscos antes de commitar. Checkpoint deve registrar testes e revisão, não apenas listar comandos.
