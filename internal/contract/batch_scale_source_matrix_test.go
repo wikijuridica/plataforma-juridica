@@ -55,6 +55,46 @@ func TestBatchDraftGeneratorScalesWithSourceMatrixCoverage(t *testing.T) {
 	}
 }
 
+func TestBatchDraftGeneratorHandlesHundredsPerFamilyWithoutMechanicalSimilarity(t *testing.T) {
+	records, loadReport := batchsourcematrix.LoadRecords(".")
+	if !loadReport.Passed() {
+		t.Fatalf("could not load source matrix: %v", loadReport.Messages())
+	}
+
+	result, report := batchdraftgen.Generate(".", batchdraftgen.Options{SamplesPerBatch: 100, CheckedAt: "2026-06-09"})
+	if !report.Passed() {
+		t.Fatalf("hundreds-scale batch draft generation failed: %v", report.Messages())
+	}
+	if len(result.Drafts) < 600 {
+		t.Fatalf("generated drafts=%d, want at least 600", len(result.Drafts))
+	}
+	if result.StructuralPatternRisk() > 0.35 {
+		t.Fatalf("structural risk=%.2f, want <=0.35", result.StructuralPatternRisk())
+	}
+	if result.MaximumPairSimilarity() > 0.64 {
+		t.Fatalf("max generated similarity=%.2f, want <=0.64", result.MaximumPairSimilarity())
+	}
+
+	coverage := batchsourcematrix.ValidateDraftCoverage(records, result.Drafts)
+	if !coverage.Passed() {
+		t.Fatalf("generated hundreds-scale drafts lack source matrix coverage: %v", coverage.Messages())
+	}
+	for _, metric := range result.Metrics {
+		if metric.GeneratedSamples < 100 {
+			t.Fatalf("%s generated_samples=%d, want >=100", metric.BatchID, metric.GeneratedSamples)
+		}
+		if metric.SourceMatrixCoveredSamples != metric.GeneratedSamples {
+			t.Fatalf("%s source_matrix_covered=%d generated=%d", metric.BatchID, metric.SourceMatrixCoveredSamples, metric.GeneratedSamples)
+		}
+		if metric.StructuralPatternRisk > 0.35 {
+			t.Fatalf("%s structural risk=%.2f, want <=0.35", metric.BatchID, metric.StructuralPatternRisk)
+		}
+		if metric.LabEstimatedCPUUnits < 1200 {
+			t.Fatalf("%s lab cpu units=%d, want >=1200 for hundreds-scale validation", metric.BatchID, metric.LabEstimatedCPUUnits)
+		}
+	}
+}
+
 func TestBatchSourceMatrixRejectsWeakOrPublicSourceRecord(t *testing.T) {
 	record := batchsourcematrix.Record{
 		MatrixID:                "unsafe",

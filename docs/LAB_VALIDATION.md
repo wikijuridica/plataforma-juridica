@@ -27,6 +27,10 @@ Esse comando combina:
 - `./tools/check-human-content-score`;
 - `./tools/check-scalable-content-batches`;
 - `./tools/check-batch-drafts`;
+- `./tools/check-batch-draft-expansion-archive`;
+- `./tools/check-batch-draft-generation`;
+- `./tools/check-batch-source-url-audits`;
+- `./tools/check-batch-source-matrix`;
 - `./tools/lab-term-draft`;
 - `./tools/check-google-search-appearance`;
 - `./tools/check-mechanical-content`;
@@ -81,9 +85,13 @@ Antes de qualquer reescrita/publicação derivada de lote, registrar `human_cont
 
 Antes de ampliar produção, registrar `batch_drafts` e rodar `./tools/check-batch-drafts`. Cada lote deve ter amostras suficientes, score calculado, reescrita automática comprovada quando houve falha inicial, baixa similaridade intra-lote e publicação bloqueada.
 
-Antes de considerar o gerador pronto para volume maior, rodar `./tools/check-batch-draft-generation` e `./tools/generate-batch-drafts`. O gerador deve ser determinístico, produzir amostras temporárias em `/tmp`, persistir apenas métricas agregadas, provar reescrita automática e manter `render_allowed=false`, `sitemap_allowed=false`, `publication_allowed=false` e `public_path=""`.
+Antes de considerar o gerador pronto para volume maior, rodar `./tools/check-batch-draft-generation` e `./tools/generate-batch-drafts`. O gerador deve ser determinístico, produzir amostras temporárias em `/tmp`, persistir métricas agregadas, provar reescrita automática e manter `render_allowed=false`, `sitemap_allowed=false`, `publication_allowed=false` e `public_path=""`.
+
+Quando uma massa gerada em `/tmp` passar nos gates e tiver utilidade jurídica para páginas futuras, ela deve ser trazida para `data/editorial/batch_draft_expansion_archive.jsonl` e validada por `./tools/check-batch-draft-expansion-archive`. Laboratório validado não deve ser descartado por padrão; repo permanente bloqueado é o caminho de continuidade.
 
 Antes de ampliar subtemas, rodar `./tools/check-batch-source-matrix`. A matriz deve provar fonte oficial específica por subtema, política sem scraping e cobertura de cada draft gerado. Se a fonte estiver genérica, ausente ou sem revisão de robots, o lote fica bloqueado.
+
+Antes de ampliar rascunhos por família, rodar `./tools/check-batch-source-url-audits`. Toda URL da matriz deve estar auditada por hash, robots/termos, política sem scraping/ingestão e vínculo com os subtemas que a usam. Falta de auditoria URL-level bloqueia o lote inteiro.
 
 Se a similaridade subir em volume maior, investigar a semântica: verificar se os textos diferem em problema, documento, fonte, risco e ação digital. Não resolver similaridade com troca mecânica de palavras ou redução de limite.
 

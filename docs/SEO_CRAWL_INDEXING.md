@@ -14,6 +14,12 @@ Toda pagina indexavel precisa de:
 - links internos rastreaveis;
 - conteudo util e nao duplicado.
 
+## URL base configurável
+
+O projeto ainda nao esta usando URL oficial travada. `content/site.json` declara a base atual e seu estado. Quando `base_url_mode` for `lab_placeholder`, o dominio serve apenas para laboratorio, canonical candidato bloqueado, robots e sitemap de teste; ele nao e marca publica nem URL final.
+
+Os testes devem validar base HTTPS, canonical absoluto, path limpo e correspondencia entre canonical e rota usando a base configurada. Eles nao devem hardcodar `portal-juridico.example` como requisito permanente. Quando a URL oficial for escolhida, a troca deve ocorrer por configuracao e atualizacao dos canonicals, mantendo os mesmos gates.
+
 ## Orcamento de HTML
 
 Pagina publica indexavel deve ser facil de rastrear. O contrato atual reprova HTML publico acima de 50 KB, `<script>`, referencias `.js/.mjs/.wasm`, `modulepreload`, import maps, payloads de framework e marcadores de hidratacao. O objetivo e manter o primeiro response barato, textual e previsivel para Googlebot, OAI-SearchBot e bots valiosos.

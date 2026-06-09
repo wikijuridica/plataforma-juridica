@@ -9,8 +9,10 @@ import (
 	"portaljuridico/internal/approvals"
 	"portaljuridico/internal/architecture"
 	"portaljuridico/internal/authorialdrafts"
+	"portaljuridico/internal/batchdraftarchive"
 	"portaljuridico/internal/batchdraftgen"
 	"portaljuridico/internal/batchdrafts"
+	"portaljuridico/internal/batchsourceaudit"
 	"portaljuridico/internal/batchsourcematrix"
 	"portaljuridico/internal/build"
 	"portaljuridico/internal/content"
@@ -66,7 +68,9 @@ var Names = []string{
 	"human-content-score",
 	"scalable-content-batches",
 	"batch-drafts",
+	"batch-draft-expansion-archive",
 	"batch-draft-generation",
+	"batch-source-url-audits",
 	"batch-source-matrix",
 	"sitemaps",
 	"canonicals",
@@ -126,8 +130,12 @@ func Run(name string, root string) []string {
 		return checkScalableContentBatches(root)
 	case "batch-drafts":
 		return checkBatchDrafts(root)
+	case "batch-draft-expansion-archive":
+		return checkBatchDraftExpansionArchive(root)
 	case "batch-draft-generation":
 		return checkBatchDraftGeneration(root)
+	case "batch-source-url-audits":
+		return checkBatchSourceURLAudits(root)
 	case "batch-source-matrix":
 		return checkBatchSourceMatrix(root)
 	case "sitemaps":
@@ -347,12 +355,20 @@ func checkBatchDrafts(root string) []string {
 	return batchdrafts.Validate(root).Messages()
 }
 
+func checkBatchDraftExpansionArchive(root string) []string {
+	return batchdraftarchive.Validate(root).Messages()
+}
+
 func checkBatchDraftGeneration(root string) []string {
 	errors := make([]string, 0)
 	_, generated := batchdraftgen.Generate(root, batchdraftgen.DefaultOptions())
 	errors = append(errors, generated.Messages()...)
 	errors = append(errors, batchdraftgen.ValidateStoredMetrics(root).Messages()...)
 	return errors
+}
+
+func checkBatchSourceURLAudits(root string) []string {
+	return batchsourceaudit.Validate(root).Messages()
 }
 
 func checkBatchSourceMatrix(root string) []string {

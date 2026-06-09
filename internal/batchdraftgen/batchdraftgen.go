@@ -71,6 +71,17 @@ type scenario struct {
 	DigitalAction   string
 }
 
+type semanticFacet struct {
+	ID                 string
+	TermContext        string
+	ReaderFocus        string
+	SourceFocus        string
+	DocumentFocus      string
+	RiskFocus          string
+	DigitalFocus       string
+	OperationalContext string
+}
+
 func DefaultOptions() Options {
 	return Options{SamplesPerBatch: 10, CheckedAt: "2026-06-09"}
 }
@@ -134,6 +145,9 @@ func validateResult(result Result, matrixEntries []batchsourcematrix.Entry) Repo
 	if len(result.Drafts) < 30 {
 		issues = append(issues, Issue{Code: "generation_too_few_drafts", Message: fmt.Sprintf("drafts=%d", len(result.Drafts))})
 	}
+	rewrittenCount := result.RewrittenCount()
+	maxSimilarity := result.MaximumPairSimilarity()
+	structuralRisk := result.StructuralPatternRisk()
 	seen := make(map[string]bool)
 	for _, draft := range result.Drafts {
 		if seen[draft.UniqueIntentID] {
@@ -148,14 +162,14 @@ func validateResult(result Result, matrixEntries []batchsourcematrix.Entry) Repo
 			issues = append(issues, Issue{Code: "generation_cta_without_origin", Message: draft.UniqueIntentID})
 		}
 	}
-	if result.RewrittenCount() < 6 {
-		issues = append(issues, Issue{Code: "generation_too_few_rewrites", Message: fmt.Sprintf("rewritten=%d", result.RewrittenCount())})
+	if rewrittenCount < 6 {
+		issues = append(issues, Issue{Code: "generation_too_few_rewrites", Message: fmt.Sprintf("rewritten=%d", rewrittenCount)})
 	}
-	if result.MaximumPairSimilarity() > 0.64 {
-		issues = append(issues, Issue{Code: "generation_similarity_too_high", Message: fmt.Sprintf("max=%.2f", result.MaximumPairSimilarity())})
+	if maxSimilarity > 0.64 {
+		issues = append(issues, Issue{Code: "generation_similarity_too_high", Message: fmt.Sprintf("max=%.2f", maxSimilarity)})
 	}
-	if result.StructuralPatternRisk() > 0.35 {
-		issues = append(issues, Issue{Code: "generation_structural_pattern_risk_too_high", Message: fmt.Sprintf("risk=%.2f", result.StructuralPatternRisk())})
+	if structuralRisk > 0.35 {
+		issues = append(issues, Issue{Code: "generation_structural_pattern_risk_too_high", Message: fmt.Sprintf("risk=%.2f", structuralRisk)})
 	}
 	if len(matrixEntries) > 0 {
 		coverage := batchsourcematrix.ValidateDraftCoverage(matrixEntries, result.Drafts)
@@ -460,6 +474,16 @@ func sourceMatrixID(scenario scenario) string {
 			return strings.TrimSuffix(scenario.IntentID, suffix)
 		}
 	}
+	for _, facet := range allSemanticFacets() {
+		suffix := "-" + facet.ID
+		if strings.HasSuffix(scenario.IntentID, suffix) {
+			return strings.TrimSuffix(scenario.IntentID, suffix)
+		}
+		roundMarker := suffix + "-rodada-"
+		if index := strings.LastIndex(scenario.IntentID, roundMarker); index > 0 {
+			return scenario.IntentID[:index]
+		}
+	}
 	return scenario.IntentID
 }
 
@@ -519,11 +543,11 @@ func expandScenarios(area string, base []scenario, count int) []scenario {
 	expanded := append([]scenario{}, base...)
 	variant := 1
 	for len(expanded) < count {
-		for _, item := range base {
+		for index, item := range base {
 			if len(expanded) >= count {
 				break
 			}
-			expanded = append(expanded, scenarioVariant(area, item, variant))
+			expanded = append(expanded, scenarioVariant(area, item, variant+index))
 		}
 		variant++
 	}
@@ -531,38 +555,211 @@ func expandScenarios(area string, base []scenario, count int) []scenario {
 }
 
 func scenarioVariant(area string, base scenario, variant int) scenario {
-	switch variant % 3 {
-	case 1:
-		return scenario{
-			IntentID:        base.IntentID + "-documentos-prazo",
-			Term:            base.Term + " com prova digital organizada",
-			ReaderProblem:   "Para " + strings.ReplaceAll(base.IntentID, "-", " e ") + ", o leitor precisa transformar a dúvida em linha do tempo, com datas, protocolo, resposta formal e documento que prove o ponto sensível do caso.",
-			SourceHook:      "A fonte de apoio continua específica ao subtema: " + base.SourceHook,
-			DocumentContext: "A segunda leitura usa os mesmos documentos centrais do caso, mas cobra ordem cronológica, comprovante digital preservado e identificação clara de quem respondeu: " + base.DocumentContext,
-			RiskContext:     "O risco muda quando a prova está incompleta: " + base.RiskContext,
-			DigitalAction:   "O atendimento online recebe origem, subtema e arquivos essenciais para decidir se falta documento, fonte ou revisão antes de qualquer página pública.",
-		}
-	case 2:
-		return scenario{
-			IntentID:        base.IntentID + "-revisao-fonte",
-			Term:            base.Term + " com revisão de fonte oficial",
-			ReaderProblem:   "O usuário quer entender se a fonte oficial realmente cobre o seu cenário, sem depender de notícia, promessa comercial ou modelo genérico de página.",
-			SourceHook:      base.SourceHook + " A variação exige comparação entre fonte primária, orientação administrativa e documentos do caso.",
-			DocumentContext: "A leitura pede decisão, protocolo, contrato, comprovantes, mensagens, identificação das partes e documento que conecte o fato ao subtema.",
-			RiskContext:     "A cautela principal é não transformar dúvida comum em página pública antes de provar especificidade, utilidade e diferença real de intenção.",
-			DigitalAction:   "O fluxo digital registra origem, subtema e documentos esperados para que o WhatsApp receba contexto útil de contratação remota.",
-		}
+	facets := semanticFacetsFor(area)
+	facet := facets[(variant-1)%len(facets)]
+	cycle := (variant - 1) / len(facets)
+	facetID := facet.ID
+	if cycle > 0 {
+		facetID = fmt.Sprintf("%s-rodada-%02d", facet.ID, cycle+1)
+	}
+	return scenario{
+		IntentID:        base.IntentID + "-" + facetID,
+		Term:            base.Term + " com foco em " + facet.OperationalContext,
+		ReaderProblem:   readerLead(facetID) + " em " + areaContext(area) + " exige " + facet.ReaderFocus + ", sem perder datas, documento principal, fonte oficial e decisao que muda o rumo do caso.",
+		SourceHook:      facet.SourceFocus + " " + areaSourceContext(area) + " Matriz URL-a-URL segue bloqueada para coleta, com tipo de fonte e uso apenas referencial.",
+		DocumentContext: facet.DocumentFocus + ". " + areaDocumentContext(area) + " Recorte do caso: " + compactContext(base.DocumentContext),
+		RiskContext:     facet.RiskFocus + ". " + areaRiskContext(area) + " Sinal especifico: " + compactContext(base.RiskContext),
+		DigitalAction:   facet.DigitalFocus + ". " + areaDigitalContext(area) + " Origem do WhatsApp recebe identificador do rascunho, subtema e motivo da consulta remota.",
+	}
+}
+
+func areaContext(area string) string {
+	switch area {
+	case "saude-suplementar":
+		return "saude suplementar digital"
+	case "trabalhista":
+		return "rotina trabalhista online"
+	case "familia":
+		return "familia e acordos remotos"
+	case "previdenciario":
+		return "beneficio previdenciario digital"
+	case "consumidor-financeiro":
+		return "consumo financeiro online"
+	case "sucessorio":
+		return "inventario e sucessao digital"
 	default:
-		return scenario{
-			IntentID:        base.IntentID + "-triagem-risco",
-			Term:            base.Term + " para triagem jurídica online",
-			ReaderProblem:   "A dúvida já tem urgência prática, porém precisa de triagem cuidadosa para separar documento essencial, risco jurídico, prazo e fonte oficial.",
-			SourceHook:      base.SourceHook + " O foco é confirmar se o subtema possui fonte suficiente para avançar no laboratório.",
-			DocumentContext: "São separados documentos obrigatórios, registros auxiliares, resposta do órgão ou empresa, comprovantes financeiros e comunicações preservadas.",
-			RiskContext:     "O risco é publicar texto parecido com outros do lote ou prometer solução sem validar a prova mínima do caso.",
-			DigitalAction:   "A etapa online mede score, similaridade, fonte e CTA contextual antes de qualquer render público.",
+		return "servico juridico digital"
+	}
+}
+
+func areaSourceContext(area string) string {
+	switch area {
+	case "saude-suplementar":
+		return "ANS, contrato do plano e lei de saude suplementar ficam separados como autoridade, sem promessa de cobertura."
+	case "trabalhista":
+		return "CLT, prova de jornada e comunicacoes do emprego sustentam a leitura antes de qualquer calculo."
+	case "familia":
+		return "Codigo Civil, CNJ e documentos familiares orientam consenso, guarda, alimentos ou partilha."
+	case "previdenciario":
+		return "INSS, CNIS, laudos e comunicados administrativos definem a fase do pedido."
+	case "consumidor-financeiro":
+		return "Banco Central, consumidor.gov.br, contrato e extratos ajudam a separar fraude, erro e cobranca."
+	case "sucessorio":
+		return "Codigo Civil, CNJ, cartorio, certidoes e bens do espolio delimitam a via possivel."
+	default:
+		return "Fonte oficial, documento do usuario e trilha de auditoria delimitam a pauta."
+	}
+}
+
+func areaDocumentContext(area string) string {
+	switch area {
+	case "saude-suplementar":
+		return "Relatorio medico, negativa da operadora, carteirinha, contrato e protocolo entram conforme urgencia."
+	case "trabalhista":
+		return "Holerites, ponto, escala, mensagens e termo rescisorio organizam a prova laboral."
+	case "familia":
+		return "Certidoes, renda, despesas, calendario combinado e minuta familiar mostram o impacto concreto."
+	case "previdenciario":
+		return "CNIS, comunicado de decisao, laudos, atestados e protocolo indicam a etapa administrativa."
+	case "consumidor-financeiro":
+		return "Extratos, contrato, comprovante Pix, fatura, protocolo e resposta do banco apontam responsabilidade."
+	case "sucessorio":
+		return "Obito, herdeiros, matricula, extratos, imposto, testamento ou divida definem o caminho."
+	default:
+		return "Documento pessoal, protocolo, decisao e comprovantes sustentam o recorte."
+	}
+}
+
+func areaRiskContext(area string) string {
+	switch area {
+	case "saude-suplementar":
+		return "Erro de urgencia ou cobertura pode prejudicar prova clinica e estrategia."
+	case "trabalhista":
+		return "Narrativa sem periodo, funcao ou prova digital enfraquece a analise."
+	case "familia":
+		return "Acordo aparente pode esconder conflito sobre filhos, renda ou bens."
+	case "previdenciario":
+		return "Prazo, qualidade de segurado e conexao entre laudo e trabalho precisam ser conferidos."
+	case "consumidor-financeiro":
+		return "Fraude, contratacao valida e erro cadastral exigem separacao documental."
+	case "sucessorio":
+		return "Bens, dividas, consenso e testamento mudam a via e nao podem ser presumidos."
+	default:
+		return "Fonte generica ou prova incompleta mantem o lote bloqueado."
+	}
+}
+
+func areaDigitalContext(area string) string {
+	switch area {
+	case "saude-suplementar":
+		return "Triagem online prioriza arquivos medicos, negativa e prazo assistencial."
+	case "trabalhista":
+		return "Atendimento remoto organiza periodo, empregador, verbas e prints preservados."
+	case "familia":
+		return "Fluxo digital separa consenso, documento dos filhos, renda e pontos pendentes da minuta."
+	case "previdenciario":
+		return "Analise remota classifica requerimento, recurso, exigencia ou novo pedido."
+	case "consumidor-financeiro":
+		return "Consulta online registra instituicao, valor, data, protocolo e impacto financeiro."
+	case "sucessorio":
+		return "Triagem sucessoria digital lista herdeiros, bens, dividas e documento faltante."
+	default:
+		return "Atendimento digital organiza fonte, arquivos e etapa juridica."
+	}
+}
+
+func compactContext(value string) string {
+	value = strings.TrimSpace(value)
+	if len(value) <= 150 {
+		return value
+	}
+	cut := strings.LastIndex(value[:150], " ")
+	if cut < 80 {
+		cut = 150
+	}
+	return strings.TrimSpace(value[:cut]) + "."
+}
+
+func readerLead(facetID string) string {
+	leads := map[string]string{
+		"prova-digital":            "Prova digital preservada",
+		"prazo-e-urgencia":         "Prazo e urgencia documentados",
+		"fonte-primaria":           "Fonte primaria conferida",
+		"documento-minimo":         "Documento minimo para analise",
+		"negociacao-previa":        "Historico de tentativa previa",
+		"risco-economico":          "Impacto financeiro mensuravel",
+		"vulnerabilidade":          "Vulnerabilidade concreta",
+		"competencia-digital":      "Caminho digital definido",
+		"linha-do-tempo":           "Linha do tempo organizada",
+		"prova-de-negativa":        "Negativa formal analisada",
+		"parte-responsavel":        "Responsavel juridico identificado",
+		"estado-do-processo":       "Situacao atual delimitada",
+		"prova-medica-ou-tecnica":  "Prova tecnica contextual",
+		"conflito-de-versoes":      "Conflito de versoes mapeado",
+		"custo-de-inercia":         "Consequencia de inercia explicada",
+		"rota-administrativa":      "Rota administrativa separada",
+		"prova-patrimonial":        "Prova patrimonial objetiva",
+		"impacto-familiar":         "Impacto familiar delimitado",
+		"evidencia-de-boa-fe":      "Boa-fe documentada",
+		"lacuna-de-fonte":          "Lacuna de fonte bloqueante",
+		"risco-clinico":            "Risco clinico comprovado",
+		"rotina-de-trabalho":       "Rotina de trabalho demonstrada",
+		"historico-previdenciario": "Historico previdenciario organizado",
+	}
+	if lead := leads[facetID]; lead != "" {
+		return lead
+	}
+	if index := strings.LastIndex(facetID, "-rodada-"); index > 0 {
+		if lead := leads[facetID[:index]]; lead != "" {
+			return lead
 		}
 	}
+	return "Contexto juridico especifico"
+}
+
+func allSemanticFacets() []semanticFacet {
+	facets := append([]semanticFacet{}, semanticFacetsFor("")...)
+	facets = append(facets,
+		semanticFacet{ID: "risco-clinico"},
+		semanticFacet{ID: "rotina-de-trabalho"},
+		semanticFacet{ID: "historico-previdenciario"},
+	)
+	return facets
+}
+
+func semanticFacetsFor(area string) []semanticFacet {
+	common := []semanticFacet{
+		{"prova-digital", "com prova digital preservada", "separar prints, protocolos e arquivos enviados em aplicativos", "A checagem prioriza documento oficial que confirme o canal e a data do evento.", "prints, e-mails, protocolo, comprovante de envio e resposta formal precisam mostrar continuidade", "a narrativa ficar forte no relato e fraca na prova verificavel", "o sistema agrupa arquivos por data, identifica lacunas e nao libera publicacao se a origem estiver incompleta", "prova"},
+		{"prazo-e-urgencia", "com prazo e urgencia documentados", "diferenciar urgencia real, prazo administrativo e demora comum", "O apoio oficial deve explicar prazo, competencia ou rito antes de qualquer interpretacao editorial.", "datas de pedido, resposta, vencimento, agenda e comunicacao indicam se ha urgencia concreta", "perder prazo ou tratar todo atraso como ilegal sem fonte e cronologia", "a triagem calcula janela temporal, registra alerta e preserva pergunta objetiva para advogado online", "prazo"},
+		{"fonte-primaria", "com fonte primaria conferida", "confirmar se a fonte primaria cobre exatamente o subtema", "A verificacao separa lei, regulador, orgao publico e tribunal, sem copiar texto de nenhum deles.", "identificacao da norma, protocolo, decisao, contrato e documento do usuario sustenta a diferenca do tema", "usar fonte generica para criar pagina parecida com outras do lote", "o laboratorio bloqueia rascunho sem matriz oficial e sem vinculo de fonte URL-a-URL", "fonte"},
+		{"documento-minimo", "com documento minimo para analise remota", "entender quais documentos mudam a conclusao juridica", "A fonte oficial funciona como ancora de autoridade, mas o texto precisa explicar o problema do usuario.", "contrato, comprovante, mensagem, resposta, identificacao das partes e documento publico formam o conjunto minimo", "publicar orientacao sem documento que confirme fato, data ou responsabilidade", "o fluxo pede os arquivos essenciais e gera mensagem de WhatsApp com origem rastreavel", "documento"},
+		{"negociacao-previa", "com historico de tentativa previa", "mostrar o que foi pedido antes de contratar advogado", "A leitura considera canais administrativos e registros formais antes de falar em medida judicial.", "protocolos, respostas, recusas, datas e comprovantes de tentativa revelam se falta etapa util", "pular tentativa relevante ou prometer processo sem maturidade documental", "a triagem separa tentativa administrativa, urgencia e prova para uma avaliacao digital proporcional", "negociacao"},
+		{"risco-economico", "com impacto financeiro mensuravel", "identificar valor, recorrencia, desconto, custo ou perda pratica", "A matriz precisa apontar fonte que ajude a qualificar o impacto, nao apenas o nome do direito.", "extratos, notas, boletos, recibos, holerites ou comprovantes indicam o tamanho do problema", "gerar texto abstrato sem explicar o prejuizo documentado", "o atendimento remoto registra valores e recorrencia sem fazer promessa comercial", "valor"},
+		{"vulnerabilidade", "com vulnerabilidade concreta descrita", "avaliar idade, saude, renda, dependencia ou urgencia familiar quando isso altera a prioridade", "A fonte oficial deve sustentar o criterio objetivo ligado ao subtema.", "laudos, comprovantes de renda, despesas, certidoes e registros familiares precisam aparecer quando forem relevantes", "usar tom emocional sem prova ou transformar todo caso em urgencia", "o sistema marca prioridade documental e exige revisao antes de qualquer rota publica", "prioridade"},
+		{"competencia-digital", "com caminho digital definido", "entender se o caso pode ser conduzido de forma totalmente online", "A verificacao observa orgao, canal digital, documento aceito e limite do atendimento remoto.", "assinaturas, documentos de identidade, protocolos eletronicos e comprovantes digitais sustentam o fluxo", "prometer solucao presencial ou cartorial quando a pauta e 100 por cento digital", "o CTA recebe contexto do canal digital, arquivos esperados e motivo da consulta", "digital"},
+		{"linha-do-tempo", "com linha do tempo organizada", "montar sequencia de fatos antes de escolher a providencia", "A fonte valida prazos, competencias ou conceitos usados na leitura dos eventos.", "evento inicial, pedido, resposta, agravamento, tentativa e documento final precisam ficar em ordem", "confundir fato antigo, resposta recente e prazo ainda aberto", "a triagem transforma datas em roteiro de avaliacao sem publicar conteudo bruto", "cronologia"},
+		{"prova-de-negativa", "com negativa formal analisada", "distinguir recusa expressa, silencio, exigencia e resposta incompleta", "A fonte de apoio precisa permitir leitura da negativa dentro do subtema.", "carta, e-mail, protocolo, print, decisao ou comunicacao da empresa mostra o tipo de negativa", "tratar qualquer silencio como recusa definitiva sem documento", "o atendimento digital classifica a negativa e prepara pergunta contextual para WhatsApp", "negativa"},
+		{"parte-responsavel", "com responsavel identificado", "saber quem deve responder pelo problema antes de sugerir caminho juridico", "A matriz de fonte ajuda a separar orgao publico, empresa, banco, operadora, empregador ou familia.", "contrato, cadastro, identificacao, comunicacao e comprovante ligam o fato a quem respondeu", "acusar parte errada ou criar texto generico sem sujeito juridico", "o fluxo registra responsavel, origem e fonte antes de qualquer avaliacao remota", "responsavel"},
+		{"estado-do-processo", "com situacao atual delimitada", "separar consulta inicial, recurso, revisao, cumprimento, acordo ou urgencia", "A fonte oficial deve servir ao estado real do caso e nao apenas ao tema amplo.", "decisao, despacho, resposta administrativa, acordo, contrato ou protocolo mostram a fase", "misturar fases e criar pagina que compete com outro subtema", "a triagem classifica a etapa e bloqueia publicacao quando houver conflito de intencao", "fase"},
+		{"prova-medica-ou-tecnica", "com prova tecnica contextual", "conectar laudo, relatorio, exame, pericia, parecer ou documento tecnico ao direito discutido", "A fonte e usada para conferir se o documento tecnico conversa com regra, prazo ou cobertura.", "laudo, exame, relatorio, receita, parecer, vistoria ou demonstrativo precisa indicar fato verificavel", "transformar opiniao tecnica isolada em conclusao juridica pronta", "o atendimento remoto pede arquivo tecnico e registra lacuna antes de recomendar proximo passo", "tecnica"},
+		{"conflito-de-versoes", "com conflito de versoes mapeado", "identificar divergencia entre relato do usuario, documento da outra parte e fonte oficial", "A pesquisa de fonte deve ajudar a explicar o ponto que esta em disputa.", "mensagens, resposta escrita, contrato, comprovantes e historico mostram onde as versoes divergem", "publicar narrativa unilateral sem indicar prova minima", "a triagem aponta a divergencia principal e mantem o lote bloqueado ate revisao", "conflito"},
+		{"custo-de-inercia", "com consequencia de inercia explicada", "mostrar o que pode piorar se o usuario nao organizar a prova agora", "A fonte oficial delimita prazo ou criterio objetivo que torna a inercia relevante.", "datas, cobrancas, comunicados, agenda, vencimentos e protocolos demonstram risco de demora", "usar medo generico como CTA em vez de informacao util", "o WhatsApp recebe motivo contextual, sem promessa e com foco em documento verificavel", "inercia"},
+		{"rota-administrativa", "com rota administrativa separada", "distinguir reclamacao administrativa, recurso, pedido novo e medida judicial", "A fonte prioriza canais oficiais e limites da via administrativa.", "protocolo, canal usado, resposta, comprovante de envio e pendencia indicam se a etapa existe", "ajuizar mentalmente toda demanda sem checar caminho simples e documentado", "a triagem marca etapa administrativa e identifica quando a consulta juridica online faz sentido", "administrativo"},
+		{"prova-patrimonial", "com prova patrimonial objetiva", "mapear bens, valores, renda, descontos, dividas ou patrimonio envolvido", "A fonte de apoio precisa conversar com registro, contrato, extrato ou documento economico.", "matricula, extrato, holerite, imposto, contrato, fatura ou comprovante financeiro sustentam o tema", "confundir suspeita patrimonial com prova aproveitavel", "o atendimento digital organiza valores e documentos antes de qualquer roteiro juridico", "patrimonio"},
+		{"impacto-familiar", "com impacto familiar delimitado", "entender quando filhos, dependentes, herdeiros ou familiares mudam a leitura do caso", "A matriz oficial deve sustentar o recorte familiar sem generalizar.", "certidoes, despesas, calendario, residencia, renda e comunicacoes mostram a situacao concreta", "criar texto emocional sem criterio juridico e documental", "o fluxo remoto registra pessoas afetadas e documentos antes de CTA contextual", "familia"},
+		{"evidencia-de-boa-fe", "com boa-fe documentada", "provar tentativa correta, comunicacao transparente e preservacao de comprovantes", "A fonte ajuda a separar conduta documentada de relato incompleto.", "mensagens, protocolos, recibos, comprovantes e respostas demonstram cooperação ou resistencia", "ignorar documento que mostra tentativa previa ou aceitar print solto como prova total", "a triagem identifica boa-fe e lacunas para avaliacao juridica remota", "boafe"},
+		{"lacuna-de-fonte", "com lacuna de fonte bloqueante", "reconhecer quando o tema ainda nao tem fonte especifica suficiente para pagina publica", "A validacao URL-a-URL decide se a matriz esta pronta apenas como referencia bloqueada.", "sem fonte especifica, documentos e contexto ficam em laboratorio, nunca em sitemap", "preencher vazio com texto bonito e sem autoridade juridica", "o gerador marca bloqueio e exige nova pesquisa antes de escalar", "bloqueio"},
+	}
+	if area == "saude-suplementar" {
+		return append(common, semanticFacet{"risco-clinico", "com risco clinico comprovado", "ligar urgencia medica a negativa, prazo e documento assistencial", "A fonte da ANS precisa conversar com cobertura, prazo ou resposta da operadora.", "relatorio medico, pedido, exame, carteirinha, contrato e negativa formam o eixo clinico", "tratar ansiedade como urgencia clinica sem relatorio", "a triagem destaca risco clinico e prova medica para consulta remota", "clinico"})
+	}
+	if area == "trabalhista" {
+		return append(common, semanticFacet{"rotina-de-trabalho", "com rotina laboral demonstrada", "provar jornada, comando, salario, funcao ou ruptura do contrato", "A CLT e a fonte trabalhista orientam o recorte, mas a rotina documentada decide a utilidade.", "ponto, escala, holerite, mensagem, advertencia e contrato mostram a pratica", "confundir desconforto comum com violacao provada", "o atendimento organiza rotina e documentos para analise trabalhista online", "rotina"})
+	}
+	if area == "previdenciario" {
+		return append(common, semanticFacet{"historico-previdenciario", "com historico previdenciario organizado", "ligar CNIS, pericia, exigencia, laudo ou beneficio ao momento certo", "A fonte do INSS orienta fase administrativa e documento esperado.", "CNIS, comunicado, protocolo, laudo, atestado e carteira mostram continuidade", "perder fase administrativa ou discutir incapacidade sem historico", "a triagem separa requerimento, recurso, exigencia e acao possivel", "previdenciario"})
+	}
+	return common
 }
 
 func scenariosForArea(area string) []scenario {

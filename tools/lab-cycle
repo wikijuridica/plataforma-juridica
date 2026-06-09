@@ -24,7 +24,9 @@ go test -count=1 ./...
 ./tools/check-human-content-score
 ./tools/check-scalable-content-batches
 ./tools/check-batch-drafts
+./tools/check-batch-draft-expansion-archive
 ./tools/check-batch-draft-generation
+./tools/check-batch-source-url-audits
 ./tools/check-batch-source-matrix
 ./tools/generate-batch-drafts --samples-per-batch 10 --checked-at 2026-06-09
 ./tools/lab-term-draft

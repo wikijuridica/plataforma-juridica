@@ -32,6 +32,7 @@ O projeto usa Go e biblioteca padrao como base tecnica. A escolha privilegia bin
 - `internal/storage`: banco leve proprio em JSONL para termos juridicos, auditorias, snapshots, rascunhos e manifesto publicado.
 - `internal/termintents`: candidatos de termos juridicos com demanda humana, fonte oficial e adequacao a contratacao 100% digital.
 - `internal/termpromotion`: ranking e promocao controlada de candidatos para seeds `draft_only`, com diversidade de areas e penalizacao de sinais fracos.
+- `internal/batchdraftarchive`: arquivo permanente bloqueado de rascunhos de lote que passaram no laboratorio e ainda nao podem virar pagina publica.
 - `cmd/refresh-editorial-drafts`: regeneracao segura de rascunhos persistidos quando o algoritmo de escrita e refinado.
 - `internal/provenance`: contrato de proveniencia por payload antes de qualquer conteudo.
 - `internal/architecture`: validacao de estrutura e proibicoes P0.
@@ -42,6 +43,12 @@ O projeto usa Go e biblioteca padrao como base tecnica. A escolha privilegia bin
 Rotas publicas devem poder ser geradas sob demanda por `internal/ondemand`, sem Next.js e sem mecanismo terceirizado de ISR/SSR. O gerador resolve uma rota canonica, renderiza HTML completo no primeiro response e grava cache local. A segunda chamada pode servir do cache do proprio projeto.
 
 O build estatico continua permitido como artefato operacional, mas nao substitui o requisito de geracao on demand propria.
+
+## URL base e canonical
+
+`content/site.json` define a base de canonical, robots e sitemap. Durante P0, essa base pode ser um placeholder de laboratorio marcado por `base_url_mode="lab_placeholder"`, `official_url_status="not_locked"` e `official_url_locked=false`.
+
+Validadores devem usar a base configurada, nao uma constante de dominio. O contrato continua exigindo HTTPS absoluto, path limpo e canonical correspondente a rota; a flexibilidade existe para trocar a URL oficial quando ela for definida, sem quebrar algoritmo ou mascarar SEO.
 
 ## HTML publico leve
 
@@ -81,6 +88,7 @@ Camadas obrigatorias:
 - `manual_keyword_research`: pesquisa editorial manual de alta intencao digital, com Trends como orientacao e fontes oficiais como autoridade;
 - `term_seeds` promovidos: seeds com `candidate_id`, evidencia de demanda, modo `digital_only` e CTA alto, mas ainda `draft_only`;
 - `source_audits`: auditoria de robots, termos de uso, alcance HTTP e decisao de bloqueio;
+- `batch_source_url_audits`: auditoria URL-a-URL das fontes da matriz de lote, com hash da URL, robots/termos revisados, uso apenas referencial e bloqueio de scraping/ingestao/publicacao;
 - `source_snapshots`: snapshots autorizados, pequenos, com hash e proveniencia;
 - `editorial_drafts`: texto editorial proprio em PT-BR, sempre noindex ate aprovacao;
 - `content_briefs`: brief inicial natural e especifico por termo, sem URL publica;
@@ -92,8 +100,10 @@ Camadas obrigatorias:
 - `scalable_content_batches`: lotes massivos de intenções únicas e rascunhos autorais, bloqueados quando houver spam, template ou score humano insuficiente;
 - `human_content_score`: score de naturalidade/IA-like/mecânico para revisão algorítmica, reescrita e auditoria;
 - `batch_drafts`: rascunhos de amostra por lote massivo, com score e reescrita comprovada, ainda sem render, sitemap ou publicacao;
+- `batch_draft_expansion_archive`: arquivo permanente bloqueado de rascunhos validados em laboratorio, preservado para expansao futura ate prova contraria;
 - `batch_generation_metrics`: métricas agregadas de geração/refino por lote, provando volume, reescrita, score e similaridade sem criar URL pública;
 - `batch_source_matrix`: matriz de fontes oficiais por subtema, usada como referência/proveniência sem scraping e sem publicação;
+- `batch_source_url_audits`: auditoria das URLs da matriz, separada da camada editorial, exigindo cobertura de cada URL por `matrix_id` antes de escalar rascunhos;
 - `published_manifest`: manifesto leve de conteudo aprovado, sem substituir o renderizador.
 
 Regra P0: termos podem iniciar `draft_only`; nenhuma linha do banco vira pagina indexavel sem fonte, revisao, qualidade, SEO, intencao unica e checkpoint.
@@ -101,5 +111,7 @@ Regra P0: termos podem iniciar `draft_only`; nenhuma linha do banco vira pagina 
 ## Laboratorio
 
 Toda mudanca P0/P1 deve passar por ciclo de laboratorio: escrever ou ajustar teste, rodar validacao, refinar, testar novamente e inspecionar artefatos. `tools/lab-cycle` combina `go test -count=1 ./...`, `tools/check-all`, build, auditoria de dependencias, diff check e busca por residuos Python.
+
+O laboratorio pode gerar primeiro em `/tmp`, mas resultado validado, juridicamente util e reutilizavel deve ser trazido para o repo como camada permanente bloqueada. Isso evita depender de contexto compactado ou diretorio temporario para continuar a fabrica de conteudo, sem confundir rascunho aprovado em laboratorio com pagina publicada.
 
 Antes de commit, o laboratório deve registrar autocrítica: hipótese do ciclo, prova obtida, riscos, melhorias possíveis, motivo pelo qual o commit é apenas checkpoint e próximo ciclo planejado. Essa autocrítica impede commit tratado como conclusão do projeto massivo.

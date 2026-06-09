@@ -73,13 +73,19 @@ func (p Page) PlainText() string {
 }
 
 type Repository struct {
-	BaseURL string
-	Pages   []Page
-	Root    string
+	BaseURL           string
+	BaseURLMode       string
+	OfficialURLStatus string
+	OfficialURLLocked bool
+	Pages             []Page
+	Root              string
 }
 
 type siteConfig struct {
-	BaseURL string `json:"base_url"`
+	BaseURL           string `json:"base_url"`
+	BaseURLMode       string `json:"base_url_mode"`
+	OfficialURLStatus string `json:"official_url_status"`
+	OfficialURLLocked bool   `json:"official_url_locked"`
 }
 
 func LoadRepository(root string) (Repository, error) {
@@ -99,9 +105,12 @@ func LoadRepository(root string) (Repository, error) {
 	}
 
 	return Repository{
-		BaseURL: strings.TrimRight(site.BaseURL, "/"),
-		Pages:   pages,
-		Root:    projectRoot,
+		BaseURL:           strings.TrimRight(site.BaseURL, "/"),
+		BaseURLMode:       site.BaseURLMode,
+		OfficialURLStatus: site.OfficialURLStatus,
+		OfficialURLLocked: site.OfficialURLLocked,
+		Pages:             pages,
+		Root:              projectRoot,
 	}, nil
 }
 

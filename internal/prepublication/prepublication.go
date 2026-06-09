@@ -10,6 +10,7 @@ import (
 	"sort"
 	"strings"
 
+	"portaljuridico/internal/content"
 	"portaljuridico/internal/seo"
 	"portaljuridico/internal/sourceblockers"
 	"portaljuridico/internal/sourceresolutions"
@@ -51,9 +52,9 @@ type Report struct {
 }
 
 var (
-	termIDPattern       = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
-	cleanCandidatePath  = regexp.MustCompile(`^/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*/$`)
-	projectCanonicalURL = "https://portal-juridico.example"
+	termIDPattern      = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
+	cleanCandidatePath = regexp.MustCompile(`^/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*/$`)
+	defaultLabBaseURL  = "https://portal-juridico.example"
 )
 
 func Validate(root string) Report {
@@ -65,12 +66,19 @@ func Validate(root string) Report {
 	if len(entries) == 0 {
 		issues = append(issues, Issue{Code: "prepublication_gates_empty", Message: "data/editorial/prepublication_gates.jsonl"})
 	}
+	repo, repoErr := content.LoadRepository(root)
+	baseURL := defaultLabBaseURL
+	if repoErr != nil {
+		issues = append(issues, Issue{Code: "prepublication_base_url_unavailable", Message: repoErr.Error()})
+	} else {
+		baseURL = repo.BaseURL
+	}
 
 	resolutions := validSourceResolutionIDs(root)
 	blockers := activeSourceBlockers(root)
 	seen := make(map[string]int)
 	for _, entry := range entries {
-		recordReport := ValidateRecord(entry.Record)
+		recordReport := ValidateRecordWithBaseURL(entry.Record, baseURL)
 		for _, issue := range recordReport.Issues {
 			issue.Message = fmt.Sprintf("line=%d %s", entry.Line, issue.Message)
 			issues = append(issues, issue)
@@ -126,7 +134,15 @@ func LoadRecords(root string) ([]Entry, Report) {
 }
 
 func ValidateRecord(record Record) Report {
+	return ValidateRecordWithBaseURL(record, defaultLabBaseURL)
+}
+
+func ValidateRecordWithBaseURL(record Record, baseURL string) Report {
 	issues := make([]Issue, 0)
+	baseURL = strings.TrimRight(baseURL, "/")
+	if !seo.IsAbsoluteHTTPSURL(baseURL) {
+		issues = append(issues, Issue{Code: "prepublication_base_url_not_https", Message: baseURL})
+	}
 	if record.TermID == "" || !termIDPattern.MatchString(record.TermID) || record.Term == "" {
 		issues = append(issues, Issue{Code: "prepublication_invalid_term", Message: record.TermID})
 	}
@@ -148,7 +164,7 @@ func ValidateRecord(record Record) Report {
 	if !cleanCandidatePath.MatchString(record.CandidatePath) || strings.ContainsAny(record.CandidatePath, "?#") {
 		issues = append(issues, Issue{Code: "prepublication_candidate_path_not_clean", Message: record.CandidatePath})
 	}
-	expectedCanonical := projectCanonicalURL + record.CandidatePath
+	expectedCanonical := baseURL + record.CandidatePath
 	if !seo.IsAbsoluteHTTPSURL(record.CandidateCanonicalURL) {
 		issues = append(issues, Issue{Code: "prepublication_canonical_not_https", Message: record.CandidateCanonicalURL})
 	} else if record.CandidateCanonicalURL != expectedCanonical {

@@ -55,6 +55,18 @@
       "description": "Eventos de auditoria de robots, termos de uso, alcance HTTP e decisao de bloqueio ou desbloqueio."
     },
     {
+      "name": "batch_source_url_audits",
+      "path": "data/source-audit/batch_source_urls.jsonl",
+      "record_type": "batch_source_url_audit",
+      "record_max_bytes": 16384,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": false,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Auditoria URL-a-URL das fontes usadas pela matriz de lotes; referencia apenas, sem scraping, sem ingestao e sem publicacao."
+    },
+    {
       "name": "source_snapshots",
       "path": "data/source-snapshots/payloads.jsonl",
       "record_type": "source_payload_snapshot",
@@ -221,6 +233,18 @@
       "requires_source_provenance": true,
       "requires_quality_state": true,
       "description": "Rascunhos de amostra gerados por lote massivo, com score humano, reescrita e publicacao bloqueada."
+    },
+    {
+      "name": "batch_draft_expansion_archive",
+      "path": "data/editorial/batch_draft_expansion_archive.jsonl",
+      "record_type": "batch_draft_scored_blocked_archive",
+      "record_max_bytes": 32768,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": true,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Arquivo permanente bloqueado de rascunhos de expansao que passaram em laboratorio; nao e lixo, nao publica e pode alimentar futuras paginas apos todos os gates."
     },
     {
       "name": "batch_generation_metrics",

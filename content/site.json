@@ -1,3 +1,6 @@
 {
-  "base_url": "https://portal-juridico.example"
+  "base_url": "https://portal-juridico.example",
+  "base_url_mode": "lab_placeholder",
+  "official_url_status": "not_locked",
+  "official_url_locked": false
 }

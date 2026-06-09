@@ -80,3 +80,33 @@ func TestPrepublicationGateRejectsIndexableOrWeakSearchContract(t *testing.T) {
 		}
 	}
 }
+
+func TestPrepublicationGateAcceptsConfigurableProjectBaseURL(t *testing.T) {
+	record := prepublication.Record{
+		TermID:                      "negativa-cobertura-plano-saude",
+		Term:                        "negativa de cobertura do plano de saúde",
+		GateID:                      "negativa-cobertura-plano-saude",
+		GateStatus:                  "blocked_prepublication",
+		Language:                    "pt-BR",
+		SourceResolutionID:          "negativa-cobertura-plano-saude",
+		SourceBlockerReconciliation: "source_resolved_blocker_still_active",
+		CandidatePath:               "/temas/negativa-cobertura-plano-saude/",
+		CandidateCanonicalURL:       "https://juridico-lab.test/temas/negativa-cobertura-plano-saude/",
+		CandidateRobots:             "noindex,follow",
+		CandidateTitle:              "Negativa de cobertura do plano: prova e urgência",
+		CandidateMetaDescription:    "Entenda quais documentos separar após negativa do plano de saúde e quando buscar triagem jurídica online com fonte oficial.",
+		RemainingGates:              []string{"definir URL oficial antes de publicar"},
+		CheckedAt:                   "2026-06-09",
+	}
+
+	report := prepublication.ValidateRecordWithBaseURL(record, "https://juridico-lab.test")
+	if !report.Passed() {
+		t.Fatalf("configurable base URL should pass blocked prepublication gate, got %v", report.Messages())
+	}
+
+	record.CandidateCanonicalURL = "https://portal-juridico.example/temas/negativa-cobertura-plano-saude/"
+	report = prepublication.ValidateRecordWithBaseURL(record, "https://juridico-lab.test")
+	if !report.HasIssue("prepublication_canonical_mismatch") {
+		t.Fatalf("missing canonical mismatch for stale hardcoded base, got %v", report.Codes())
+	}
+}

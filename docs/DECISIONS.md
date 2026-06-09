@@ -479,3 +479,40 @@ Motivos:
 - publicar sem matriz de fonte específica criaria risco jurídico e risco de conteúdo raso.
 
 Consequencia: `internal/batchsourcematrix`, `data/editorial/batch_source_matrix.jsonl` e `./tools/check-batch-source-matrix` entram no laboratório. `batchdraftgen` passa a gerar 60 drafts temporários com `source_matrix_id`, cobertura de matriz, risco estrutural e estimativa de CPU de laboratório; a similaridade máxima validada caiu para 0.52 após refinamento semântico. O próximo ciclo deve ampliar a matriz e o gerador para centenas de amostras por família, mantendo fonte específica e publicação bloqueada.
+
+## 2026-06-09 — Auditoria URL-level e centenas de rascunhos por família
+
+Decisao: criar `batch_source_url_audits` e ampliar o gerador para validar 100 amostras por família no laboratório, mantendo publicação bloqueada e sem afrouxar score, similaridade ou fonte.
+
+Motivos:
+- matriz de fonte por subtema ainda nao prova auditoria de cada URL oficial usada pelo lote;
+- centenas de amostras por família exigem algoritmo semântico, não repetição de três sufixos;
+- similaridade precisa diferenciar faceta e subtema, sem confundir metadado bruto com texto editorial;
+- testes podem usar CPU no laboratório, mas o runtime público continua leve;
+- nenhum rascunho de lote pode virar render, sitemap, `public_path` ou página indexável no P0.
+
+Consequencia: `internal/batchsourceaudit`, `data/source-audit/batch_source_urls.jsonl` e `./tools/check-batch-source-url-audits` entram no laboratório. `batchdraftgen` passa a gerar 600 drafts temporários em teste de contrato, com 100 por família, facetas semânticas distribuídas por subtema, contexto de área, auditoria URL-level e similaridade máxima abaixo do limite de 0.64. `batchdrafts.MaximumPairSimilarity` foi otimizado para pré-computar sinais semânticos e pondera subtema/faceta sem afrouxar o limite. O próximo ciclo deve transformar essa massa temporária em gate de lote candidato, ainda bloqueado, com amostra persistida controlada e pré-publicação sem URL pública.
+
+## 2026-06-09 — Laboratorio aprovado vira arquivo permanente bloqueado
+
+Decisao: rascunhos massivos gerados em `/tmp` que passam nos gates e contêm informação jurídica útil devem ser preservados no repositório como `batch_draft_expansion_archive`, não descartados.
+
+Motivos:
+- checkpoint nao pode depender de diretorio temporario ou contexto compactado;
+- rascunhos validados podem virar base permanente de páginas futuras depois de expansão, fonte e revisão;
+- excluir dados jurídicos úteis sem prova atrasa a fabrica de conteúdo e reduz rastreabilidade;
+- persistir no repo nao significa publicar, renderizar, criar sitemap ou liberar CTA público.
+
+Consequencia: `data/editorial/batch_draft_expansion_archive.jsonl`, `internal/batchdraftarchive` e `./tools/check-batch-draft-expansion-archive` entram no laboratório. O arquivo exige 600 rascunhos, 100 por família, `source_matrix_id`, reescrita automática, baixa similaridade e bloqueio total de render/sitemap/publicação. Remoção ou rebaixamento de rascunho validado exige prova em checkpoint e gate próprio.
+
+## 2026-06-09 — URL oficial do projeto ainda nao esta travada
+
+Decisao: tratar `content/site.json` como fonte configuravel da base de canonical/sitemap/robots e marcar a base atual como placeholder de laboratorio, nao URL oficial do produto.
+
+Motivos:
+- o projeto ainda esta em P0 e a URL oficial publica nao foi definida;
+- testes rigidos por dominio quebrariam a migracao futura sem melhorar SEO;
+- canonical continua obrigatorio, mas deve ser validado por base configurada, HTTPS e path limpo;
+- pre-publicacao bloqueada pode planejar canonical candidato sem criar URL publica.
+
+Consequencia: `content/site.json` passa a declarar `base_url_mode`, `official_url_status` e `official_url_locked`. `internal/prepublication` valida canonical candidato contra a base carregada de `content/site.json`, e o teste `TestPrepublicationGateAcceptsConfigurableProjectBaseURL` prova que outro dominio HTTPS pode ser aceito sem alterar algoritmo. `portal-juridico.example` so pode ser tratado como placeholder enquanto `base_url_mode="lab_placeholder"`.

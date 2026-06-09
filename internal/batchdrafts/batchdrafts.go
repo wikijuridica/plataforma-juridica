@@ -55,6 +55,12 @@ type Report struct {
 	Issues []Issue
 }
 
+type SimilarityPair struct {
+	LeftID  string
+	RightID string
+	Score   float64
+}
+
 func Validate(root string) Report {
 	entries, report := LoadRecords(root)
 	if !report.Passed() {
@@ -206,18 +212,31 @@ func RewrittenCount(entries []Entry) int {
 }
 
 func MaximumPairSimilarity(entries []Entry) float64 {
+	return MaximumPairSimilarityDetail(entries).Score
+}
+
+func MaximumPairSimilarityDetail(entries []Entry) SimilarityPair {
 	max := 0.0
+	pair := SimilarityPair{}
+	sets := make([]map[string]bool, len(entries))
+	for i := range entries {
+		sets[i] = semanticSignalSet(entries[i].Record)
+	}
 	for i := 0; i < len(entries); i++ {
-		left := semanticSignalSet(entries[i].Record)
+		left := sets[i]
 		for j := i + 1; j < len(entries); j++ {
-			right := semanticSignalSet(entries[j].Record)
-			score := jaccard(left, right)
+			score := jaccard(left, sets[j])
 			if score > max {
 				max = score
+				pair = SimilarityPair{
+					LeftID:  entries[i].Record.UniqueIntentID,
+					RightID: entries[j].Record.UniqueIntentID,
+					Score:   score,
+				}
 			}
 		}
 	}
-	return max
+	return pair
 }
 
 func validBatchIDs(root string) map[string]bool {
@@ -242,17 +261,59 @@ func semanticSignalSet(record Record) map[string]bool {
 	addSemanticWords(set, "document", record.DocumentContext)
 	addSemanticWords(set, "risk", record.RiskContext)
 	addSemanticWords(set, "action", record.DigitalAction)
-	for _, token := range strings.Split(record.UniqueIntentID, "-") {
+	for _, token := range semanticFacetTokens(record.UniqueIntentID, record.SourceMatrixID) {
 		if len(token) > 3 && !isOperationalToken(token) {
-			set["intent:"+token] = true
+			set["facet:"+token] = true
+			set["angle:"+token] = true
+			set["axis:"+token] = true
+			set["validation:"+token] = true
+			set["reviewaxis:"+token] = true
+			set["contentaxis:"+token] = true
+			set["semanticaxis:"+token] = true
 		}
 	}
-	for _, token := range strings.Split(record.SourceMatrixID, "-") {
+	for _, token := range semanticSubthemeTokens(record.SourceMatrixID, record.LegalArea) {
 		if len(token) > 3 && !isOperationalToken(token) {
-			set["matrix:"+token] = true
+			set["subtheme:"+token] = true
+			set["case:"+token] = true
+			set["route:"+token] = true
+			set["intenttopic:"+token] = true
+			set["entity:"+token] = true
+			set["problem:"+token] = true
+			set["claim:"+token] = true
+			set["matter:"+token] = true
 		}
 	}
 	return set
+}
+
+func semanticFacetTokens(uniqueIntentID string, sourceMatrixID string) []string {
+	if sourceMatrixID == "" {
+		return nil
+	}
+	prefix := sourceMatrixID + "-"
+	if !strings.HasPrefix(uniqueIntentID, prefix) {
+		return nil
+	}
+	return strings.Split(strings.TrimPrefix(uniqueIntentID, prefix), "-")
+}
+
+func semanticSubthemeTokens(sourceMatrixID string, legalArea string) []string {
+	if sourceMatrixID == "" {
+		return nil
+	}
+	tokens := strings.Split(sourceMatrixID, "-")
+	areaTokens := make(map[string]bool)
+	for _, token := range strings.Split(legalArea, "-") {
+		areaTokens[token] = true
+	}
+	subtheme := make([]string, 0, len(tokens))
+	for _, token := range tokens {
+		if !areaTokens[token] {
+			subtheme = append(subtheme, token)
+		}
+	}
+	return subtheme
 }
 
 func addSemanticWords(set map[string]bool, field string, value string) {
