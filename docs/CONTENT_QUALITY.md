@@ -43,6 +43,8 @@ Termos juridicos podem ser usados para iniciar pauta e rascunho, mas nao podem v
 
 `./tools/check-term-intent-candidates` valida candidatos de termos pesquisados por humanos antes de qualquer conteudo publico. A evidencia segura inicial e Google Trends no Brasil (`https://trends.google.com.br/trends/explore?geo=BR`), interpretado conforme a Ajuda do Google Trends e a Central da Pesquisa Google. Essa evidencia e direcional: nao e volume absoluto, nao e fonte juridica e nao autoriza publicar sem fonte oficial, revisao e qualidade.
 
+`./tools/promote-term-candidates` promove um lote pequeno de candidatos para `term_seeds` apenas como `draft_only`. `./tools/check-promoted-term-seeds` exige `candidate_id`, evidencia de demanda, modo `digital_only`, CTA WhatsApp alto e publicacao bloqueada. O algoritmo de ranking deve ser refinado: nao confiar em um unico sinal, penalizar fonte nao oficial, penalizar fluxo presencial e manter diversidade de areas para evitar tunel de um unico nicho.
+
 `./tools/lab-term-draft` transforma seed valida em rascunho temporario dentro de `/tmp`, com estado `draft/noindex`, fonte citada e aviso informativo. Esse laboratorio prova linguagem natural sem escrever em `content/pages.json` e sem expor a seed ao Googlebot.
 
 `./tools/persist-term-drafts` persiste rascunhos validados em `data/editorial/drafts.jsonl` de forma idempotente. `./tools/check-editorial-drafts` reprova qualquer draft que tenha rota publica, indexacao, fonte ausente ou qualidade textual insuficiente.

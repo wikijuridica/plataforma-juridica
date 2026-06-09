@@ -50,6 +50,8 @@ Alta intencao de contratacao online exige que o fluxo possa ser 100% digital: Wh
 
 Os caminhos seguros de pesquisa de demanda ficam em `docs/data-sources/search-demand.md`. O laboratorio deve validar `term_intent_candidates` antes de transformar qualquer termo pesquisado em seed, rascunho ou pauta publica.
 
+Promocao de candidato para seed deve passar por ranking refinavel, nao por lista fixa. O score deve considerar area, risco, fonte oficial, adequacao digital, CTA WhatsApp e penalidades para fluxo presencial ou evidencia fraca. Quando falso positivo ou falso negativo aparecer, escrever teste e ajustar o algoritmo antes de continuar.
+
 ## Politica
 
 Nenhum script isolado e prova suficiente para mudanca P0/P1. Use o laboratorio como conjunto minimo e inspecione os artefatos quando a mudanca afetar HTML, sitemap, robots, canonical, indexacao, qualidade ou conteudo.

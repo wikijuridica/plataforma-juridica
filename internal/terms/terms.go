@@ -12,15 +12,21 @@ import (
 )
 
 type Seed struct {
-	TermID       string `json:"term_id"`
-	Term         string `json:"term"`
-	Language     string `json:"language"`
-	QualityState string `json:"quality_state"`
-	SourceID     string `json:"source_id"`
-	SourceURL    string `json:"source_url"`
-	CheckedAt    string `json:"checked_at"`
-	IntentHint   string `json:"intent_hint"`
-	Notes        string `json:"notes"`
+	TermID             string `json:"term_id"`
+	Term               string `json:"term"`
+	Language           string `json:"language"`
+	QualityState       string `json:"quality_state"`
+	SourceID           string `json:"source_id"`
+	SourceURL          string `json:"source_url"`
+	CheckedAt          string `json:"checked_at"`
+	IntentHint         string `json:"intent_hint"`
+	CandidateID        string `json:"candidate_id,omitempty"`
+	DemandEvidenceType string `json:"demand_evidence_type,omitempty"`
+	DemandEvidenceURL  string `json:"demand_evidence_url,omitempty"`
+	DemandQueryGroup   string `json:"demand_query_group,omitempty"`
+	OnlineServiceMode  string `json:"online_service_mode,omitempty"`
+	WhatsAppCTAIntent  string `json:"whatsapp_cta_intent,omitempty"`
+	Notes              string `json:"notes"`
 }
 
 type Issue struct {
@@ -118,7 +124,26 @@ func ValidateSeed(seed Seed) Report {
 	if len(strings.Fields(seed.IntentHint)) < 6 {
 		issues = append(issues, Issue{Code: "term_seed_without_intent_hint", Message: seed.TermID})
 	}
+	if seed.CandidateID != "" || seed.DemandEvidenceURL != "" || seed.OnlineServiceMode != "" || seed.WhatsAppCTAIntent != "" {
+		if seed.CandidateID == "" {
+			issues = append(issues, Issue{Code: "promoted_seed_without_candidate_id", Message: seed.TermID})
+		}
+		if seed.DemandEvidenceType != "google_trends_directional" || !isSafeDemandEvidenceURL(seed.DemandEvidenceURL) {
+			issues = append(issues, Issue{Code: "promoted_seed_without_safe_demand_evidence", Message: seed.TermID})
+		}
+		if seed.OnlineServiceMode != "digital_only" {
+			issues = append(issues, Issue{Code: "promoted_seed_not_digital_only", Message: seed.TermID})
+		}
+		if seed.WhatsAppCTAIntent != "high" {
+			issues = append(issues, Issue{Code: "promoted_seed_without_high_whatsapp_intent", Message: seed.TermID})
+		}
+	}
 	return Report{Issues: issues}
+}
+
+func isSafeDemandEvidenceURL(value string) bool {
+	return strings.HasPrefix(value, "https://trends.google.com.br/trends/explore") ||
+		strings.HasPrefix(value, "https://trends.google.com/trends/explore")
 }
 
 func looksLikePortugueseTerm(value string) bool {

@@ -307,3 +307,15 @@ Motivos:
 - o projeto precisa escolher termos com demanda humana real antes de criar pauta publica.
 
 Consequencia: `data/terms/intent_candidates.jsonl` deve registrar URL de comparacao, fonte juridica oficial, adequacao a contratacao 100% digital e bloqueio de publicacao. Nenhum candidato vira pagina publica sem novo ciclo de fonte, revisao, qualidade, SEO e CTA.
+
+## 2026-06-09 — Ranking refinavel de termos, sem confiar no primeiro sinal
+
+Decisao: promover candidatos de alta intencao para `term_seeds` por ranking refinavel e testado, nao por lista fixa nem confianca cega em Google Trends.
+
+Motivos:
+- um unico sinal de demanda pode ser enganoso, sazonal ou amplo demais;
+- termo presencial pode ter volume, mas baixa adequacao ao produto 100% digital;
+- fonte nao oficial ou fraca aumenta risco juridico e editorial;
+- concentrar todos os termos em uma area reduz aprendizado e escala.
+
+Consequencia: `internal/termpromotion` pontua candidatos, penaliza fonte nao oficial e modo presencial, exige diversidade de areas e preserva evidencia de demanda na seed. `./tools/promote-term-candidates` e `./tools/check-promoted-term-seeds` mantem seeds como `draft_only`, sem URL publica e sem CTA publico.
