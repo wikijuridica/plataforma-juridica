@@ -155,3 +155,14 @@ Motivos:
 - laboratorio pode ser mais pesado quando necessario para provar qualidade, mas isso nao pode virar dependencia do atendimento publico.
 
 Consequencia: `./tools/check-cpu-budget` escaneia caminhos de runtime publico/producao e reprova execucao externa, chamadas de rede, sleeps ou loops sem limite. Testes, build, laboratorio e auditorias podem usar comandos mais pesados quando forem necessarios e registrados.
+
+## 2026-06-09 — Modo /goal nao permite parada operacional
+
+Decisao: quando o Codex estiver em modo `/goal`, nao deve parar enquanto houver trabalho no escopo e nao houver bloqueio P0 real comprovado.
+
+Motivos:
+- checkpoint e resposta no thread sao rastreabilidade, nao ordem de parada;
+- o projeto exige continuidade autonoma e documentada;
+- o proximo passo deve sobreviver a compactacao de contexto, troca de sessao e perda de chat.
+
+Consequencia: a primeira linha de `AGENTS.md` registra a regra literal de `/goal`; `GOAL.md`, `CHECKPOINT.md` e documentos de decisao devem manter proximo passo planejado e continuidade explicita. O agente deve executar o proximo passo documentado sem aguardar nova cobranca do usuario, salvo bloqueio P0 real comprovado.

@@ -10,6 +10,15 @@ import (
 	"portaljuridico/internal/scale"
 )
 
+func TestAgentsFirstLineForGoalModeDoesNotAllowStopping(t *testing.T) {
+	text := readRootFile(t, "AGENTS.md")
+	firstLine := strings.SplitN(text, "\n", 2)[0]
+	want := "SE o Codex estiver em modo /goal, não é para parar enquanto tem trabalho."
+	if !strings.Contains(firstLine, want) {
+		t.Fatalf("AGENTS.md first line = %q, want it to contain %q", firstLine, want)
+	}
+}
+
 func TestContractsRequireContinuationBeyondCheckpoints(t *testing.T) {
 	for _, path := range []string{"AGENTS.md", "GOAL.md"} {
 		text := readRootFile(t, path)

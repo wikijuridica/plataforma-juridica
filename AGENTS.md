@@ -1,3 +1,5 @@
+SE o Codex estiver em modo /goal, não é para parar enquanto tem trabalho. É obrigatório sempre colocar nos documentos o próximo passo planejado e continuar sem parar, salvo bloqueio P0 real comprovado.
+
 # AGENTS.md — Portal Jurídico Brasileiro de Alta Escala
 
 ## Missão do projeto
@@ -31,6 +33,8 @@ Só peça intervenção humana quando houver bloqueio P0 real.
 Não pare em checkpoint. Checkpoint não é ordem de parada. Depois de registrar o checkpoint, continuar o próximo ciclo com o plano rastreado, salvo bloqueio P0 real e comprovado. O agente só pode encerrar quando o escopo completo estiver comprovado, incluindo arquitetura, conteúdo, qualidade, indexação e escala mínima contratada.
 
 Regra literal de continuidade: o agente não deve parar. Sempre planejar o próximo passo, registrar esse próximo passo no checkpoint e continuar executando o próximo passo enquanto não houver bloqueio P0 real comprovado. Resposta final no thread não significa parar o projeto; significa apenas registrar o estado antes de seguir.
+
+Regra específica de `/goal`: se o Codex estiver em modo /goal, não é para parar enquanto existir trabalho no escopo. O próximo passo planejado deve ficar nos documentos persistentes e no checkpoint, e deve ser executado sem aguardar nova cobrança do usuário.
 
 Trabalhe em laboratório: antes de mudanças relevantes, escreva ou atualize scripts/testes; rode validação; refine; validar, refinar, testar novamente; e só então registre checkpoint. Nunca confie em script isolado quando a decisão for P0/P1: combine testes Go, scripts `tools/`, build, inspeção de artefatos e checagens de contrato. Nada de mudar no chute.
 

@@ -166,3 +166,24 @@
 - plano de continuidade: continuar P0 com auditoria robots/termos por fonte; adicionar diagnosticos mais ricos para fonte aprovada versus preliminar; manter detector mecanico em observacao para falsos positivos/falsos negativos antes de qualquer conteudo em escala.
 - proximo ciclo: P0 auditoria robots/termos e contratos de fonte por tipo de dado.
 - riscos: limites SERP sao orcamento interno conservador, nao limite oficial Google; algoritmo mecanico e inicial e deve evoluir quando houver novos exemplos naturais ou mecanicos.
+
+## 2026-06-09 — Ciclo 9 — P0 primeira linha /goal e continuidade sem parada
+
+- data/hora local conferida antes do commit: `2026-06-09 08:43:12 -03`.
+- ciclo: 9
+- prioridade: P0
+- objetivo: corrigir contrato persistente para deixar a primeira linha de `AGENTS.md` explícita: em modo `/goal`, Codex nao deve parar enquanto houver trabalho no escopo.
+- natureza do checkpoint: rastreabilidade operacional para continuar; nao e aceite final, nao e ordem de parada.
+- continuidade: continuar P0 sem aguardar nova cobrança; o proximo ciclo planejado e auditoria robots/termos por fonte e contratos de fonte por tipo de dado.
+- entregas registradas no ciclo: teste `TestAgentsFirstLineForGoalModeDoesNotAllowStopping`; primeira linha de `AGENTS.md` com regra literal de `/goal`; `GOAL.md` reforcado; `docs/DECISIONS.md` com decisao de nao parar em `/goal`.
+- arquivos alterados: `AGENTS.md`, `GOAL.md`, `docs/DECISIONS.md`, `internal/contract/continuity_test.go`, `CHECKPOINT.md`.
+- decisoes: resposta no thread, checkpoint ou build verde nao encerram modo `/goal`; o proximo passo planejado deve ficar em documentos persistentes e deve ser executado enquanto nao houver bloqueio P0 real comprovado.
+- comandos executados: `env GOCACHE=/tmp/wiki-go-build-cache go test -count=1 ./internal/contract`; `date '+%Y-%m-%d %H:%M:%S %Z'`.
+- resultados: teste de contrato passou e prova a primeira linha de `AGENTS.md`.
+- falhas: RED inicial mostrou que a primeira linha de `AGENTS.md` ainda era o titulo do arquivo, nao a regra de `/goal`.
+- correcoes: primeira linha substituida por regra literal; `GOAL.md` e `docs/DECISIONS.md` receberam regra equivalente.
+- provas: `continuity_test.go` agora valida a primeira linha e os contratos de continuidade.
+- commit: este ciclo deve ser persistido em Git apos validacao final desta entrada.
+- plano de continuidade: continuar P0 imediatamente apos commit; proximo ciclo: auditoria robots/termos por fonte, sem scraping cego, sem ingestao e com diagnostico de fonte preliminar.
+- proximo ciclo: P0 auditoria robots/termos e contratos de fonte por tipo de dado.
+- riscos: a regra de `/goal` aumenta autonomia operacional, mas continua limitada por bloqueio P0 real, seguranca, LGPD, robots.txt, termos de uso e ausencia de scraping cego.
