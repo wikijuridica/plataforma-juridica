@@ -16,8 +16,15 @@ func TestBatchSourceSpecificityCoversPrepublicationWithoutPublishing(t *testing.
 	if !loadReport.Passed() {
 		t.Fatalf("could not load batch source specificity resolutions: %v", loadReport.Messages())
 	}
-	if len(records) != 18 {
-		t.Fatalf("source specificity resolutions=%d, want one record for each prepublication gate", len(records))
+	index, indexReport := batchsourcespecificity.BuildSourceIndex(".")
+	if !indexReport.Passed() {
+		t.Fatalf("could not build source specificity index: %v", indexReport.Messages())
+	}
+	if len(records) != len(index.PrepublicationByIntent) {
+		t.Fatalf("source specificity resolutions=%d prepublication=%d, want one record for each prepublication gate", len(records), len(index.PrepublicationByIntent))
+	}
+	if len(records) < 168 {
+		t.Fatalf("source specificity resolutions=%d, want at least 168 expanded paid-passed candidates", len(records))
 	}
 
 	for _, entry := range records {

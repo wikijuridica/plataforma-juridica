@@ -83,6 +83,8 @@ Antes de ampliar a seleção de candidatos por família, rodar `./tools/check-ba
 
 Antes de preparar pré-publicação por lote, rodar `./tools/check-batch-candidate-gates`. O gate deve selecionar candidatos reais do arquivo permanente, acompanhar a base oficial configurada em `content/site.json`, exigir CTA contextual e impedir render, sitemap, publicação ou `public_path`.
 
+Depois de expandir `batch_candidate_gates`, rodar `./tools/refresh-batch-candidate-pipeline`. O refresh deve propagar a seleção para revisões, pre-publication, fonte específica, manifesto e rascunhos finais bloqueados. Se a seleção subir de 18 para 168, os artefatos downstream também devem subir para 168, exceto rascunhos finais, que só podem preservar candidatos ainda elegíveis por fonte travada e paid intent. Falha de contagem downstream é falha P0, não detalhe cosmético.
+
 Antes de transformar candidatos de lote em pré-publicação, rodar `./tools/check-batch-candidate-reviews`. Cada candidato selecionado precisa de revisão jurídico-editorial bloqueada, fonte matricial auditada e CTA WhatsApp de origem rastreável. URL oficial travada não dispensa revisão; promessa de resultado, path com domínio, fonte sem auditoria ou flag pública verdadeira bloqueiam o lote.
 
 Antes de qualquer rota candidata de lote se aproximar de renderização, rodar `./tools/check-batch-prepublication-gates`. Esse gate registra canonical oficial e `noindex,follow`, mas mantém fonte final, revisão SEO e manifesto público como pendências. Render, sitemap, publicação e `public_path` devem continuar falsos.

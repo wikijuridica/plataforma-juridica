@@ -3,6 +3,7 @@ package contract_test
 import (
 	"testing"
 
+	"portaljuridico/internal/batchcandidatereviews"
 	"portaljuridico/internal/batchprepublication"
 )
 
@@ -16,8 +17,15 @@ func TestBatchPrepublicationGatesCoverReviewedCandidatesWithoutPublishing(t *tes
 	if !loadReport.Passed() {
 		t.Fatalf("could not load batch prepublication gates: %v", loadReport.Messages())
 	}
-	if len(records) != 18 {
-		t.Fatalf("prepublication gates=%d, want one blocked gate for each reviewed batch candidate", len(records))
+	reviewIndex, indexReport := batchcandidatereviews.BuildCandidateIndex(".")
+	if !indexReport.Passed() {
+		t.Fatalf("could not build selected candidate index: %v", indexReport.Messages())
+	}
+	if len(records) != len(reviewIndex.SelectedByIntent) {
+		t.Fatalf("prepublication gates=%d selected=%d, want one blocked gate for each selected batch candidate", len(records), len(reviewIndex.SelectedByIntent))
+	}
+	if len(records) < 168 {
+		t.Fatalf("prepublication gates=%d, want at least 168 expanded paid-passed candidates", len(records))
 	}
 
 	for _, entry := range records {

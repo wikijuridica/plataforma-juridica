@@ -253,6 +253,39 @@ func LoadRecords(root string) ([]Entry, Report) {
 	return entries, Report{Issues: issues}
 }
 
+func WriteRecords(root string, records []Record) error {
+	projectRoot, err := findProjectRoot(root)
+	if err != nil {
+		return err
+	}
+	path := filepath.Join(projectRoot, "data", "editorial", "batch_candidate_gates.jsonl")
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return err
+	}
+	file, err := os.Create(path)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	index, indexReport := BuildArchiveIndex(root)
+	if !indexReport.Passed() {
+		return fmt.Errorf("batch_candidate_archive_index_failed=%s", strings.Join(indexReport.Messages(), " | "))
+	}
+	for _, record := range records {
+		if messages := ValidateRecordAgainstArchive(record, index).Messages(); len(messages) > 0 {
+			return fmt.Errorf("invalid_batch_candidate_gate=%s", strings.Join(messages, " | "))
+		}
+		data, err := json.Marshal(record)
+		if err != nil {
+			return err
+		}
+		if _, err := file.Write(append(data, '\n')); err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
 func convertArchiveIssues(report batchdraftarchive.Report) []Issue {
 	issues := make([]Issue, 0, len(report.Issues))
 	for _, issue := range report.Issues {

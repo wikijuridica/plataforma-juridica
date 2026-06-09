@@ -348,6 +348,7 @@ func RefreshRecords(root string) ([]Record, Report) {
 		record.PaidIntentMissingIntentIDs = paidMissing
 		record.PaidIntentBlockedIntentIDs = paidBlocked
 		record.KnownSourceBlockerIntentIDs = append([]string{}, index.SourceBlockersByBatch[record.BatchID]...)
+		record.CurrentCandidateCount = index.CurrentCandidateCountByBatch[record.BatchID]
 		record.ActionableBlockers = expectedActionableBlockers(len(paidMissing), len(paidBlocked), len(record.KnownSourceBlockerIntentIDs))
 		if len(paidMissing) > 0 {
 			record.ReadinessStatus = PaidGateMissingStatus

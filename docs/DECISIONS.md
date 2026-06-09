@@ -710,3 +710,15 @@ Motivos:
 - readiness sem blocker antigo de paid/fonte precisa apontar o proximo gate real, nao ficar com blocker vazio.
 
 Consequencia: `./tools/refine-paid-intent-drafts` refinou 140 registros na primeira aplicacao (135 no arquivo permanente de expansao e 5 rascunhos finais), `./tools/check-paid-intent-refinements` entrou no check-all, `batch_paid_intent_gates` passou a registrar 168 candidatos pagos bloqueados para publicacao, 6 bloqueios de assistencia publica e 6 bloqueios de autoatendimento. `batch_candidate_expansion_readiness` usa `batch_candidate_gate_pending` quando a familia esta livre de paid/source blockers antigos, mas continua `noindex`, sem manifesto, render, sitemap, publicacao ou `public_path`. O proximo ciclo executavel e ampliar `batch_candidate_gates` a partir dos candidatos pagos aprovados internamente, mantendo bloqueio publico e fonte especifica como gates.
+
+## 2026-06-09 — Expansao candidata de 168 e refresh idempotente da cadeia bloqueada
+
+Decisao: `batch_candidate_gates` deve ser expandido por algoritmo a partir de `batch_candidate_expansion_readiness` e `batch_paid_intent_gates`, e a cadeia downstream deve ser regenerada por `refresh-batch-candidate-pipeline`, nunca por edicao manual de JSONL em massa.
+
+Motivos:
+- ampliar de 18 para 168 candidatos sem propagar revisao, pre-publicacao, fonte especifica e manifesto quebra o contrato P0;
+- paid-intent aprovado internamente nao equivale a publicacao, pois fonte especifica e revisao ainda podem bloquear;
+- rascunhos finais bons devem ser preservados quando continuam elegiveis, mas BPC/assistencia publica e autoatendimento devem sair da cadeia candidata paga;
+- a meta de 10k/milhoes exige ferramenta idempotente, nao ajuste manual lento.
+
+Consequencia: `./tools/expand-batch-candidate-gates` seleciona 168 intenções pagas bloqueadas; `./tools/refresh-batch-candidate-pipeline` materializa 168 revisoes, 168 prepublication gates, 168 resolucoes de fonte e 168 manifestos, preservando 5 rascunhos finais elegiveis e bloqueando 163 por fonte especifica. Todos permanecem `noindex`, sem render, sitemap, publicacao ou `public_path`.

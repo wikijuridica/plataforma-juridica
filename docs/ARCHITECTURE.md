@@ -111,9 +111,9 @@ Camadas obrigatorias:
 - `batch_drafts`: rascunhos de amostra por lote massivo, com score e reescrita comprovada, ainda sem render, sitemap ou publicacao;
 - `batch_draft_expansion_archive`: arquivo permanente bloqueado de rascunhos validados em laboratorio, preservado para expansao futura ate prova contraria;
 - `batch_candidate_expansion_readiness`: prontidao bloqueada de expansao por familia, conectando 600 rascunhos permanentes a alvos de 30+ candidatos e diferenciando paid-intent ausente, paid-intent existente mas reprovado, fonte ampla, proximo gate pendente e flags publicas;
-- `batch_candidate_gates`: gate permanente de candidatos selecionados do arquivo, ainda sem render, sitemap, publicacao ou `public_path`;
-- `batch_candidate_reviews`: revisao juridico-editorial bloqueada de candidatos de lote, com fonte matricial auditada e CTA WhatsApp de origem rastreavel;
-- `batch_prepublication_gates`: pre-publicacao bloqueada de candidatos revisados, com canonical oficial, title/meta, `noindex` e fonte final ainda pendente;
+- `batch_candidate_gates`: gate permanente de candidatos selecionados do arquivo, agora expansivel por paid-intent para 168 intenções internas, ainda sem render, sitemap, publicacao ou `public_path`;
+- `batch_candidate_reviews`: revisao juridico-editorial bloqueada de cada candidato de lote selecionado, com fonte matricial auditada e CTA WhatsApp de origem rastreavel;
+- `batch_prepublication_gates`: pre-publicacao bloqueada de cada candidato revisado, com canonical oficial, title/meta, `noindex` e fonte final ainda pendente;
 - `batch_source_specificity_resolutions`: resolucao de fonte por candidato pre-publicado, marcando URL especifica auditada ou bloqueio explicito por fonte ampla, sem liberar render/sitemap/publicacao;
 - `batch_public_manifest_gates`: manifesto publico bloqueado por candidato, permitindo SEO/conteudo pendente apenas quando a fonte esta travada e mantendo fonte ampla bloqueada;
 - `batch_final_authorial_drafts`: rascunhos autorais finais bloqueados, com fonte travada, score humano/naturalidade, CTA contextual e intenção comercial paga, ainda sem render, sitemap ou publicação;
@@ -122,6 +122,8 @@ Camadas obrigatorias:
 - `batch_generation_metrics`: métricas agregadas de geração/refino por lote, provando volume, reescrita, score e similaridade sem criar URL pública;
 - `batch_source_matrix`: matriz de fontes oficiais por subtema, usada como referência/proveniência sem scraping e sem publicação;
 - `batch_source_url_audits`: auditoria das URLs da matriz, separada da camada editorial, exigindo cobertura de cada URL por `matrix_id` antes de escalar rascunhos;
+
+Ferramentas operacionais de escala: `./tools/expand-batch-candidate-gates` recalcula a seleção a partir de `batch_candidate_expansion_readiness` e `batch_paid_intent_gates`; `./tools/refresh-batch-candidate-pipeline` propaga a seleção para revisões, pre-publicação, fonte específica, manifesto e rascunhos finais bloqueados. A ferramenta deve ser idempotente e não pode publicar: ela preserva somente rascunhos finais ainda elegíveis pelo paid gate e mantém os demais candidatos em `final_source_blocked_needs_specific_url`.
 - `published_manifest`: manifesto leve de conteudo aprovado, sem substituir o renderizador.
 
 Camada operacional fora do banco de conteúdo:

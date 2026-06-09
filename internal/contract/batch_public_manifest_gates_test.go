@@ -3,6 +3,7 @@ package contract_test
 import (
 	"testing"
 
+	"portaljuridico/internal/batchfinaldrafts"
 	"portaljuridico/internal/batchpublicmanifest"
 )
 
@@ -16,10 +17,21 @@ func TestBatchPublicManifestGatesCoverSourceSpecificityWithoutPublishing(t *test
 	if !loadReport.Passed() {
 		t.Fatalf("could not load batch public manifest gates: %v", loadReport.Messages())
 	}
-	if len(records) != 18 {
-		t.Fatalf("public manifest gates=%d, want one blocked gate for each source-specificity resolution", len(records))
+	index, indexReport := batchpublicmanifest.BuildManifestIndex(".")
+	if !indexReport.Passed() {
+		t.Fatalf("could not build public manifest index: %v", indexReport.Messages())
+	}
+	if len(records) != len(index.SourceByIntent) {
+		t.Fatalf("public manifest gates=%d source_resolutions=%d, want one blocked gate for each source-specificity resolution", len(records), len(index.SourceByIntent))
+	}
+	if len(records) < 168 {
+		t.Fatalf("public manifest gates=%d, want at least 168 expanded paid-passed candidates", len(records))
 	}
 
+	finalDrafts, finalLoadReport := batchfinaldrafts.LoadRecords(".")
+	if !finalLoadReport.Passed() {
+		t.Fatalf("could not load final drafts for manifest lock count: %v", finalLoadReport.Messages())
+	}
 	sourceLocked := 0
 	sourceBlocked := 0
 	for _, entry := range records {
@@ -48,8 +60,11 @@ func TestBatchPublicManifestGatesCoverSourceSpecificityWithoutPublishing(t *test
 			t.Fatalf("line=%d invalid manifest status=%q", entry.Line, record.ManifestGateStatus)
 		}
 	}
-	if sourceLocked != 7 || sourceBlocked != 11 {
-		t.Fatalf("source_locked=%d source_blocked=%d, want 7 locked and 11 blocked", sourceLocked, sourceBlocked)
+	if sourceLocked != len(finalDrafts) {
+		t.Fatalf("source_locked=%d final_drafts=%d, want locked manifest only for eligible final drafts", sourceLocked, len(finalDrafts))
+	}
+	if sourceLocked+sourceBlocked != len(records) {
+		t.Fatalf("source_locked=%d source_blocked=%d records=%d, manifest statuses must cover every record", sourceLocked, sourceBlocked, len(records))
 	}
 }
 

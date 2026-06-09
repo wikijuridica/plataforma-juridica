@@ -17,8 +17,15 @@ func TestBatchCandidateReviewsCoverEverySelectedIntentWithoutPublishing(t *testi
 		t.Fatalf("could not load batch candidate reviews: %v", loadReport.Messages())
 	}
 
-	if len(records) != 18 {
-		t.Fatalf("reviews=%d, want one blocked legal-editorial review for each of the 18 selected batch intents", len(records))
+	index, indexReport := batchcandidatereviews.BuildCandidateIndex(".")
+	if !indexReport.Passed() {
+		t.Fatalf("could not build selected candidate index: %v", indexReport.Messages())
+	}
+	if len(records) != len(index.SelectedByIntent) {
+		t.Fatalf("reviews=%d selected=%d, want one blocked legal-editorial review for each selected batch intent", len(records), len(index.SelectedByIntent))
+	}
+	if len(records) < 168 {
+		t.Fatalf("reviews=%d, want at least 168 paid-passed selected batch intents for the expanded P0 pipeline", len(records))
 	}
 
 	seen := make(map[string]bool)
@@ -46,6 +53,14 @@ func TestBatchCandidateReviewsCoverEverySelectedIntentWithoutPublishing(t *testi
 		}
 		if !record.CTAContextMessageContains("Intent: " + record.UniqueIntentID) {
 			t.Fatalf("line=%d cta context missing unique intent id %q: %s", entry.Line, record.UniqueIntentID, record.CTAContextMessage)
+		}
+	}
+	for _, blockedIntent := range []string{
+		"previdenciario-bpc-loas-cadunico-renda",
+		"previdenciario-cumprimento-exigencia-parado",
+	} {
+		if seen[blockedIntent] {
+			t.Fatalf("paid intent blocked candidate %q escaped into batch candidate reviews", blockedIntent)
 		}
 	}
 }

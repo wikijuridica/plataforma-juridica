@@ -1,0 +1,114 @@
+package batchcandidatepromotion
+
+import (
+	"fmt"
+	"sort"
+
+	"portaljuridico/internal/batchcandidateexpansion"
+	"portaljuridico/internal/batchcandidategates"
+	"portaljuridico/internal/paidintent"
+)
+
+type Issue struct {
+	Code    string
+	Message string
+}
+
+type Report struct {
+	Issues []Issue
+}
+
+func ExpandFromReadiness(root string) ([]batchcandidategates.Record, Report) {
+	entries, loadReport := batchcandidategates.LoadRecords(root)
+	archiveIndex, archiveReport := batchcandidategates.BuildArchiveIndex(root)
+	readinessEntries, readinessReport := batchcandidateexpansion.LoadRecords(root)
+	paidEntries, paidReport := paidintent.LoadRecords(root)
+	issues := append(convertGateIssues(loadReport), convertGateIssues(archiveReport)...)
+	issues = append(issues, convertReadinessIssues(readinessReport)...)
+	issues = append(issues, convertPaidIssues(paidReport)...)
+	if len(issues) > 0 {
+		return nil, Report{Issues: issues}
+	}
+
+	readinessByBatch := make(map[string]batchcandidateexpansion.Record)
+	for _, entry := range readinessEntries {
+		readinessByBatch[entry.Record.BatchID] = entry.Record
+	}
+	paidStatusByIntent := make(map[string]string)
+	for _, entry := range paidEntries {
+		paidStatusByIntent[entry.Record.UniqueIntentID] = entry.Record.PaidIntentStatus
+	}
+
+	expanded := make([]batchcandidategates.Record, 0, len(entries))
+	for _, entry := range entries {
+		record := entry.Record
+		readiness, ok := readinessByBatch[record.BatchID]
+		if !ok {
+			issues = append(issues, Issue{Code: "batch_candidate_missing_expansion_readiness", Message: record.BatchID})
+			continue
+		}
+		selected := make([]string, 0, len(readiness.ExpansionCandidateIntentIDs))
+		for _, intentID := range readiness.ExpansionCandidateIntentIDs {
+			if paidStatusByIntent[intentID] != paidintent.PassedBlockedStatus {
+				continue
+			}
+			selected = append(selected, intentID)
+		}
+		if len(selected) < 18 {
+			issues = append(issues, Issue{Code: "batch_candidate_too_few_paid_passed_intents", Message: fmt.Sprintf("%s=%d", record.BatchID, len(selected))})
+			continue
+		}
+		record.SelectedUniqueIntentIDs = selected
+		record.ArchiveMinimumRecords = readiness.ArchiveRecordsRequired
+		record.MaxSimilarityObserved = archiveIndex.MaxSimilarity
+		record.MinimumHumanScore = readiness.MinimumHumanScore
+		record.PublicationBlockReason = "P0 bloqueado: seleção expandida exige fonte específica, revisão jurídico-editorial, SEO final, manifesto público finito e aprovação explícita antes de publicar."
+		record.RenderAllowed = false
+		record.SitemapAllowed = false
+		record.PublicationAllowed = false
+		record.PublicPath = ""
+		record.CheckedAt = readiness.CheckedAt
+		expanded = append(expanded, record)
+	}
+	if len(issues) > 0 {
+		return expanded, Report{Issues: issues}
+	}
+	sort.Slice(expanded, func(left int, right int) bool {
+		return expanded[left].BatchID < expanded[right].BatchID
+	})
+	return expanded, Report{}
+}
+
+func (r Report) Passed() bool { return len(r.Issues) == 0 }
+
+func (r Report) Messages() []string {
+	messages := make([]string, 0, len(r.Issues))
+	for _, issue := range r.Issues {
+		messages = append(messages, issue.Code+": "+issue.Message)
+	}
+	return messages
+}
+
+func convertGateIssues(report batchcandidategates.Report) []Issue {
+	issues := make([]Issue, 0, len(report.Issues))
+	for _, issue := range report.Issues {
+		issues = append(issues, Issue{Code: "batch_candidate_promotion_gate_" + issue.Code, Message: issue.Message})
+	}
+	return issues
+}
+
+func convertReadinessIssues(report batchcandidateexpansion.Report) []Issue {
+	issues := make([]Issue, 0, len(report.Issues))
+	for _, issue := range report.Issues {
+		issues = append(issues, Issue{Code: "batch_candidate_promotion_readiness_" + issue.Code, Message: issue.Message})
+	}
+	return issues
+}
+
+func convertPaidIssues(report paidintent.Report) []Issue {
+	issues := make([]Issue, 0, len(report.Issues))
+	for _, issue := range report.Issues {
+		issues = append(issues, Issue{Code: "batch_candidate_promotion_paid_intent_" + issue.Code, Message: issue.Message})
+	}
+	return issues
+}

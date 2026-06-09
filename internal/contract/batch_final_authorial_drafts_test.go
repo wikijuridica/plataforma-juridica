@@ -16,8 +16,15 @@ func TestBatchFinalAuthorialDraftsCoverEligibleManifestWithoutPublishing(t *test
 	if !loadReport.Passed() {
 		t.Fatalf("could not load batch final authorial drafts: %v", loadReport.Messages())
 	}
-	if len(records) != 7 {
-		t.Fatalf("final authorial drafts=%d, want one blocked draft for each source-locked manifest gate", len(records))
+	index, indexReport := batchfinaldrafts.BuildManifestIndex(".")
+	if !indexReport.Passed() {
+		t.Fatalf("could not build final draft manifest index: %v", indexReport.Messages())
+	}
+	if len(records) != len(index.EligibleByIntent) {
+		t.Fatalf("final authorial drafts=%d eligible_manifest=%d, want one blocked draft for each source-locked manifest gate", len(records), len(index.EligibleByIntent))
+	}
+	if len(records) < 5 {
+		t.Fatalf("final authorial drafts=%d, want at least 5 paid-passed preserved drafts after filtering free/admin-risk intents", len(records))
 	}
 
 	for _, entry := range records {
@@ -36,6 +43,14 @@ func TestBatchFinalAuthorialDraftsCoverEligibleManifestWithoutPublishing(t *test
 		}
 		if !record.HasInformationalNotice() {
 			t.Fatalf("line=%d missing informational legal notice", entry.Line)
+		}
+		for _, blockedIntent := range []string{
+			"previdenciario-bpc-loas-cadunico-renda",
+			"previdenciario-cumprimento-exigencia-parado",
+		} {
+			if record.UniqueIntentID == blockedIntent {
+				t.Fatalf("paid intent blocked draft %q escaped into eligible final authorial drafts", blockedIntent)
+			}
 		}
 	}
 }

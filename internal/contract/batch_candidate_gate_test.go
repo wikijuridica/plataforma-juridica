@@ -3,7 +3,9 @@ package contract_test
 import (
 	"testing"
 
+	"portaljuridico/internal/batchcandidateexpansion"
 	"portaljuridico/internal/batchcandidategates"
+	"portaljuridico/internal/paidintent"
 )
 
 func TestBatchCandidateGatesSelectArchiveDraftsWithoutPublishing(t *testing.T) {
@@ -19,17 +21,52 @@ func TestBatchCandidateGatesSelectArchiveDraftsWithoutPublishing(t *testing.T) {
 	if len(records) != 6 {
 		t.Fatalf("candidate gates=%d, want 6 batch families", len(records))
 	}
+	readinessRecords, readinessReport := batchcandidateexpansion.LoadRecords(".")
+	if !readinessReport.Passed() {
+		t.Fatalf("could not load expansion readiness: %v", readinessReport.Messages())
+	}
+	readinessByBatch := make(map[string]batchcandidateexpansion.Record)
+	for _, entry := range readinessRecords {
+		readinessByBatch[entry.Record.BatchID] = entry.Record
+	}
+	paidRecords, paidReport := paidintent.LoadRecords(".")
+	if !paidReport.Passed() {
+		t.Fatalf("could not load paid intent gates: %v", paidReport.Messages())
+	}
+	paidStatusByIntent := make(map[string]string)
+	for _, entry := range paidRecords {
+		paidStatusByIntent[entry.Record.UniqueIntentID] = entry.Record.PaidIntentStatus
+	}
+
+	totalSelected := 0
 	for _, entry := range records {
 		record := entry.Record
-		if len(record.SelectedUniqueIntentIDs) < 3 {
-			t.Fatalf("%s selected intents=%d, want at least 3", record.BatchID, len(record.SelectedUniqueIntentIDs))
+		readiness, ok := readinessByBatch[record.BatchID]
+		if !ok {
+			t.Fatalf("%s missing expansion readiness", record.BatchID)
 		}
+		expected := make([]string, 0)
+		for _, intentID := range readiness.ExpansionCandidateIntentIDs {
+			if paidStatusByIntent[intentID] == paidintent.PassedBlockedStatus {
+				expected = append(expected, intentID)
+			}
+		}
+		if !sameStringSet(record.SelectedUniqueIntentIDs, expected) {
+			t.Fatalf("%s selected intents do not match paid-passed readiness candidates: selected=%d expected=%d", record.BatchID, len(record.SelectedUniqueIntentIDs), len(expected))
+		}
+		if len(record.SelectedUniqueIntentIDs) < 18 {
+			t.Fatalf("%s selected intents=%d, want at least 18 paid-passed expansion candidates", record.BatchID, len(record.SelectedUniqueIntentIDs))
+		}
+		totalSelected += len(record.SelectedUniqueIntentIDs)
 		if record.RenderAllowed || record.SitemapAllowed || record.PublicationAllowed || record.PublicPath != "" {
 			t.Fatalf("%s escaped blocked gate: render=%t sitemap=%t publication=%t public_path=%q", record.BatchID, record.RenderAllowed, record.SitemapAllowed, record.PublicationAllowed, record.PublicPath)
 		}
 		if record.BaseURLMode != "official_configured" || !record.OfficialURLLocked {
 			t.Fatalf("%s must track locked official URL while preserving blocked publication, mode=%q locked=%t", record.BatchID, record.BaseURLMode, record.OfficialURLLocked)
 		}
+	}
+	if totalSelected != 168 {
+		t.Fatalf("selected intents=%d, want 168 paid-passed expansion candidates", totalSelected)
 	}
 }
 
@@ -74,4 +111,23 @@ func TestBatchCandidateGateRejectsPublicOrUnknownArchiveIntent(t *testing.T) {
 			t.Fatalf("missing issue %q in %v", code, report.Codes())
 		}
 	}
+}
+
+func sameStringSet(left []string, right []string) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	seen := make(map[string]int)
+	for _, value := range left {
+		seen[value]++
+	}
+	for _, value := range right {
+		seen[value]--
+	}
+	for _, count := range seen {
+		if count != 0 {
+			return false
+		}
+	}
+	return true
 }
