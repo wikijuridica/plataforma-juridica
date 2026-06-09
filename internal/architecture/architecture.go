@@ -19,6 +19,7 @@ var requiredModules = map[string]string{
 	"sources":             "internal/sources",
 	"storage":             "internal/storage",
 	"provenance":          "internal/provenance",
+	"termintents":         "internal/termintents",
 	"publicationblockers": "internal/publicationblockers",
 	"quality":             "internal/quality",
 	"seo":                 "internal/seo",

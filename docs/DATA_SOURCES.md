@@ -12,6 +12,7 @@ Estado inicial:
 - STJ: documentado preliminarmente em `docs/data-sources/stj.md`, sem ingestao automatica.
 - CJF: documentado preliminarmente em `docs/data-sources/cjf.md`, sem ingestao automatica.
 - APIs auxiliares candidatas: documentadas em `docs/data-sources/api-candidates.md`, sem ingestao automatica.
+- Pesquisa de demanda e intencao: documentada em `docs/data-sources/search-demand.md`; Google Trends e Google Search Central sao caminhos seguros para sinal direcional/metodologico, nao fonte juridica e nao autorizacao de publicacao automatica.
 
 Nenhum scraping cego esta autorizado neste ciclo.
 
@@ -28,6 +29,8 @@ Ingestao de termos juridicos pode iniciar a producao de conteudo apenas como ras
 O contrato de armazenamento fica em `content/storage_contract.json` e e validado por `./tools/check-storage-contract`. Nenhuma fonte auditada, termo juridico ou snapshot autorizado pode ser tratado como conteudo publico pronto. O caminho correto e: termo com proveniencia -> rascunho editorial proprio -> revisao -> qualidade -> SEO -> publicacao.
 
 As sementes iniciais ficam em `data/terms/legal_terms.jsonl` e sao validadas por `./tools/check-term-seeds`. Isso permite iniciar laboratorio editorial por termos sem gerar paginas para Googlebot.
+
+Os candidatos de alta intencao ficam em `data/terms/intent_candidates.jsonl` e sao validados por `./tools/check-term-intent-candidates`. Cada candidato precisa separar demanda humana, fonte juridica oficial, adequacao a atendimento 100% digital e bloqueio de publicacao.
 
 Rascunhos persistidos ficam em `data/editorial/drafts.jsonl`, separados de snapshots oficiais e de paginas publicas. Eles devem permanecer `draft/noindex` ate fonte, revisao, qualidade e decisao editorial completa.
 

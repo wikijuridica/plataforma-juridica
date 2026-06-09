@@ -19,6 +19,18 @@
       "description": "Banco leve de termos juridicos para iniciar rascunhos; nao publica, nao indexa e nao guarda texto oficial bruto."
     },
     {
+      "name": "term_intent_candidates",
+      "path": "data/terms/intent_candidates.jsonl",
+      "record_type": "term_intent_candidate",
+      "record_max_bytes": 8192,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": false,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Candidatos de termos com evidencia de demanda humana, fonte oficial e adequacao a contratacao juridica digital; nao publica."
+    },
+    {
       "name": "source_audits",
       "path": "data/source-audit/robots_terms.jsonl",
       "record_type": "source_audit_event",

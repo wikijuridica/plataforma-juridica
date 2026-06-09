@@ -290,3 +290,20 @@ Motivos:
 - servicos juridicos digitais sao prioridade: triagem, envio de documentos e contratacao remota devem ser viaveis sem atendimento presencial como padrao.
 
 Consequencia: antes de criar conteudo publico, deve haver pesquisa atual de demanda/intencao, registro no banco leve, fonte confiavel, intencao unica e bloqueio contra spam. Essa regra nao libera publicacao automatica; ela define o proximo movimento apos gates seguros.
+
+## 2026-06-09 — Caminhos seguros para demanda humana
+
+Decisao: usar Google Trends e Google Search Central como caminhos seguros para orientar demanda humana e estrategia, sem tratar esses caminhos como fonte juridica ou como autorizacao de publicacao.
+
+Caminhos registrados:
+- Google Trends Explore Brasil: `https://trends.google.com.br/trends/explore?geo=BR`
+- Ajuda do Google Trends sobre comparacao: `https://support.google.com/trends/answer/4359550?hl=pt-BR`
+- FAQ de dados do Google Trends: `https://support.google.com/trends/answer/4365533?hl=pt-br`
+- Google Search Central sobre Trends: `https://developers.google.com/search/docs/monitor-debug/trends-start`
+
+Motivos:
+- o Google Trends permite comparar termos e observar interesse de busca, mas seus dados sao normalizados e direcionais;
+- a Central da Pesquisa Google orienta usar Trends para estrategia de conteudo sem escrever apenas porque algo esta em alta;
+- o projeto precisa escolher termos com demanda humana real antes de criar pauta publica.
+
+Consequencia: `data/terms/intent_candidates.jsonl` deve registrar URL de comparacao, fonte juridica oficial, adequacao a contratacao 100% digital e bloqueio de publicacao. Nenhum candidato vira pagina publica sem novo ciclo de fonte, revisao, qualidade, SEO e CTA.

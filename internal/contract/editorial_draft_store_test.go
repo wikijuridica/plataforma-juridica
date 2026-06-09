@@ -51,6 +51,7 @@ func copyStorageFixture(t *testing.T) string {
 	for _, path := range []string{
 		"content/storage_contract.json",
 		"data/terms/legal_terms.jsonl",
+		"data/terms/intent_candidates.jsonl",
 		"data/source-audit/robots_terms.jsonl",
 		"data/source-snapshots/payloads.jsonl",
 		"data/editorial/drafts.jsonl",

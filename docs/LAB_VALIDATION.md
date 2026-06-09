@@ -48,6 +48,8 @@ Quando o laboratorio passar com seguranca, o ciclo seguinte deve migrar para hos
 
 Alta intencao de contratacao online exige que o fluxo possa ser 100% digital: WhatsApp, envio remoto de documentos, triagem remota e contratacao de advogado sem depender de atendimento presencial como caminho principal.
 
+Os caminhos seguros de pesquisa de demanda ficam em `docs/data-sources/search-demand.md`. O laboratorio deve validar `term_intent_candidates` antes de transformar qualquer termo pesquisado em seed, rascunho ou pauta publica.
+
 ## Politica
 
 Nenhum script isolado e prova suficiente para mudanca P0/P1. Use o laboratorio como conjunto minimo e inspecione os artefatos quando a mudanca afetar HTML, sitemap, robots, canonical, indexacao, qualidade ou conteudo.

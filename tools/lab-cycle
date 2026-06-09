@@ -8,6 +8,7 @@ go test -count=1 ./...
 ./tools/check-sources
 ./tools/check-storage-contract
 ./tools/check-term-seeds
+./tools/check-term-intent-candidates
 ./tools/check-editorial-drafts
 ./tools/check-review-queue
 ./tools/check-approvals

@@ -27,6 +27,7 @@ O projeto usa Go e biblioteca padrao como base tecnica. A escolha privilegia bin
 - `internal/legal`: controle de conteudo juridico.
 - `internal/sources`: contratos de fontes oficiais.
 - `internal/storage`: banco leve proprio em JSONL para termos juridicos, auditorias, snapshots, rascunhos e manifesto publicado.
+- `internal/termintents`: candidatos de termos juridicos com demanda humana, fonte oficial e adequacao a contratacao 100% digital.
 - `internal/provenance`: contrato de proveniencia por payload antes de qualquer conteudo.
 - `internal/architecture`: validacao de estrutura e proibicoes P0.
 - `tools`: scripts locais obrigatorios.
@@ -65,6 +66,7 @@ Ingestao de termos juridicos e valida para iniciar conteudos somente como sement
 
 Camadas obrigatorias:
 - `term_seeds`: termos juridicos para iniciar rascunhos, sem texto oficial bruto e sem texto editorial publico;
+- `term_intent_candidates`: candidatos priorizados por demanda humana e contratacao online, ainda sem publicacao;
 - `source_audits`: auditoria de robots, termos de uso, alcance HTTP e decisao de bloqueio;
 - `source_snapshots`: snapshots autorizados, pequenos, com hash e proveniencia;
 - `editorial_drafts`: texto editorial proprio em PT-BR, sempre noindex ate aprovacao;

@@ -19,6 +19,7 @@ import (
 	"portaljuridico/internal/seo"
 	"portaljuridico/internal/sources"
 	"portaljuridico/internal/storage"
+	"portaljuridico/internal/termintents"
 	"portaljuridico/internal/terms"
 )
 
@@ -36,6 +37,7 @@ var Names = []string{
 	"sources",
 	"storage-contract",
 	"term-seeds",
+	"term-intent-candidates",
 	"editorial-drafts",
 	"review-queue",
 	"approvals",
@@ -66,6 +68,8 @@ func Run(name string, root string) []string {
 		return checkStorageContract(root)
 	case "term-seeds":
 		return checkTermSeeds(root)
+	case "term-intent-candidates":
+		return checkTermIntentCandidates(root)
 	case "editorial-drafts":
 		return checkEditorialDrafts(root)
 	case "review-queue":
@@ -225,6 +229,10 @@ func checkStorageContract(root string) []string {
 
 func checkTermSeeds(root string) []string {
 	return terms.ValidateSeeds(root).Messages()
+}
+
+func checkTermIntentCandidates(root string) []string {
+	return termintents.Validate(root).Messages()
 }
 
 func checkEditorialDrafts(root string) []string {
