@@ -62,6 +62,8 @@ Antes de aprovar qualquer draft priorizado, validar `source_specificity_blockers
 
 Quando uma fonte especifica for encontrada, registrar `source_specificity_resolutions` e rodar `./tools/check-source-specificity-resolutions`. A resolucao aproxima o rascunho da revisao, mas permanece `noindex`, sem URL publica e sem CTA publico ate os demais gates.
 
+Antes de renderizar uma rota candidata, registrar `prepublication_gates` e rodar `./tools/check-prepublication-gates`. O gate deve provar title/meta/canonical dentro do orcamento do Google Search, mas manter render, sitemap e publicacao bloqueados.
+
 ## Politica
 
 Nenhum script isolado e prova suficiente para mudanca P0/P1. Use o laboratorio como conjunto minimo e inspecione os artefatos quando a mudanca afetar HTML, sitemap, robots, canonical, indexacao, qualidade ou conteudo.

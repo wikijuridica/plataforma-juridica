@@ -44,6 +44,8 @@ Bloqueios de fonte especifica ficam em `data/editorial/source_blockers.jsonl` e 
 
 Resolucoes de fonte especifica ficam em `data/editorial/source_resolutions.jsonl` e sao validadas por `./tools/check-source-specificity-resolutions`. Elas registram URLs oficiais especificas, tipo de fonte, uso editorial permitido e gates restantes, mas nao armazenam texto oficial bruto e nao liberam publicacao.
 
+Gates de pre-publicacao ficam em `data/editorial/prepublication_gates.jsonl` e sao validados por `./tools/check-prepublication-gates`. Eles conectam fonte resolvida, blocker ainda ativo e contrato SEO/crawl candidato, sem render publico ou sitemap.
+
 Rascunhos persistidos ficam em `data/editorial/drafts.jsonl`, separados de snapshots oficiais e de paginas publicas. Eles devem permanecer `draft/noindex` ate fonte, revisao, qualidade e decisao editorial completa.
 
 A fila de revisao fica em `data/editorial/review_queue.jsonl`. Ela registra autoria, motivo, historico e estado `needs_review`, mas nao libera publicacao nem cria URL.

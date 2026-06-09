@@ -377,3 +377,15 @@ Motivos:
 - a escala de 10 mil páginas exige rastreabilidade por termo.
 
 Consequencia: `data/editorial/source_resolutions.jsonl` registra a primeira resolução para `negativa-cobertura-plano-saude`; `internal/sourceresolutions` e `./tools/check-source-specificity-resolutions` exigem lei primária, regra de cobertura, fontes oficiais específicas, score mínimo, `noindex`, `publication_allowed=false` e `public_path=""`.
+
+## 2026-06-09 — Gate SEO/crawl de pré-publicação bloqueada
+
+Decisao: uma rota candidata pode ter title, meta description, canonical e path planejados antes de publicar, mas esse planejamento deve ficar em gate bloqueado e nao pode renderizar HTML publico.
+
+Motivos:
+- Googlebot deve ver somente paginas realmente aprovadas;
+- SEO tecnico deve ser validado antes de render publico, nao depois;
+- fonte resolvida nao remove sozinha bloqueio editorial, CTA e revisao juridica;
+- a escala de 10 mil paginas exige paths finitos e canonicals planejados sem criar URL prematura.
+
+Consequencia: `data/editorial/prepublication_gates.jsonl` registra a primeira rota candidata para `negativa-cobertura-plano-saude`; `internal/prepublication` e `./tools/check-prepublication-gates` exigem fonte resolvida, blocker ativo, path limpo, canonical HTTPS, `noindex,follow`, title/meta dentro do orcamento, `render_allowed=false`, `sitemap_allowed=false`, `publication_allowed=false` e `public_path=""`.

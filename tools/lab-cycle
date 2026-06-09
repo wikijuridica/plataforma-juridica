@@ -19,6 +19,7 @@ go test -count=1 ./...
 ./tools/check-publication-blockers
 ./tools/check-source-specificity-blockers
 ./tools/check-source-specificity-resolutions
+./tools/check-prepublication-gates
 ./tools/lab-term-draft
 ./tools/check-google-search-appearance
 ./tools/check-mechanical-content

@@ -12,6 +12,7 @@ var requiredModules = map[string]string{
 	"approvals":           "internal/approvals",
 	"router":              "internal/router",
 	"ondemand":            "internal/ondemand",
+	"prepublication":      "internal/prepublication",
 	"scale":               "internal/scale",
 	"cta":                 "internal/cta",
 	"content":             "internal/content",
