@@ -151,6 +151,18 @@
       "description": "Bloqueios por termo quando a fonte atual ainda nao e especifica o suficiente para aprovacao/publicacao."
     },
     {
+      "name": "source_specificity_resolutions",
+      "path": "data/editorial/source_resolutions.jsonl",
+      "record_type": "source_specificity_resolution",
+      "record_max_bytes": 16384,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": false,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Resolucao de fontes oficiais especificas para rascunho autoral, sem texto bruto, sem URL publica e sem liberar publicacao."
+    },
+    {
       "name": "published_manifest",
       "path": "data/editorial/published_manifest.jsonl",
       "record_type": "published_content_manifest",

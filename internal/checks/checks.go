@@ -21,6 +21,7 @@ import (
 	"portaljuridico/internal/reviewqueue"
 	"portaljuridico/internal/seo"
 	"portaljuridico/internal/sourceblockers"
+	"portaljuridico/internal/sourceresolutions"
 	"portaljuridico/internal/sources"
 	"portaljuridico/internal/storage"
 	"portaljuridico/internal/termintents"
@@ -52,6 +53,7 @@ var Names = []string{
 	"approvals",
 	"publication-blockers",
 	"source-specificity-blockers",
+	"source-specificity-resolutions",
 	"sitemaps",
 	"canonicals",
 	"no-duplicate-content",
@@ -98,6 +100,8 @@ func Run(name string, root string) []string {
 		return checkPublicationBlockers(root)
 	case "source-specificity-blockers":
 		return checkSourceSpecificityBlockers(root)
+	case "source-specificity-resolutions":
+		return checkSourceSpecificityResolutions(root)
 	case "sitemaps":
 		return checkSitemaps(root)
 	case "canonicals":
@@ -289,6 +293,10 @@ func checkPublicationBlockers(root string) []string {
 
 func checkSourceSpecificityBlockers(root string) []string {
 	return sourceblockers.Validate(root).Messages()
+}
+
+func checkSourceSpecificityResolutions(root string) []string {
+	return sourceresolutions.Validate(root).Messages()
 }
 
 func checkSitemaps(root string) []string {

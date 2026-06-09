@@ -60,6 +60,8 @@ Se a inspeção mostrar grafia mecanica ou sem acento em rascunho PT-BR, tratar 
 
 Antes de aprovar qualquer draft priorizado, validar `source_specificity_blockers`. O laboratorio deve bloquear termo que usa apenas fonte ampla, noticia institucional ou canal administrativo quando ainda falta norma, artigo, regra ou recorte juridico especifico.
 
+Quando uma fonte especifica for encontrada, registrar `source_specificity_resolutions` e rodar `./tools/check-source-specificity-resolutions`. A resolucao aproxima o rascunho da revisao, mas permanece `noindex`, sem URL publica e sem CTA publico ate os demais gates.
+
 ## Politica
 
 Nenhum script isolado e prova suficiente para mudanca P0/P1. Use o laboratorio como conjunto minimo e inspecione os artefatos quando a mudanca afetar HTML, sitemap, robots, canonical, indexacao, qualidade ou conteudo.

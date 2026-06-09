@@ -55,6 +55,8 @@ Rascunho editorial tambem deve preservar grafia natural em PT-BR. Mesmo em labor
 
 `./tools/check-source-specificity-blockers` exige que termos priorizados tenham manifesto de fonte especifica antes de qualquer aprovacao. Fonte institucional ampla pode iniciar laboratorio, mas nao basta para conteudo publico quando falta norma, artigo, regra administrativa, requisito ou limite juridico especifico. Enquanto o bloqueio existir, `approval_allowed=false`, `publication_allowed=false` e `public_path=""`.
 
+`./tools/check-source-specificity-resolutions` valida resolucoes de fonte especifica em `data/editorial/source_resolutions.jsonl`. Resolucao de fonte permite revisar rascunho autoral com mais seguranca, mas nao publica: exige lei primaria quando cabivel, regra de cobertura, fontes oficiais especificas, `index_policy=noindex`, `publication_allowed=false` e `public_path=""`.
+
 `./tools/lab-term-draft` transforma seed valida em rascunho temporario dentro de `/tmp`, com estado `draft/noindex`, fonte citada e aviso informativo. Esse laboratorio prova linguagem natural sem escrever em `content/pages.json` e sem expor a seed ao Googlebot.
 
 `./tools/persist-term-drafts` persiste rascunhos validados em `data/editorial/drafts.jsonl` de forma idempotente. `./tools/check-editorial-drafts` reprova qualquer draft que tenha rota publica, indexacao, fonte ausente ou qualidade textual insuficiente.

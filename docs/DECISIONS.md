@@ -365,3 +365,15 @@ Motivos:
 - a escala de 10 mil paginas exige banco organizado antes de renderizacao publica.
 
 Consequencia: `data/editorial/authorial_drafts.jsonl` vira camada propria de rascunho autoral; `internal/authorialdrafts` e `./tools/check-authorial-content-drafts` reprovam abertura repetida, shape de secoes reaproveitado, heading generico, CTA raso, fonte ausente, publicacao permitida e path publico.
+
+## 2026-06-09 — Resolução de fonte específica antes de pré-publicação
+
+Decisao: fonte específica resolvida deve virar manifesto próprio antes de qualquer contrato de publicação, sem remover automaticamente bloqueadores nem criar URL pública.
+
+Motivos:
+- o projeto precisa diferenciar fonte ampla de fonte realmente útil para revisar o texto;
+- fontes oficiais devem dar autoridade e proveniência, não texto copiado;
+- Googlebot só deve ver página depois de fonte, revisão, qualidade, SEO/crawl e CTA passarem;
+- a escala de 10 mil páginas exige rastreabilidade por termo.
+
+Consequencia: `data/editorial/source_resolutions.jsonl` registra a primeira resolução para `negativa-cobertura-plano-saude`; `internal/sourceresolutions` e `./tools/check-source-specificity-resolutions` exigem lei primária, regra de cobertura, fontes oficiais específicas, score mínimo, `noindex`, `publication_allowed=false` e `public_path=""`.

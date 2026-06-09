@@ -18,6 +18,7 @@ go test -count=1 ./...
 ./tools/check-approvals
 ./tools/check-publication-blockers
 ./tools/check-source-specificity-blockers
+./tools/check-source-specificity-resolutions
 ./tools/lab-term-draft
 ./tools/check-google-search-appearance
 ./tools/check-mechanical-content
