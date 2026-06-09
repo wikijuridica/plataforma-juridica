@@ -13,3 +13,5 @@ O primeiro ciclo P0/P1 materializa o contrato tecnico, nao um acervo juridico am
 Meta de crescimento: o produto deve chegar a no minimo 10 mil paginas juridicas informativas com alta intencao de contratar advogado e CTA proprio de WhatsApp para contratacao quando a pagina for adequada. Essa meta e posterior aos gates: arquitetura, fontes, proveniencia, revisao, qualidade e indexacao precisam estar comprovadas antes de publicar conteudo juridico em escala.
 
 O projeto nao deve crescer por spam, permutacao de palavras-chave ou texto mecanico. A escala precisa vir de pesquisa de fonte correta, escrita natural, utilidade humana, revisao e validacao repetida em laboratorio.
+
+O agente Codex neste repositorio opera com autonomia de engenheiro senior, arquiteto e criador de conteudo juridico. Ele deve continuar o trabalho dentro do escopo, corrigir bugs e lacunas sem aguardar aprovacao normal e persistir cada ciclo em checkpoint e commit.

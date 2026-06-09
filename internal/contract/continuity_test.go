@@ -26,6 +26,10 @@ func TestContractsRequireContinuationBeyondCheckpoints(t *testing.T) {
 		requireContains(t, text, "não considerar fontes oficiais como alvo de scraping")
 		requireContains(t, text, "não criar clone")
 		requireContains(t, text, "conteúdo próprio, natural e único")
+		requireContains(t, text, "Codex deve ser autônomo")
+		requireContains(t, text, "engenheiro sênior, arquiteto e criador de conteúdo jurídico")
+		requireContains(t, text, "deve continuar até terminar")
+		requireContains(t, text, "corrigir sem pedir aprovação")
 	}
 }
 

@@ -49,6 +49,8 @@ Adendo operacional: sempre planejar o proximo passo e continuar executando. Uma 
 
 Adendo de persistencia: cada ciclo deve ser commitado apos validacao, incluindo `CHECKPOINT.md`, para preservar continuidade em Git.
 
+Adendo de autonomia: Codex atua como engenheiro senior, arquiteto e criador de conteudo juridico. Se houver trabalho no escopo ou bug identificado, deve continuar e corrigir sem pedir aprovacao para decisao normal de engenharia.
+
 ## 2026-06-09 — Meta de 10 mil paginas com CTA subordinado a qualidade
 
 Decisao: a meta de produto inclui no minimo 10 mil paginas juridicas informativas, com alta intencao de contratar advogado e CTA proprio de WhatsApp quando apropriado.

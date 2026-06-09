@@ -81,6 +81,7 @@
 - adendo do ciclo: fontes oficiais sao referencia/proveniencia, nao alvo de scraping, clone ou espelho; o site deve produzir conteudo proprio, natural e unico.
 - adendo operacional: sempre revisar e validar; validacao isolada nao basta; revisar diff, artefatos, contratos e riscos antes de commit.
 - adendo de produto: CTA WhatsApp e critico para paginas informativas de alta intencao de contratar advogado, mas continua bloqueado por fonte, revisao, aprovacao e qualidade.
+- adendo de autonomia: Codex deve ser autonomo como engenheiro senior, arquiteto e criador de conteudo juridico; deve continuar ate terminar e corrigir bugs do escopo sem pedir aprovacao normal.
 
 ## 2026-06-09 — Ciclo 5 — P0 CTA WhatsApp gating
 
@@ -101,3 +102,23 @@
 - plano de continuidade: continuar P0; criar auditoria robots/termos por fonte e preparar renderizacao visual do CTA em modo bloqueado/testado, sem ativar nas paginas atuais.
 - proximo ciclo: P0 robots/termos e componente visual de CTA gated.
 - riscos: telefone real de WhatsApp ainda e placeholder; nao configurar numero nem ativar CTA publico antes dos gates.
+
+## 2026-06-09 — Ciclo 6 — autonomia persistente do Codex
+
+- ciclo: 6
+- prioridade: P0
+- objetivo: persistir regra operacional de autonomia do Codex como engenheiro senior, arquiteto e criador de conteudo juridico.
+- natureza do checkpoint: rastreabilidade operacional para continuar; nao e aceite final, nao e ordem de parada.
+- continuidade: continuar P0 sem aguardar repeticao do usuario; se houver trabalho no escopo ou bug identificado, corrigir, validar, revisar, checkpointar e commitar.
+- entregas registradas no ciclo: `AGENTS.md`, `GOAL.md`, `docs/PROJECT_VISION.md`, `docs/DECISIONS.md` e teste `continuity_test.go` atualizados para autonomia explicita.
+- arquivos alterados: `AGENTS.md`, `GOAL.md`, `docs/PROJECT_VISION.md`, `docs/DECISIONS.md`, `CHECKPOINT.md`, `internal/contract/continuity_test.go`.
+- decisoes: Codex tem autonomia para decisao normal de engenharia; so deve pedir intervencao em bloqueio P0 real; bugs/lacunas no escopo devem ser corrigidos sem aguardar permissao.
+- comandos executados: `GOCACHE=/tmp/opt-wiki-go-cache go test -count=1 ./internal/contract`; `./tools/lab-cycle`.
+- resultados: `./tools/lab-cycle` passou; `go test -count=1 ./...` passou; checks P0/P1 passaram; build gerou `generated_pages=3 indexable_pages=1 output_dir=public`.
+- falhas: teste RED indicou ausencia da frase literal de autonomia nos contratos persistentes.
+- correcoes: regra literal adicionada aos contratos e docs.
+- provas: `continuity_test.go` exige `Codex deve ser autônomo`, `engenheiro sênior, arquiteto e criador de conteúdo jurídico`, `deve continuar até terminar` e `corrigir sem pedir aprovação`.
+- commit: este ciclo deve ser persistido em Git apos validacao final desta entrada.
+- plano de continuidade: continuar P0; commitar ciclo 5/6; seguir para auditoria automatizada de robots/termos e componente visual de CTA gated.
+- proximo ciclo: P0 robots/termos e renderizacao visual do CTA gated.
+- riscos: manter autonomia sem violar P0; decisao normal e autonoma, mas bloqueio P0 real deve ser registrado.
