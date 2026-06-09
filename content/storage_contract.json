@@ -319,6 +319,18 @@
       "description": "Rascunhos autorais finais bloqueados por candidato com fonte travada, score humano, CTA contextual e intencao paga, sem render, sitemap ou publicacao."
     },
     {
+      "name": "batch_paid_intent_gates",
+      "path": "data/editorial/batch_paid_intent_gates.jsonl",
+      "record_type": "batch_paid_intent_gate_blocked",
+      "record_max_bytes": 16384,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": false,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Gate bloqueado de intencao comercial paga por rascunho final; separa contratacao particular forte de gratuidade, curiosidade, assistencia publica dominante e autoatendimento administrativo."
+    },
+    {
       "name": "batch_generation_metrics",
       "path": "data/editorial/batch_generation_metrics.jsonl",
       "record_type": "batch_generation_scored_blocked",

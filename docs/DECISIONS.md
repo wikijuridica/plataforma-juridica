@@ -637,3 +637,15 @@ Motivos:
 - o Codex principal deve manter responsabilidade por arquitetura, P0/P1, integração, validação, checkpoint e commit.
 
 Consequencia: tarefas paralelas devem ser particionadas por fonte, área, subtema, pacote ou teste. Agentes podem ajudar a escrever e debugar, mas o Codex principal valida evidência, revisa o diff, roda os checks relevantes e não publica nada sem gate.
+
+## 2026-06-09 — Gate pago persistente e fonte geral como fonte ampla
+
+Decisao: intenção comercial paga agora fica registrada em `batch_paid_intent_gates`, e fontes legais gerais como Código Civil, CDC e CLT compilada não destravam recortes específicos sozinhas.
+
+Motivos:
+- CTA com honorários não basta quando o tema dominante indica assistência pública, gratuidade provável ou autoatendimento administrativo;
+- BPC/LOAS, CadÚnico, renda familiar/vulnerabilidade e cumprimento de exigência precisam de bloqueio comercial explícito antes de escalar conteúdo;
+- fonte ampla pode ser referência oficial, mas não substitui ato, súmula, regra, serviço ou orientação específica para o subtema;
+- agentes auxiliares podem acelerar pesquisa oficial e rascunho bloqueado, mas o Codex principal precisa validar evidência, integração e gates críticos.
+
+Consequencia: `./tools/check-paid-intent` valida o arquivo permanente `data/editorial/batch_paid_intent_gates.jsonl`; candidatos comerciais fortes continuam bloqueados para publicação, e candidatos com risco de assistência pública ou self-service ficam roteados para bloqueio comercial. `./tools/check-batch-source-specificity` trata `codigo_civil`, `codigo_consumidor` e `clt_compilada` como fontes amplas quando o recorte precisa de fonte específica. O próximo ciclo deve criar prontidão de expansão de candidatos, usando agentes sem concorrência crítica para pesquisar fontes oficiais e ampliar conteúdo bloqueado com validação pelo Codex principal.

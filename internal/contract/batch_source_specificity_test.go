@@ -114,3 +114,58 @@ func TestBatchSourceSpecificityRejectsUnauditedOrPublicResolution(t *testing.T) 
 		}
 	}
 }
+
+func TestBatchSourceSpecificityTreatsGeneralLegalCodesAsBroadSources(t *testing.T) {
+	index := batchsourcespecificity.SourceIndex{
+		BaseURL: "https://wikijuridica.com.br",
+		PrepublicationByIntent: map[string]batchsourcespecificity.PrepublicationCandidate{
+			"trabalhista-rescisao-indireta-assedio-salario": {
+				PrepublicationID:      "prepub-trabalhista-rescisao-indireta-assedio-salario",
+				ReviewID:              "review-trabalhista-rescisao-indireta-assedio-salario",
+				BatchID:               "batch-trabalhista-digital",
+				UniqueIntentID:        "trabalhista-rescisao-indireta-assedio-salario",
+				SourceMatrixID:        "trabalhista-rescisao-indireta-assedio-salario",
+				Term:                  "rescisão indireta por assédio e atraso salarial",
+				CandidatePath:         "/temas/trabalhista-rescisao-indireta-assedio-salario/",
+				CandidateCanonicalURL: "https://wikijuridica.com.br/temas/trabalhista-rescisao-indireta-assedio-salario/",
+				CandidateRobots:       "noindex,follow",
+			},
+		},
+		AuditsByURL: map[string]batchsourcespecificity.AuditedSource{
+			"https://www.planalto.gov.br/ccivil_03/decreto-lei/del5452compilado.htm": {
+				SourceURL:        "https://www.planalto.gov.br/ccivil_03/decreto-lei/del5452compilado.htm",
+				MatrixIDs:        []string{"trabalhista-rescisao-indireta-assedio-salario"},
+				OfficialHost:     true,
+				AuditStatus:      "source_url_audited_reference_only_blocked",
+				UsePolicy:        "reference_only_no_scraping_no_ingestion",
+				SourceType:       "clt_compilada",
+				ScrapingAllowed:  false,
+				IngestionAllowed: false,
+			},
+		},
+	}
+
+	record := batchsourcespecificity.Record{
+		ResolutionID:            "source-specificity-trabalhista-rescisao-indireta-assedio-salario",
+		PrepublicationID:        "prepub-trabalhista-rescisao-indireta-assedio-salario",
+		ReviewID:                "review-trabalhista-rescisao-indireta-assedio-salario",
+		BatchID:                 "batch-trabalhista-digital",
+		UniqueIntentID:          "trabalhista-rescisao-indireta-assedio-salario",
+		SourceMatrixID:          "trabalhista-rescisao-indireta-assedio-salario",
+		Term:                    "rescisão indireta por assédio e atraso salarial",
+		CandidatePath:           "/temas/trabalhista-rescisao-indireta-assedio-salario/",
+		CandidateCanonicalURL:   "https://wikijuridica.com.br/temas/trabalhista-rescisao-indireta-assedio-salario/",
+		CandidateRobots:         "noindex,follow",
+		SourceSpecificityStatus: "final_source_locked_reference_only",
+		SelectedSourceURLs: []string{
+			"https://www.planalto.gov.br/ccivil_03/decreto-lei/del5452compilado.htm",
+		},
+		UsePolicy: "reference_only_no_scraping_no_ingestion",
+		CheckedAt: "2026-06-09",
+	}
+
+	report := batchsourcespecificity.ValidateRecordAgainstSourceIndex(record, index)
+	if !report.HasIssue("batch_source_specificity_locked_without_specific_url") {
+		t.Fatalf("general CLT source unlocked specific recorte; issues=%v", report.Codes())
+	}
+}

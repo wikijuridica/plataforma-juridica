@@ -366,7 +366,7 @@ func isBroadSource(source AuditedSource) bool {
 	if source.SourceURL == "https://www.gov.br/consumidor/pt-br" || source.SourceURL == "https://www.gov.br/inss/pt-br" || source.SourceURL == "https://www.gov.br/trabalho-e-emprego/pt-br" {
 		return true
 	}
-	broadTypes := []string{"orgao_judiciario", "regulador_financeiro", "orgao_previdenciario", "tribunal_trabalhista", "orientacao_administrativa"}
+	broadTypes := []string{"codigo_civil", "codigo_consumidor", "clt_compilada", "orgao_judiciario", "regulador_financeiro", "orgao_previdenciario", "tribunal_trabalhista", "orientacao_administrativa"}
 	for _, sourceType := range broadTypes {
 		if source.SourceType == sourceType {
 			return true
