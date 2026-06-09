@@ -127,3 +127,5 @@ Publicação só pode avançar quando o texto atingir score alto, motivos de rep
 `./tools/check-human-content-score` valida os registros de score. `./tools/check-scalable-content-batches` valida lotes massivos planejados, bloqueados para publicação e com escala real de produção, sem criar HTML ou sitemap.
 
 `./tools/check-batch-drafts` valida amostras de drafts em lote: mínimo por família, score humano aplicado, reescrita automática quando houve falha inicial, baixa similaridade e bloqueio total de publicação.
+
+`./tools/check-batch-draft-generation` valida que o gerador/refinador em lote produz pelo menos 30 amostras determinísticas, cinco por família, com score calculado, reescrita automática, CTA WhatsApp com origem e métricas agregadas persistidas. `./tools/generate-batch-drafts` deve escrever amostras temporárias em `/tmp`; só `batch_generation_metrics` fica persistido como rastreabilidade, sem render, sitemap, publicação ou `public_path`.

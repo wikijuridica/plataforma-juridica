@@ -453,3 +453,16 @@ Motivos:
 - Googlebot não deve ver rascunho enquanto score, fonte, revisão, SEO e publicação não estiverem completos.
 
 Consequencia: `data/editorial/batch_drafts.jsonl` registra 18 rascunhos, três por família jurídica de lote, todos `batch_draft_scored_blocked`. `internal/batchdrafts` valida score via `internal/humanscore`, similaridade máxima, reescritas, origem de lote e bloqueio de render/sitemap/publicação. `./tools/check-batch-drafts` entra no laboratório. O próximo ciclo deve transformar amostras em geração programática ampliada e medição agregada por lote.
+
+## 2026-06-09 — Gerador/refinador de batch drafts com métricas agregadas
+
+Decisao: implementar `batchdraftgen` como gerador/refinador determinístico de rascunhos de lote, produzindo amostras temporárias e persistindo métricas agregadas bloqueadas.
+
+Motivos:
+- a fábrica massiva precisa gerar e validar lote por comando, não depender de amostras escritas uma a uma;
+- reescrita automática deve ser comprovada por falha inicial, score final e métrica agregada;
+- métricas por família permitem crescer volume sem mascarar similaridade, IA-like ou baixa especificidade;
+- o laboratório pode usar CPU para gerar/refinar, mas nada deve escapar para HTML, sitemap, `public_path` ou publicação;
+- CTA WhatsApp precisa nascer com origem de `unique_intent_id` para triagem digital.
+
+Consequencia: `internal/batchdraftgen`, `cmd/generate-batch-drafts`, `./tools/generate-batch-drafts` e `./tools/check-batch-draft-generation` entram no laboratório. `data/editorial/batch_generation_metrics.jsonl` registra 6 métricas de geração bloqueada; o comando gera 30 rascunhos temporários, cinco por família, todos reescritos e com similaridade máxima 0.27 no laboratório. O próximo ciclo deve aumentar o volume por família, cruzar fonte específica por subtema e preparar gate de pré-publicação bloqueada por lote sem publicar.

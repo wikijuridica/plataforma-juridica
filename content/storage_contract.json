@@ -223,6 +223,18 @@
       "description": "Rascunhos de amostra gerados por lote massivo, com score humano, reescrita e publicacao bloqueada."
     },
     {
+      "name": "batch_generation_metrics",
+      "path": "data/editorial/batch_generation_metrics.jsonl",
+      "record_type": "batch_generation_scored_blocked",
+      "record_max_bytes": 8192,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": false,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Metricas agregadas de geracao/refino em lote, sempre bloqueadas para render, sitemap e publicacao."
+    },
+    {
       "name": "published_manifest",
       "path": "data/editorial/published_manifest.jsonl",
       "record_type": "published_content_manifest",

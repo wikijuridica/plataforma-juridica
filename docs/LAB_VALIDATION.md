@@ -81,6 +81,8 @@ Antes de qualquer reescrita/publicação derivada de lote, registrar `human_cont
 
 Antes de ampliar produção, registrar `batch_drafts` e rodar `./tools/check-batch-drafts`. Cada lote deve ter amostras suficientes, score calculado, reescrita automática comprovada quando houve falha inicial, baixa similaridade intra-lote e publicação bloqueada.
 
+Antes de considerar o gerador pronto para volume maior, rodar `./tools/check-batch-draft-generation` e `./tools/generate-batch-drafts`. O gerador deve ser determinístico, produzir amostras temporárias em `/tmp`, persistir apenas métricas agregadas, provar reescrita automática e manter `render_allowed=false`, `sitemap_allowed=false`, `publication_allowed=false` e `public_path=""`.
+
 ## Politica
 
 Nenhum script isolado e prova suficiente para mudanca P0/P1. Use o laboratorio como conjunto minimo e inspecione os artefatos quando a mudanca afetar HTML, sitemap, robots, canonical, indexacao, qualidade ou conteudo.

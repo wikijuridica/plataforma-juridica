@@ -9,6 +9,7 @@ import (
 	"portaljuridico/internal/approvals"
 	"portaljuridico/internal/architecture"
 	"portaljuridico/internal/authorialdrafts"
+	"portaljuridico/internal/batchdraftgen"
 	"portaljuridico/internal/batchdrafts"
 	"portaljuridico/internal/build"
 	"portaljuridico/internal/content"
@@ -64,6 +65,7 @@ var Names = []string{
 	"human-content-score",
 	"scalable-content-batches",
 	"batch-drafts",
+	"batch-draft-generation",
 	"sitemaps",
 	"canonicals",
 	"no-duplicate-content",
@@ -122,6 +124,8 @@ func Run(name string, root string) []string {
 		return checkScalableContentBatches(root)
 	case "batch-drafts":
 		return checkBatchDrafts(root)
+	case "batch-draft-generation":
+		return checkBatchDraftGeneration(root)
 	case "sitemaps":
 		return checkSitemaps(root)
 	case "canonicals":
@@ -337,6 +341,14 @@ func checkScalableContentBatches(root string) []string {
 
 func checkBatchDrafts(root string) []string {
 	return batchdrafts.Validate(root).Messages()
+}
+
+func checkBatchDraftGeneration(root string) []string {
+	errors := make([]string, 0)
+	_, generated := batchdraftgen.Generate(root, batchdraftgen.DefaultOptions())
+	errors = append(errors, generated.Messages()...)
+	errors = append(errors, batchdraftgen.ValidateStoredMetrics(root).Messages()...)
+	return errors
 }
 
 func checkSitemaps(root string) []string {
