@@ -26,3 +26,5 @@ As fontes listadas sao referencia e proveniencia. Elas nao autorizam scraping, c
 Ingestao de termos juridicos pode iniciar a producao de conteudo apenas como rascunho (`draft_only`). Esses termos ficam em `data/terms/legal_terms.jsonl`, separados da auditoria de fonte, snapshots oficiais, rascunho editorial e manifesto publicado.
 
 O contrato de armazenamento fica em `content/storage_contract.json` e e validado por `./tools/check-storage-contract`. Nenhuma fonte auditada, termo juridico ou snapshot autorizado pode ser tratado como conteudo publico pronto. O caminho correto e: termo com proveniencia -> rascunho editorial proprio -> revisao -> qualidade -> SEO -> publicacao.
+
+As sementes iniciais ficam em `data/terms/legal_terms.jsonl` e sao validadas por `./tools/check-term-seeds`. Isso permite iniciar laboratorio editorial por termos sem gerar paginas para Googlebot.

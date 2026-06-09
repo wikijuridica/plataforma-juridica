@@ -209,3 +209,24 @@
 - plano de continuidade: continuar P0 no ciclo 11; criar camada inicial de `term_seeds` com esquema/validador de termo juridico natural, fonte e estado `draft_only`; usar fontes com auditoria documental acessivel como Camara/LexML/STJ para sementes de laboratorio, sem publicar pagina; manter Planalto bloqueado ate robots/termos ficarem auditaveis por meio seguro.
 - proximo ciclo: P0 esquema de termos juridicos, validador de `term_seeds`, e laboratorio de rascunho natural PT-BR sem exposicao ao Googlebot.
 - riscos: URL oficial do Portal da Legislacao foi confirmada publicamente, mas `robots.txt` nao foi alcançado pela rede local; portanto qualquer ingestao do Planalto segue proibida. `data/source-audit/robots_terms.jsonl` e append-only e pode crescer, entao o proximo ciclo deve limitar/particionar eventos se o volume aumentar.
+
+## 2026-06-09 — Ciclo 11 — P0 term seeds como pauta draft_only
+
+- data/hora local conferida antes do commit: `2026-06-09 09:18:08 -03`.
+- ciclo: 11
+- prioridade: P0
+- objetivo: continuar sem parada; criar esquema e validador para `term_seeds` como pauta editorial, sem publicar pagina, sem CTA e sem indexacao.
+- natureza do checkpoint: rastreabilidade operacional para continuar; nao e aceite final, nao e ordem de parada.
+- continuidade: continuar P0; proximo ciclo deve transformar seed valida em rascunho temporario de laboratorio PT-BR natural, ainda fora de `content/pages.json`.
+- entregas registradas no ciclo: `internal/terms`; teste `internal/contract/term_seed_test.go`; primeira seed `responsabilidade-civil` em `data/terms/legal_terms.jsonl`; check `./tools/check-term-seeds`; integracao do check ao `cmd/check all` e `./tools/lab-cycle`; contratos e docs atualizados para seed como pauta, nao pagina.
+- arquivos alterados: `AGENTS.md`, `GOAL.md`, `CHECKPOINT.md`, `data/terms/legal_terms.jsonl`, `docs/CONTENT_QUALITY.md`, `docs/DATA_SOURCES.md`, `docs/DECISIONS.md`, `internal/checks/checks.go`, `internal/contract/term_seed_test.go`, `internal/terms/terms.go`, `tools/check-term-seeds`, `tools/lab-cycle`.
+- decisoes: seed juridica deve ser `draft_only`, PT-BR, com fonte, URL oficial, data de verificacao e intencao editorial; seed invalida bloqueia laboratorio; seed nao vira pagina publica automaticamente.
+- comandos executados: `env GOCACHE=/tmp/wiki-go-build-cache go test -count=1 ./internal/contract`; `env GOCACHE=/tmp/wiki-go-build-cache go test -count=1 ./internal/terms`; `./tools/check-term-seeds`; `./tools/lab-cycle`; `date '+%Y-%m-%d %H:%M:%S %Z'`.
+- resultados: `./tools/lab-cycle` passou; `term-seeds: pass`; `go test -count=1 ./...` passou; `check-all` passou com `term-seeds`; build continuou com `generated_pages=3 indexable_pages=1 output_dir=public`; nenhuma pagina nova foi publicada.
+- falhas: RED inicial apontou ausencia de `internal/terms`; teste negativo provou que seed `published` ou sem fonte deve falhar.
+- correcoes: `internal/terms.ValidateSeeds` e `ValidateSeed` implementados; check dedicado criado; seed inicial ficou em `draft_only` com LexML como fonte e nota de laboratorio.
+- provas: `term_seed_test.go` exige contrato P0; `ValidateSeed` reprova `term_seed_not_draft_only`, `term_seed_without_source` e `term_seed_without_checked_at`; `lab-cycle` inclui `term-seeds: pass`.
+- commit: este ciclo deve ser persistido em Git apos validacao final desta entrada.
+- plano de continuidade: continuar P0 no ciclo 12; criar gerador de rascunho temporario em `/tmp` a partir de seed valida, com texto natural PT-BR, fonte citada, aviso informativo e reprova mecanico/raso antes de qualquer exposicao publica.
+- proximo ciclo: P0 laboratorio de rascunho editorial temporario a partir de `term_seeds`, sem publicacao.
+- riscos: a seed usa LexML como referencia acessivel, mas ainda nao autoriza conteudo indexavel; proximo ciclo deve manter rascunho em `/tmp` e fora do manifesto publico.

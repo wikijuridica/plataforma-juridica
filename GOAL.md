@@ -383,6 +383,7 @@ Criar aliases ou scripts equivalentes:
 - `./tools/check-crawlability`
 - `./tools/check-sources`
 - `./tools/check-storage-contract`
+- `./tools/check-term-seeds`
 - `./tools/check-sitemaps`
 - `./tools/check-canonicals`
 - `./tools/check-no-duplicate-content`

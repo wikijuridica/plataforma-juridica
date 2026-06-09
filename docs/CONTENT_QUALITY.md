@@ -39,6 +39,8 @@ Roteiro mínimo antes de qualquer página jurídica:
 
 Termos juridicos podem ser usados para iniciar pauta e rascunho, mas nao podem virar pagina automaticamente. A camada `term_seeds` exige proveniencia e estado de qualidade; a camada `editorial_drafts` guarda texto proprio em PT-BR; e o manifesto publicado registra apenas conteudo que ja passou por fonte, revisao, qualidade, SEO e decisao editorial.
 
+`./tools/check-term-seeds` valida que cada semente esta em PT-BR, `draft_only`, tem fonte, URL oficial, data de verificacao e indicacao de intencao editorial. Seed invalida bloqueia o laboratorio antes de qualquer rascunho.
+
 ## Conteúdo mecânico
 
 Conteúdo raso ou mecânico deve ser detectado antes de qualquer exposição ao Googlebot. O laboratório `./tools/lab-content-quality` cria textos temporários em `/tmp`: um texto natural em PT-BR e um texto mecânico de permutação de palavras-chave. O detector precisa aprovar o texto natural e reprovar o mecânico.
