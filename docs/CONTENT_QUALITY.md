@@ -35,6 +35,8 @@ Regras de lote:
 
 Revisão humana não pode ser gargalo para milhões de páginas. O papel do laboratório é transformar validação e revisão em algoritmo: score, motivos de reprovação, reescrita, amostragem e auditoria. Se o algoritmo estiver fraco, o agente deve melhorá-lo e continuar, não transferir correção repetitiva ao usuário.
 
+Agentes auxiliares podem acelerar pesquisa de fontes oficiais e rascunhos bloqueados, mas a saída deles é referência. Antes de virar prova de conteúdo, fonte ou gate, deve estar registrada em `.agents/agent_context_ledger.jsonl`, com evidência, riscos e decisão de integração validada pelo Codex principal.
+
 Validação massiva é obrigatória antes de publicação massiva. O lote precisa provar diversidade real em agregados e amostras: intenção, fonte, estrutura, abertura, exemplos, documentos, CTA contextual, densidade de termos, similaridade e utilidade. Falha de lote exige reescrita/refinamento e reteste, não publicação parcial por conveniência.
 
 ## Escrita natural
@@ -131,6 +133,8 @@ Publicação só pode avançar quando o texto atingir score alto, motivos de rep
 `./tools/check-batch-draft-generation` valida que o gerador/refinador em lote produz amostras determinísticas, com score calculado, reescrita automática, CTA WhatsApp com origem e métricas agregadas persistidas. `./tools/generate-batch-drafts` deve escrever amostras temporárias em `/tmp` durante o laboratório; quando a massa passa nos gates e contém informação jurídica útil, ela deve ser arquivada no repo como `batch_draft_expansion_archive`, sem render, sitemap, publicação ou `public_path`.
 
 `./tools/check-batch-draft-expansion-archive` valida o arquivo permanente bloqueado de rascunhos massivos. O gate exige pelo menos 600 registros, mínimo de 100 por família, score de rascunho válido, reescrita automática comprovada, `source_matrix_id`, baixa similaridade e flags públicas falsas. Arquivo validado não é descartável; ele só pode ser removido ou rebaixado com prova registrada e novo gate.
+
+`./tools/check-batch-candidate-expansion-readiness` valida `data/editorial/batch_candidate_expansion_readiness.jsonl`. O gate atravessa os 600 rascunhos permanentes e registra alvos de expansão de pelo menos 30 candidatos por família, mas mantém tudo bloqueado quando falta `batch_paid_intent_gates` por intenção, quando há paid intent bloqueado, fonte específica pendente ou qualquer flag pública. Readiness não publica: exige `index_policy=noindex`, `manifest_allowed=false`, `render_allowed=false`, `sitemap_allowed=false`, `publication_allowed=false`, `public_path=""` e blockers acionáveis.
 
 `./tools/check-batch-candidate-gates` valida a seleção bloqueada de candidatos a partir do arquivo permanente. O gate exige 6 famílias, pelo menos 3 intenções selecionadas por família, existência de cada intenção no arquivo, 100 registros mínimos por lote, CTA contextual, fonte matricial, base URL oficial configurada e `render_allowed=false`, `sitemap_allowed=false`, `publication_allowed=false`, `public_path=""`.
 

@@ -259,6 +259,18 @@
       "description": "Gate permanente de candidatos selecionados a partir do arquivo de rascunhos validado; nao publica, nao renderiza e nao cria sitemap."
     },
     {
+      "name": "batch_candidate_expansion_readiness",
+      "path": "data/editorial/batch_candidate_expansion_readiness.jsonl",
+      "record_type": "batch_candidate_expansion_readiness_blocked",
+      "record_max_bytes": 32768,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": false,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Prontidao bloqueada para ampliar candidatos por familia a partir do arquivo permanente; exige paid-intent, fonte, CTA, noindex e flags publicas falsas antes de qualquer selecao maior."
+    },
+    {
       "name": "batch_candidate_reviews",
       "path": "data/editorial/batch_candidate_reviews.jsonl",
       "record_type": "batch_candidate_review_blocked",

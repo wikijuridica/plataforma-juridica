@@ -11,6 +11,7 @@ import (
 	"strings"
 
 	"portaljuridico/internal/batchpublicmanifest"
+	"portaljuridico/internal/content"
 	"portaljuridico/internal/humanscore"
 	"portaljuridico/internal/quality"
 	"portaljuridico/internal/router"
@@ -141,13 +142,19 @@ func Validate(root string) Report {
 func BuildManifestIndex(root string) (ManifestIndex, Report) {
 	manifestReport := batchpublicmanifest.Validate(root)
 	issues := convertManifestIssues(manifestReport)
-	manifestIndex, manifestIndexReport := batchpublicmanifest.BuildManifestIndex(root)
-	issues = append(issues, convertManifestIssues(manifestIndexReport)...)
 	manifestEntries, manifestLoadReport := batchpublicmanifest.LoadRecords(root)
 	issues = append(issues, convertManifestIssues(manifestLoadReport)...)
+	repo, err := content.LoadRepository(root)
+	if err != nil {
+		issues = append(issues, Issue{Code: "batch_final_draft_site_config_unavailable", Message: err.Error()})
+	}
+	baseURL := "https://wikijuridica.com.br"
+	if repo.BaseURL != "" {
+		baseURL = repo.BaseURL
+	}
 
 	index := ManifestIndex{
-		BaseURL:          strings.TrimRight(manifestIndex.BaseURL, "/"),
+		BaseURL:          strings.TrimRight(baseURL, "/"),
 		EligibleByIntent: make(map[string]EligibleManifest),
 		BlockedByIntent:  make(map[string]bool),
 	}

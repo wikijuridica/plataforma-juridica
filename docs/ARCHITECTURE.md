@@ -8,6 +8,7 @@ O projeto usa Go e biblioteca padrao como base tecnica. A escolha privilegia bin
 
 - `cmd/build`: gera artefatos publicos em `public/`.
 - `cmd/check`: executa validadores locais.
+- `cmd/profile-tests`: executa perfil de testes Go via `go test -json` para ranquear gargalos antes de commit.
 - `cmd/server`: entrega paginas com geracao on demand propria.
 - `internal/content`: modelos e carregamento do manifesto de paginas.
 - `internal/manualresearch`: banco leve de pesquisa editorial manual de termos de alta intencao digital.
@@ -41,6 +42,8 @@ O projeto usa Go e biblioteca padrao como base tecnica. A escolha privilegia bin
 - `cmd/refresh-editorial-drafts`: regeneracao segura de rascunhos persistidos quando o algoritmo de escrita e refinado.
 - `internal/provenance`: contrato de proveniencia por payload antes de qualquer conteudo.
 - `internal/architecture`: validacao de estrutura e proibicoes P0.
+- `internal/agentcontext`: ledger persistente de contexto de agentes auxiliares para sobreviver a compactação e impedir uso de pesquisa sem validação principal.
+- `internal/testprofile`: parser próprio de eventos `go test -json` para timing de testes lentos sem dependência externa.
 - `tools`: scripts locais obrigatorios.
 
 ## Geracao on demand obrigatoria
@@ -106,6 +109,7 @@ Camadas obrigatorias:
 - `human_content_score`: score de naturalidade/IA-like/mecânico para revisão algorítmica, reescrita e auditoria;
 - `batch_drafts`: rascunhos de amostra por lote massivo, com score e reescrita comprovada, ainda sem render, sitemap ou publicacao;
 - `batch_draft_expansion_archive`: arquivo permanente bloqueado de rascunhos validados em laboratorio, preservado para expansao futura ate prova contraria;
+- `batch_candidate_expansion_readiness`: prontidao bloqueada de expansao por familia, conectando 600 rascunhos permanentes a alvos de 30+ candidatos e bloqueando paid-intent ausente, fonte ampla e flags publicas;
 - `batch_candidate_gates`: gate permanente de candidatos selecionados do arquivo, ainda sem render, sitemap, publicacao ou `public_path`;
 - `batch_candidate_reviews`: revisao juridico-editorial bloqueada de candidatos de lote, com fonte matricial auditada e CTA WhatsApp de origem rastreavel;
 - `batch_prepublication_gates`: pre-publicacao bloqueada de candidatos revisados, com canonical oficial, title/meta, `noindex` e fonte final ainda pendente;
@@ -117,6 +121,9 @@ Camadas obrigatorias:
 - `batch_source_matrix`: matriz de fontes oficiais por subtema, usada como referência/proveniência sem scraping e sem publicação;
 - `batch_source_url_audits`: auditoria das URLs da matriz, separada da camada editorial, exigindo cobertura de cada URL por `matrix_id` antes de escalar rascunhos;
 - `published_manifest`: manifesto leve de conteudo aprovado, sem substituir o renderizador.
+
+Camada operacional fora do banco de conteúdo:
+- `.agents/agent_context_ledger.jsonl`: registra subagentes por ciclo, escopo, status, evidência, riscos e decisão de integração. Não é conteúdo jurídico, não autoriza publicação e não substitui validação do Codex principal.
 
 Regra P0: termos podem iniciar `draft_only`; nenhuma linha do banco vira pagina indexavel sem fonte, revisao, qualidade, SEO, intencao unica e checkpoint.
 

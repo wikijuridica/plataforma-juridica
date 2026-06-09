@@ -12,6 +12,7 @@ import (
 
 	"portaljuridico/internal/batchprepublication"
 	"portaljuridico/internal/batchsourcespecificity"
+	"portaljuridico/internal/content"
 	"portaljuridico/internal/router"
 	"portaljuridico/internal/seo"
 )
@@ -136,15 +137,21 @@ func Validate(root string) Report {
 func BuildManifestIndex(root string) (ManifestIndex, Report) {
 	sourceReport := batchsourcespecificity.Validate(root)
 	issues := convertSourceIssues(sourceReport)
-	sourceIndex, sourceIndexReport := batchsourcespecificity.BuildSourceIndex(root)
-	issues = append(issues, convertSourceIssues(sourceIndexReport)...)
 	sourceEntries, sourceLoadReport := batchsourcespecificity.LoadRecords(root)
 	issues = append(issues, convertSourceIssues(sourceLoadReport)...)
 	preEntries, preLoadReport := batchprepublication.LoadRecords(root)
 	issues = append(issues, convertPrepublicationIssues(preLoadReport)...)
+	repo, err := content.LoadRepository(root)
+	if err != nil {
+		issues = append(issues, Issue{Code: "batch_public_manifest_site_config_unavailable", Message: err.Error()})
+	}
+	baseURL := "https://wikijuridica.com.br"
+	if repo.BaseURL != "" {
+		baseURL = repo.BaseURL
+	}
 
 	index := ManifestIndex{
-		BaseURL:                strings.TrimRight(sourceIndex.BaseURL, "/"),
+		BaseURL:                strings.TrimRight(baseURL, "/"),
 		SourceByIntent:         make(map[string]SourceResolution),
 		PrepublicationByIntent: make(map[string]PrepublicationSEO),
 	}

@@ -6,9 +6,11 @@ import (
 	"path/filepath"
 	"strings"
 
+	"portaljuridico/internal/agentcontext"
 	"portaljuridico/internal/approvals"
 	"portaljuridico/internal/architecture"
 	"portaljuridico/internal/authorialdrafts"
+	"portaljuridico/internal/batchcandidateexpansion"
 	"portaljuridico/internal/batchcandidategates"
 	"portaljuridico/internal/batchcandidatereviews"
 	"portaljuridico/internal/batchdraftarchive"
@@ -51,6 +53,7 @@ const (
 )
 
 var Names = []string{
+	"agent-context-ledger",
 	"architecture",
 	"content-quality",
 	"seo",
@@ -76,6 +79,7 @@ var Names = []string{
 	"scalable-content-batches",
 	"batch-drafts",
 	"batch-draft-expansion-archive",
+	"batch-candidate-expansion-readiness",
 	"batch-candidate-gates",
 	"batch-candidate-reviews",
 	"batch-prepublication-gates",
@@ -96,6 +100,8 @@ var Names = []string{
 
 func Run(name string, root string) []string {
 	switch name {
+	case "agent-context-ledger":
+		return checkAgentContextLedger(root)
 	case "architecture":
 		return checkArchitecture(root)
 	case "content-quality":
@@ -146,6 +152,8 @@ func Run(name string, root string) []string {
 		return checkBatchDrafts(root)
 	case "batch-draft-expansion-archive":
 		return checkBatchDraftExpansionArchive(root)
+	case "batch-candidate-expansion-readiness":
+		return checkBatchCandidateExpansionReadiness(root)
 	case "batch-candidate-gates":
 		return checkBatchCandidateGates(root)
 	case "batch-candidate-reviews":
@@ -181,6 +189,10 @@ func Run(name string, root string) []string {
 	default:
 		return []string{"unknown_check=" + name}
 	}
+}
+
+func checkAgentContextLedger(root string) []string {
+	return agentcontext.Validate(root).Messages()
 }
 
 func checkArchitecture(root string) []string {
@@ -385,6 +397,10 @@ func checkBatchDrafts(root string) []string {
 
 func checkBatchDraftExpansionArchive(root string) []string {
 	return batchdraftarchive.Validate(root).Messages()
+}
+
+func checkBatchCandidateExpansionReadiness(root string) []string {
+	return batchcandidateexpansion.Validate(root).Messages()
 }
 
 func checkBatchCandidateGates(root string) []string {

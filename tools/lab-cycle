@@ -3,45 +3,32 @@ set -eu
 
 export GOCACHE="${GOCACHE:-/tmp/opt-wiki-go-cache}"
 
-go test -count=1 ./...
-./tools/check-all
-./tools/check-sources
-./tools/check-storage-contract
-./tools/check-manual-keyword-research
-./tools/check-term-seeds
-./tools/check-term-intent-candidates
-./tools/check-promoted-term-seeds
-./tools/check-content-briefs
-./tools/check-authorial-content-drafts
-./tools/check-editorial-drafts
-./tools/check-review-queue
-./tools/check-approvals
-./tools/check-publication-blockers
-./tools/check-source-specificity-blockers
-./tools/check-source-specificity-resolutions
-./tools/check-prepublication-gates
-./tools/check-legal-editorial-reviews
-./tools/check-human-content-score
-./tools/check-scalable-content-batches
-./tools/check-batch-drafts
-./tools/check-batch-draft-expansion-archive
-./tools/check-batch-candidate-gates
-./tools/check-batch-candidate-reviews
-./tools/check-batch-prepublication-gates
-./tools/check-batch-source-specificity
-./tools/check-batch-public-manifest-gates
-./tools/check-batch-final-authorial-drafts
-./tools/check-paid-intent
-./tools/check-batch-draft-generation
-./tools/check-batch-source-url-audits
-./tools/check-batch-source-matrix
-./tools/generate-batch-drafts --samples-per-batch 10 --checked-at 2026-06-09
-./tools/lab-term-draft
-./tools/check-google-search-appearance
-./tools/check-mechanical-content
-./tools/check-cpu-budget
-./tools/lab-content-quality
-go run ./cmd/build public
-go list -m all
-git diff --check
-find . -name '*.py' -o -name '*.pyc'
+run_step() {
+	name="$1"
+	shift
+	start="$(date +%s)"
+	printf 'TIMING start %s\n' "$name"
+	if "$@"; then
+		status=0
+	else
+		status="$?"
+	fi
+	end="$(date +%s)"
+	elapsed="$((end - start))"
+	if [ "$status" -eq 0 ]; then
+		printf 'TIMING pass %s seconds=%s\n' "$name" "$elapsed"
+	else
+		printf 'TIMING fail %s seconds=%s status=%s\n' "$name" "$elapsed" "$status"
+	fi
+	return "$status"
+}
+
+run_step go-test-all go test -count=1 ./...
+run_step check-all-contracts go run ./cmd/check all
+run_step generate-batch-drafts ./tools/generate-batch-drafts --samples-per-batch 10 --checked-at 2026-06-09
+run_step lab-term-draft ./tools/lab-term-draft
+run_step lab-content-quality ./tools/lab-content-quality
+run_step build-public go run ./cmd/build public
+run_step go-list-modules go list -m all
+run_step diff-check git diff --check
+run_step python-residue find . -name '*.py' -o -name '*.pyc'

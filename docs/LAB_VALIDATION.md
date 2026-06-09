@@ -6,7 +6,9 @@ O projeto deve operar como laboratorio: testar, validar, refinar, testar novamen
 
 Laboratorio deve usar engenharia agressiva inteligente. O agente deve planejar a hipótese do ciclo, rodar validação em massa quando o escopo for massa, usar CPU disponível para acelerar prova e refinar algoritmo antes de expor qualquer conteúdo público. Passividade, pergunta desnecessária, commit sem autocrítica e validação pequena para decisão massiva são falhas de laboratório.
 
-O agente principal pode acionar o máximo de agentes auxiliares que fizer sentido para acelerar pesquisa de fontes oficiais, matriz de proveniência, criação de conteúdo bloqueado, testes, edição localizada, revisão documental e debugging. A paralelização deve ser por tarefas independentes, sem concorrência desordenada no mesmo arquivo, gate ou decisão crítica. O agente principal valida, integra, revisa diff, roda os checks relevantes, atualiza checkpoint e commita.
+Otimização é regra do laboratório. Antes de commitar ciclo com teste ou gate lento, medir duração real, identificar gargalos e aplicar melhoria segura quando houver caminho técnico. `./tools/profile-contract-tests` ranqueia testes lentos de contrato por `go test -json`; `./tools/lab-cycle` imprime `TIMING start/pass/fail` por etapa. Se um teste pesado continuar necessário, registrar estratégia de shard ou índice em memória no checkpoint.
+
+O agente principal pode acionar agentes auxiliares para acelerar pesquisa de fontes oficiais, matriz de proveniência, criação de conteúdo bloqueado, testes, edição localizada, revisão documental e debugging. A divisão deve ser por tarefas independentes, sem concorrência no mesmo arquivo, gate, commit, fonte jurídica ou decisão crítica. A saída de agente é insumo isolado até o Codex principal validar. Antes de checkpoint/commit, registrar `.agents/agent_context_ledger.jsonl` com escopo, status, evidências, riscos e decisão de integração, para compactação não apagar contexto.
 
 Validação deve ser proporcional ao risco. Validação global completa é cara em tempo e só deve rodar quando houver alteração ampla, mudança em contrato central, risco P0/P1 crítico, modificação de HTML/sitemap/canonical/robots/indexação/performance, gerador em massa, preparação de publicação ou falha que possa contaminar várias camadas. Em ciclo pequeno/localizado, use teste focado, check específico, inspeção do diff/artefato e `git diff --check`.
 
@@ -16,45 +18,20 @@ Validação deve ser proporcional ao risco. Validação global completa é cara 
 
 Esse comando combina:
 - `go test -count=1 ./...`;
-- `./tools/check-all`;
-- `./tools/check-sources`;
-- `./tools/check-storage-contract`;
-- `./tools/check-term-seeds`;
-- `./tools/check-editorial-drafts`;
-- `./tools/check-review-queue`;
-- `./tools/check-approvals`;
-- `./tools/check-publication-blockers`;
-- `./tools/check-source-specificity-blockers`;
-- `./tools/check-source-specificity-resolutions`;
-- `./tools/check-prepublication-gates`;
-- `./tools/check-legal-editorial-reviews`;
-- `./tools/check-human-content-score`;
-- `./tools/check-scalable-content-batches`;
-- `./tools/check-batch-drafts`;
-- `./tools/check-batch-draft-expansion-archive`;
-- `./tools/check-batch-candidate-gates`;
-- `./tools/check-batch-candidate-reviews`;
-- `./tools/check-batch-prepublication-gates`;
-- `./tools/check-batch-source-specificity`;
-- `./tools/check-batch-public-manifest-gates`;
-- `./tools/check-batch-final-authorial-drafts`;
-- `./tools/check-paid-intent`;
-- `./tools/check-batch-draft-generation`;
-- `./tools/check-batch-source-url-audits`;
-- `./tools/check-batch-source-matrix`;
+- `go run ./cmd/check all`, que cobre os checks nomeados sem repetir `go test`;
+- `./tools/generate-batch-drafts --samples-per-batch 10 --checked-at 2026-06-09`;
 - `./tools/lab-term-draft`;
-- `./tools/check-google-search-appearance`;
-- `./tools/check-mechanical-content`;
-- `./tools/check-cpu-budget`;
 - `./tools/lab-content-quality`;
 - `go run ./cmd/build public`;
 - `go list -m all`;
 - `git diff --check`;
 - busca por residuos `.py` e `.pyc`.
 
-Use `./tools/lab-cycle` como prova global em momentos críticos ou alterações de grande alcance. Não transforme esse comando em ritual automático para toda edição pequena: isso aumenta custo sem melhorar a prova. O checkpoint deve explicar por que a validação escolhida foi suficiente; se a validação global foi pulada, registrar os checks focados usados.
+Use `./tools/lab-cycle` como prova global em momentos críticos ou alterações de grande alcance. Não transforme esse comando em ritual automático para toda edição pequena: isso aumenta custo sem melhorar a prova. O checkpoint deve explicar por que a validação escolhida foi suficiente; se a validação global foi pulada, registrar os checks focados usados. O comando global não deve chamar `./tools/check-all` nem repetir checks individuais já cobertos por `cmd/check all`; duplicação sem ganho é falha de otimização.
 
 O gate `./tools/check-performance-budget` deve reprovar HTML publico pesado, `<script>`, runtime cliente, bundle JavaScript, WebAssembly, mapas, `modulepreload`, import map, marcadores de hidratacao e CSS inline excessivo. Leveza e parte da prova de indexacao para Googlebot e bots valiosos.
+
+`./tools/check-agent-context-ledger` valida que agentes auxiliares usados no ciclo foram registrados em `.agents/agent_context_ledger.jsonl`, sem permissão de escrita concorrente, com evidência, risco, decisão de integração e validação obrigatória pelo Codex principal. Sem esse ledger, achado de subagente não conta como prova de checkpoint.
 
 `./tools/lab-content-quality` usa arquivos temporarios em `/tmp` para validar texto natural versus texto mecanico. Isso e laboratorio, nao publicacao. Ele deve detectar conteudo raso, keyword stuffing e permutacao antes que qualquer pagina seja exposta ao Googlebot.
 
@@ -101,6 +78,8 @@ Antes de ampliar produção, registrar `batch_drafts` e rodar `./tools/check-bat
 Antes de considerar o gerador pronto para volume maior, rodar `./tools/check-batch-draft-generation` e `./tools/generate-batch-drafts`. O gerador deve ser determinístico, produzir amostras temporárias em `/tmp`, persistir métricas agregadas, provar reescrita automática e manter `render_allowed=false`, `sitemap_allowed=false`, `publication_allowed=false` e `public_path=""`.
 
 Quando uma massa gerada em `/tmp` passar nos gates e tiver utilidade jurídica para páginas futuras, ela deve ser trazida para `data/editorial/batch_draft_expansion_archive.jsonl` e validada por `./tools/check-batch-draft-expansion-archive`. Laboratório validado não deve ser descartado por padrão; repo permanente bloqueado é o caminho de continuidade.
+
+Antes de ampliar a seleção de candidatos por família, rodar `./tools/check-batch-candidate-expansion-readiness`. O gate deve provar que a família tem massa permanente suficiente, CTA contextual, score humano, baixa similaridade, paid-intent por intenção, fonte específica ou bloqueio acionável, `index_policy=noindex`, manifesto falso e flags públicas falsas. Se faltar paid gate para as intenções expandidas, o estado correto é `batch_candidate_expansion_blocked_paid_gate_missing`, nunca readiness mascarada.
 
 Antes de preparar pré-publicação por lote, rodar `./tools/check-batch-candidate-gates`. O gate deve selecionar candidatos reais do arquivo permanente, acompanhar a base oficial configurada em `content/site.json`, exigir CTA contextual e impedir render, sitemap, publicação ou `public_path`.
 

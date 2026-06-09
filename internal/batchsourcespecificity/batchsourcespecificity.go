@@ -12,6 +12,7 @@ import (
 
 	"portaljuridico/internal/batchprepublication"
 	"portaljuridico/internal/batchsourceaudit"
+	"portaljuridico/internal/content"
 	"portaljuridico/internal/router"
 	"portaljuridico/internal/seo"
 )
@@ -134,12 +135,15 @@ func Validate(root string) Report {
 
 func BuildSourceIndex(root string) (SourceIndex, Report) {
 	issues := convertPrepublicationIssues(batchprepublication.Validate(root))
-	reviewIndex, reviewReport := batchprepublication.BuildReviewIndex(root)
-	issues = append(issues, convertPrepublicationIssues(reviewReport)...)
-	baseURL := strings.TrimRight(reviewIndex.BaseURL, "/")
-	if baseURL == "" {
-		baseURL = "https://wikijuridica.com.br"
+	repo, err := content.LoadRepository(root)
+	if err != nil {
+		issues = append(issues, Issue{Code: "batch_source_specificity_site_config_unavailable", Message: err.Error()})
 	}
+	baseURL := "https://wikijuridica.com.br"
+	if repo.BaseURL != "" {
+		baseURL = repo.BaseURL
+	}
+	baseURL = strings.TrimRight(baseURL, "/")
 
 	preEntries, preLoadReport := batchprepublication.LoadRecords(root)
 	issues = append(issues, convertPrepublicationIssues(preLoadReport)...)

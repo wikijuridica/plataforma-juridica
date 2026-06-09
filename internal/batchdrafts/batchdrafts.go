@@ -351,47 +351,51 @@ func isOperationalToken(word string) bool {
 	if len(word) <= 3 {
 		return true
 	}
-	stop := map[string]bool{
-		"para": true, "com": true, "que": true, "uma": true, "por": true, "dos": true, "das": true, "pelo": true, "pela": true,
-		"origem": true, "fonte": true, "fontes": true, "oficial": true, "oficiais": true, "documentos": true, "documento": true,
-		"whatsapp": true, "triagem": true, "digital": true, "online": true, "juridica": true, "jurídica": true, "protocolo": true,
-		"resposta": true, "leitor": true, "caso": true, "subtema": true, "linha": true, "tempo": true, "datas": true, "prova": true,
-		"atendimento": true, "publica": true, "pública": true, "laboratorio": true, "laboratório": true, "revisao": true, "revisão": true,
-		"prazo": true, "prazos": true, "arquivo": true, "arquivos": true, "contexto": true,
-	}
-	return stop[word]
+	return operationalTokens[word]
 }
 
 func categoryFor(word string) string {
-	categories := map[string]string{
-		"contrato": "contrato", "carteirinha": "contrato", "plano": "contrato", "clausula": "contrato",
-		"negativa": "recusa", "recusa": "recusa", "indeferimento": "recusa", "cessado": "recusa",
-		"médico": "saude", "medico": "saude", "laudo": "saude", "exames": "saude", "medicamento": "saude", "cirurgia": "saude",
-		"ans": "regulador", "inss": "previdenciario", "previdência": "previdenciario", "previdencia": "previdenciario", "cnis": "previdenciario",
-		"clt": "trabalhista", "holerites": "trabalhista", "jornada": "trabalhista", "rescisão": "trabalhista", "rescisao": "trabalhista",
-		"guarda": "familia", "pensão": "familia", "pensao": "familia", "divórcio": "familia", "divorcio": "familia", "filhos": "familia",
-		"pix": "financeiro", "banco": "financeiro", "cartão": "financeiro", "cartao": "financeiro", "consignado": "financeiro",
-		"inventário": "sucessorio", "inventario": "sucessorio", "herdeiros": "sucessorio", "espólio": "sucessorio", "espolio": "sucessorio",
-	}
-	return categories[word]
+	return semanticCategories[word]
 }
 
 func jaccard(left map[string]bool, right map[string]bool) float64 {
 	if len(left) == 0 && len(right) == 0 {
 		return 0
 	}
+	if len(left) > len(right) {
+		left, right = right, left
+	}
 	intersection := 0
-	union := make(map[string]bool)
 	for word := range left {
-		union[word] = true
 		if right[word] {
 			intersection++
 		}
 	}
-	for word := range right {
-		union[word] = true
+	unionLen := len(left) + len(right) - intersection
+	if unionLen == 0 {
+		return 0
 	}
-	return float64(intersection) / float64(len(union))
+	return float64(intersection) / float64(unionLen)
+}
+
+var operationalTokens = map[string]bool{
+	"para": true, "com": true, "que": true, "uma": true, "por": true, "dos": true, "das": true, "pelo": true, "pela": true,
+	"origem": true, "fonte": true, "fontes": true, "oficial": true, "oficiais": true, "documentos": true, "documento": true,
+	"whatsapp": true, "triagem": true, "digital": true, "online": true, "juridica": true, "jurídica": true, "protocolo": true,
+	"resposta": true, "leitor": true, "caso": true, "subtema": true, "linha": true, "tempo": true, "datas": true, "prova": true,
+	"atendimento": true, "publica": true, "pública": true, "laboratorio": true, "laboratório": true, "revisao": true, "revisão": true,
+	"prazo": true, "prazos": true, "arquivo": true, "arquivos": true, "contexto": true,
+}
+
+var semanticCategories = map[string]string{
+	"contrato": "contrato", "carteirinha": "contrato", "plano": "contrato", "clausula": "contrato",
+	"negativa": "recusa", "recusa": "recusa", "indeferimento": "recusa", "cessado": "recusa",
+	"médico": "saude", "medico": "saude", "laudo": "saude", "exames": "saude", "medicamento": "saude", "cirurgia": "saude",
+	"ans": "regulador", "inss": "previdenciario", "previdência": "previdenciario", "previdencia": "previdenciario", "cnis": "previdenciario",
+	"clt": "trabalhista", "holerites": "trabalhista", "jornada": "trabalhista", "rescisão": "trabalhista", "rescisao": "trabalhista",
+	"guarda": "familia", "pensão": "familia", "pensao": "familia", "divórcio": "familia", "divorcio": "familia", "filhos": "familia",
+	"pix": "financeiro", "banco": "financeiro", "cartão": "financeiro", "cartao": "financeiro", "consignado": "financeiro",
+	"inventário": "sucessorio", "inventario": "sucessorio", "herdeiros": "sucessorio", "espólio": "sucessorio", "espolio": "sucessorio",
 }
 
 func (r Report) Passed() bool { return len(r.Issues) == 0 }

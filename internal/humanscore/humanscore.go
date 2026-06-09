@@ -48,6 +48,32 @@ type Report struct {
 	Issues []Issue
 }
 
+var scoreStopWords = map[string]bool{
+	"a": true, "o": true, "os": true, "as": true, "um": true, "uma": true, "de": true, "do": true, "da": true, "dos": true, "das": true,
+	"e": true, "ou": true, "em": true, "no": true, "na": true, "nos": true, "nas": true, "para": true, "por": true, "com": true,
+	"que": true, "se": true, "ao": true, "aos": true, "pela": true, "pelo": true, "pelas": true, "pelos": true, "isso": true,
+	"este": true, "esta": true, "esse": true, "essa": true, "sobre": true, "tambem": true, "também": true,
+}
+
+var specificitySignals = map[string]bool{
+	"contrato": true, "pedido": true, "médico": true, "medico": true, "resposta": true, "operadora": true, "protocolo": true,
+	"relatório": true, "relatorio": true, "clínico": true, "clinico": true, "procedimento": true, "prazo": true, "aplicativo": true,
+	"central": true, "ans": true, "rol": true, "urgência": true, "urgencia": true, "cobertura": true, "documentos": true,
+	"triagem": true, "administrativa": true, "judicial": true, "lei": true, "artigo": true, "processo": true, "inss": true,
+	"benefício": true, "beneficio": true, "cartório": true, "cartorio": true, "notariado": true, "laudo": true,
+	"clt": true, "holerites": true, "mensagens": true, "advertências": true, "advertencias": true, "testemunhas": true,
+	"jornada": true, "rescisão": true, "rescisao": true, "verbas": true, "escala": true, "ponto": true,
+	"casamento": true, "filhos": true, "guarda": true, "convivência": true, "convivencia": true, "pensão": true,
+	"pensao": true, "renda": true, "acordo": true, "bens": true, "sentença": true, "sentenca": true, "despesas": true,
+	"criança": true, "crianca": true, "residência": true, "residencia": true, "calendário": true, "calendario": true,
+	"cadúnico": true, "cadunico": true, "cnis": true, "perícia": true, "pericia": true, "laudos": true,
+	"exames": true, "atestados": true, "comunicado": true, "decisão": true, "decisao": true, "recurso": true,
+	"cadastro": true, "dívida": true, "divida": true, "extratos": true, "fraude": true, "banco": true, "pix": true,
+	"certidão": true, "certidao": true, "óbito": true, "obito": true, "herdeiros": true, "matrícula": true,
+	"matricula": true, "testamento": true, "espólio": true, "espolio": true, "alvará": true, "alvara": true,
+	"extrato": true, "imóvel": true, "imovel": true, "dívidas": true, "dividas": true, "imposto": true,
+}
+
 func ScoreText(value string) Score {
 	words := normalizedWords(value)
 	signalWords := removeStopWords(words)
@@ -243,15 +269,9 @@ func normalizedWords(value string) []string {
 }
 
 func removeStopWords(words []string) []string {
-	stop := map[string]bool{
-		"a": true, "o": true, "os": true, "as": true, "um": true, "uma": true, "de": true, "do": true, "da": true, "dos": true, "das": true,
-		"e": true, "ou": true, "em": true, "no": true, "na": true, "nos": true, "nas": true, "para": true, "por": true, "com": true,
-		"que": true, "se": true, "ao": true, "aos": true, "pela": true, "pelo": true, "pelas": true, "pelos": true, "isso": true,
-		"este": true, "esta": true, "esse": true, "essa": true, "sobre": true, "tambem": true, "também": true,
-	}
 	filtered := make([]string, 0, len(words))
 	for _, word := range words {
-		if !stop[word] && len(word) > 2 {
+		if !scoreStopWords[word] && len(word) > 2 {
 			filtered = append(filtered, word)
 		}
 	}
@@ -281,28 +301,10 @@ func genericMarkerCount(value string) int {
 }
 
 func specificityCount(words []string) int {
-	specific := map[string]bool{
-		"contrato": true, "pedido": true, "médico": true, "medico": true, "resposta": true, "operadora": true, "protocolo": true,
-		"relatório": true, "relatorio": true, "clínico": true, "clinico": true, "procedimento": true, "prazo": true, "aplicativo": true,
-		"central": true, "ans": true, "rol": true, "urgência": true, "urgencia": true, "cobertura": true, "documentos": true,
-		"triagem": true, "administrativa": true, "judicial": true, "lei": true, "artigo": true, "processo": true, "inss": true,
-		"benefício": true, "beneficio": true, "cartório": true, "cartorio": true, "notariado": true, "laudo": true,
-		"clt": true, "holerites": true, "mensagens": true, "advertências": true, "advertencias": true, "testemunhas": true,
-		"jornada": true, "rescisão": true, "rescisao": true, "verbas": true, "escala": true, "ponto": true,
-		"casamento": true, "filhos": true, "guarda": true, "convivência": true, "convivencia": true, "pensão": true,
-		"pensao": true, "renda": true, "acordo": true, "bens": true, "sentença": true, "sentenca": true, "despesas": true,
-		"criança": true, "crianca": true, "residência": true, "residencia": true, "calendário": true, "calendario": true,
-		"cadúnico": true, "cadunico": true, "cnis": true, "perícia": true, "pericia": true, "laudos": true,
-		"exames": true, "atestados": true, "comunicado": true, "decisão": true, "decisao": true, "recurso": true,
-		"cadastro": true, "dívida": true, "divida": true, "extratos": true, "fraude": true, "banco": true, "pix": true,
-		"certidão": true, "certidao": true, "óbito": true, "obito": true, "herdeiros": true, "matrícula": true,
-		"matricula": true, "testamento": true, "espólio": true, "espolio": true, "alvará": true, "alvara": true,
-		"extrato": true, "imóvel": true, "imovel": true, "dívidas": true, "dividas": true, "imposto": true,
-	}
 	count := 0
 	seen := make(map[string]bool)
 	for _, word := range words {
-		if specific[word] && !seen[word] {
+		if specificitySignals[word] && !seen[word] {
 			seen[word] = true
 			count++
 		}

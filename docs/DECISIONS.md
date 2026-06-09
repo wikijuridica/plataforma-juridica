@@ -628,15 +628,39 @@ Consequencia: `data/editorial/batch_final_authorial_drafts.jsonl`, `internal/bat
 
 ## 2026-06-09 — Agentes auxiliares sem concorrência crítica
 
-Decisao: no próximo ciclo e nos seguintes, usar agentes auxiliares em paralelo quando houver trabalho independente, especialmente pesquisa de fontes oficiais, matriz de proveniência, testes, conteúdo bloqueado e debugging.
+Decisao: no próximo ciclo e nos seguintes, usar agentes auxiliares quando houver trabalho independente, especialmente pesquisa de fontes oficiais, matriz de proveniência, testes, conteúdo bloqueado e debugging, mas sem concorrência no estado do repositório.
 
 Motivos:
 - a meta massiva exige acelerar pesquisa e produção sem perder validação;
 - fontes oficiais e conteúdo por subtema podem ser divididos por área/fonte;
-- concorrência no mesmo arquivo, gate ou decisão crítica aumenta risco de conflito e mascaramento;
+- concorrência no mesmo arquivo, gate, commit, fonte jurídica ou decisão crítica aumenta risco de conflito e mascaramento;
 - o Codex principal deve manter responsabilidade por arquitetura, P0/P1, integração, validação, checkpoint e commit.
 
-Consequencia: tarefas paralelas devem ser particionadas por fonte, área, subtema, pacote ou teste. Agentes podem ajudar a escrever e debugar, mas o Codex principal valida evidência, revisa o diff, roda os checks relevantes e não publica nada sem gate.
+Consequencia: agentes devem produzir pesquisa, evidência ou rascunho em escopo isolado. Se houver escrita, ela precisa ser disjunta e só entra no repo após validação do Codex principal. O Codex principal valida evidência, revisa o diff, roda os checks relevantes, registra checkpoint e não publica nada sem gate. Para não perder contexto em compactação, todo agente usado em ciclo deve virar registro em `.agents/agent_context_ledger.jsonl` antes do checkpoint/commit.
+
+## 2026-06-09 — Ledger persistente contra perda de contexto de agentes
+
+Decisao: criar `.agents/agent_context_ledger.jsonl` e `./tools/check-agent-context-ledger` como contrato operacional para preservar contexto de subagentes entre compactações.
+
+Motivos:
+- compactação pode remover IDs, achados, riscos e decisões de integração dos agentes;
+- pesquisa de fonte oficial e revisão de conteúdo precisam sobreviver ao próximo ciclo;
+- agente auxiliar não pode virar prova invisível nem autorização implícita;
+- o Codex principal precisa conseguir retomar sem refazer pesquisa ou confiar em memória solta.
+
+Consequencia: cada agente usado deve registrar ciclo, ID, apelido, tipo de tarefa, escopo, status, política de uso, resumo, evidências, riscos, decisão de integração e flags `repo_write_allowed=false`, `codex_validation_required=true`, `closed_before_checkpoint=true`. `internal/agentcontext` valida o ledger; `check-all` e `lab-cycle` passam a incluir esse gate.
+
+## 2026-06-09 — Timing e otimização obrigatórios antes de commit
+
+Decisao: teste lento não pode ser tratado como normal sem medição. Criar `cmd/profile-tests`, `internal/testprofile`, `./tools/profile-contract-tests` e fazer `tools/lab-cycle` medir cada etapa com `TIMING`, removendo duplicação de `check-all` e checks individuais já cobertos por `cmd/check all`.
+
+Motivos:
+- `internal/contract` chegou a 207,365s em medição por `go test -json`;
+- gargalos reais eram revalidação editorial upstream e similaridade de 600 drafts, não falta de vontade de usar CPU;
+- `lab-cycle` repetia `go test`, `check-all` e vários checks individuais;
+- otimização precisa preservar contrato, não mascarar gate.
+
+Consequencia: antes de commit com teste/gate lento, rodar perfil ou registrar timing. O ciclo otimizado usa `go test -count=1 ./...`, `go run ./cmd/check all` e ferramentas de laboratório não cobertas pelo check-all. `batchdrafts` evita alocação de mapa de união em Jaccard e validadores finais deixam de reconstruir índice upstream duas vezes no mesmo caminho. Medição pós-otimização de `./tools/profile-contract-tests`: `total_observed_seconds=17.02`, `slow_tests=0` com threshold de 5s.
 
 ## 2026-06-09 — Gate pago persistente e fonte geral como fonte ampla
 
@@ -649,3 +673,15 @@ Motivos:
 - agentes auxiliares podem acelerar pesquisa oficial e rascunho bloqueado, mas o Codex principal precisa validar evidência, integração e gates críticos.
 
 Consequencia: `./tools/check-paid-intent` valida o arquivo permanente `data/editorial/batch_paid_intent_gates.jsonl`; candidatos comerciais fortes continuam bloqueados para publicação, e candidatos com risco de assistência pública ou self-service ficam roteados para bloqueio comercial. `./tools/check-batch-source-specificity` trata `codigo_civil`, `codigo_consumidor` e `clt_compilada` como fontes amplas quando o recorte precisa de fonte específica. O próximo ciclo deve criar prontidão de expansão de candidatos, usando agentes sem concorrência crítica para pesquisar fontes oficiais e ampliar conteúdo bloqueado com validação pelo Codex principal.
+
+## 2026-06-09 — Prontidao de expansao bloqueada por paid gate
+
+Decisao: criar `batch_candidate_expansion_readiness` como camada entre o arquivo permanente de 600 rascunhos e a seleção candidata ampliada, com alvo inicial de 30 candidatos por família e bloqueio explícito quando faltar paid-intent por intenção.
+
+Motivos:
+- o projeto precisa sair de 18 candidatos rumo a dezenas/centenas por família sem publicar spam;
+- `batch_draft_expansion_archive` já prova massa útil, mas não prova que cada intenção expandida tem paid gate, fonte específica e CTA aptos;
+- CTA colado não pode salvar candidato fraco, e paid-intent ausente deve ser blocker acionável;
+- readiness precisa sobreviver ao checkpoint e orientar agentes auxiliares sem concorrência no mesmo gate.
+
+Consequencia: `data/editorial/batch_candidate_expansion_readiness.jsonl`, `internal/batchcandidateexpansion` e `./tools/check-batch-candidate-expansion-readiness` entram no laboratório. O gate registra 6 famílias com 30 alvos cada, mas mantém status `batch_candidate_expansion_blocked_paid_gate_missing` enquanto as intenções expandidas não tiverem `batch_paid_intent_gates`. Nenhum registro permite manifesto, render, sitemap, publicação ou `public_path`.
