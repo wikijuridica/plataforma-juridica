@@ -781,3 +781,15 @@ Motivos:
 - a excecao precisa ser status proprio, auditavel e bloqueada, nao mascaramento de paid-intent aprovado.
 
 Consequencia: `internal/paidintent` cria `paid_intent_flexible_previdenciario_informational_blocked_publication` e centraliza elegibilidade em `paidintent.AllowsExpansion`, que aceita o status apenas em `batch-previdenciario-digital` e com flags publicas falsas. `internal/batchexpansionapply`, `internal/batchcandidateexpansion`, `internal/batchcandidatepromotion` e `internal/batchcandidatepipeline` usam esse helper. `batch_candidate_gates` sobe para 330 candidatos internos bloqueados; `batch_paid_intent_gates` cobre 510 alvos de laboratorio, com 42 previdenciarios informativos bloqueados; `batch_expansion_strategy` planeja proximo crescimento para 510 current total, sendo 90 nas cinco familias comerciais e 60 em previdenciario. Gratuidade explicita, defensoria/justica gratuita, "sem pagar", promessa de beneficio, promessa de resultado ou substituicao de canal publico continuam bloqueios P0.
+
+## 2026-06-09 — Avanco explicito para 510 candidatos bloqueados
+
+Decisao: criar `./tools/advance-batch-candidate-gates` para promover explicitamente o `next_candidate_target` planejado por `batch_expansion_strategy`, sem mudar o comportamento conservador de `./tools/expand-batch-candidate-gates`.
+
+Motivos:
+- o contrato atual separa current de next target para impedir salto implicito no mesmo checkpoint;
+- o ciclo 47 precisava materializar 510 candidatos, mas isso deveria ser uma acao explicita, rastreavel e validada;
+- reaproveitar `expand-batch-candidate-gates` como salto automatico quebraria a decisao anterior e poderia mascarar crescimento sem checkpoint;
+- a meta massiva exige comando rapido de avancar lote, com teste e regeneracao downstream, nao edicao manual de JSONL.
+
+Consequencia: `internal/batchcandidatepromotion` passa a ter `AdvanceToNextTargets`, mantendo `ExpandFromReadiness` como selecao current; `cmd/advance-batch-candidate-gates` e `tools/advance-batch-candidate-gates` materializam o next target quando a estrategia esta pronta. `batch_candidate_gates` sobe para 510 candidatos internos bloqueados: 90 em cada uma das cinco familias comerciais e 60 em previdenciario. A cadeia downstream sobe para 510 revisoes, prepublication gates, source-specificity, manifests e final drafts, todos `noindex`, sem render, sitemap, publicacao ou `public_path`. `batch_paid_intent_gates` passa a cobrir 590 alvos de laboratorio para o proximo crescimento planejado.

@@ -181,6 +181,7 @@ func BuildRecord(readiness ReadinessSnapshot) Record {
 		},
 		ValidationCommands: []string{
 			"./tools/check-batch-expansion-strategy",
+			"./tools/advance-batch-candidate-gates --expect-total <expected-current>",
 			"./tools/expand-batch-candidate-gates",
 			"./tools/refresh-batch-candidate-pipeline",
 			"./tools/check-batch-candidate-gates",

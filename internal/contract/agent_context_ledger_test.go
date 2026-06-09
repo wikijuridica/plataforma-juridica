@@ -28,7 +28,13 @@ func TestAgentContextLedgerPersistsSubagentSummaries(t *testing.T) {
 		"previdenciario_contract_review": "019eae7c-8e95-7402-a285-6b56d3cdc0fa",
 		"previdenciario_gate_audit":      "019eae7c-8fc9-7b60-a89a-83c64f426fdb",
 	}
+	requiredCycle47 := map[string]string{
+		"candidate_510_promotion_audit":    "019eae90-3bb8-72d3-b21f-0b29bc834706",
+		"cycle_47_performance_shard_audit": "019eae90-535f-7f90-85ec-4821ff346729",
+		"previdenciario_60_semantic_audit": "019eae90-73f9-7470-8798-9ceacefc4a2f",
+	}
 	seenCycle46 := make(map[string]agentcontext.Record)
+	seenCycle47 := make(map[string]agentcontext.Record)
 	for _, entry := range records {
 		record := entry.Record
 		if record.Cycle < 40 {
@@ -60,6 +66,9 @@ func TestAgentContextLedgerPersistsSubagentSummaries(t *testing.T) {
 		if record.Cycle == 46 {
 			seenCycle46[record.TaskKind] = record
 		}
+		if record.Cycle == 47 {
+			seenCycle47[record.TaskKind] = record
+		}
 	}
 	if !hasSourceResearch || !hasReadinessAudit || !hasPaidIntentReview {
 		t.Fatalf("missing expected cycle 40 agent summaries: source=%t readiness=%t paid=%t", hasSourceResearch, hasReadinessAudit, hasPaidIntentReview)
@@ -77,6 +86,21 @@ func TestAgentContextLedgerPersistsSubagentSummaries(t *testing.T) {
 		}
 		if !record.CodexValidationRequired || !record.ClosedBeforeCheckpoint {
 			t.Fatalf("cycle 46 %s not closed for checkpoint validation=%t closed=%t", taskKind, record.CodexValidationRequired, record.ClosedBeforeCheckpoint)
+		}
+	}
+	for taskKind, agentID := range requiredCycle47 {
+		record, ok := seenCycle47[taskKind]
+		if !ok {
+			t.Fatalf("missing cycle 47 agent context for %s", taskKind)
+		}
+		if record.AgentID != agentID {
+			t.Fatalf("cycle 47 %s agent_id=%q, want %q", taskKind, record.AgentID, agentID)
+		}
+		if len(record.Evidence) < 2 || len(record.Risks) == 0 || record.IntegrationDecision == "" {
+			t.Fatalf("cycle 47 %s lacks durable context: evidence=%d risks=%d integration=%q", taskKind, len(record.Evidence), len(record.Risks), record.IntegrationDecision)
+		}
+		if !record.CodexValidationRequired || !record.ClosedBeforeCheckpoint {
+			t.Fatalf("cycle 47 %s not closed for checkpoint validation=%t closed=%t", taskKind, record.CodexValidationRequired, record.ClosedBeforeCheckpoint)
 		}
 	}
 }

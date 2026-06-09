@@ -87,8 +87,8 @@ func TestBatchCandidateGatesSelectArchiveDraftsWithoutPublishing(t *testing.T) {
 			t.Fatalf("%s must track locked official URL while preserving blocked publication, mode=%q locked=%t", record.BatchID, record.BaseURLMode, record.OfficialURLLocked)
 		}
 	}
-	if totalSelected != 330 {
-		t.Fatalf("selected intents=%d, want 330 paid-passed or previdenciario-informational strategy candidates", totalSelected)
+	if totalSelected != 510 {
+		t.Fatalf("selected intents=%d, want 510 paid-passed or previdenciario-informational strategy candidates", totalSelected)
 	}
 }
 

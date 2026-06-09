@@ -20,6 +20,31 @@ type Report struct {
 }
 
 func ExpandFromReadiness(root string) ([]batchcandidategates.Record, Report) {
+	return promoteFromReadiness(root, materializationTarget)
+}
+
+func AdvanceToNextTargets(root string) ([]batchcandidategates.Record, Report) {
+	return promoteFromReadiness(root, nextTargetMaterialization)
+}
+
+func ValidateTotalSelected(records []batchcandidategates.Record, expected int) Report {
+	if expected <= 0 {
+		return Report{}
+	}
+	total := 0
+	for _, record := range records {
+		total += len(record.SelectedUniqueIntentIDs)
+	}
+	if total != expected {
+		return Report{Issues: []Issue{{
+			Code:    "batch_candidate_unexpected_total_selected",
+			Message: fmt.Sprintf("selected=%d expected=%d", total, expected),
+		}}}
+	}
+	return Report{}
+}
+
+func promoteFromReadiness(root string, targetFor func(batchcandidateexpansion.Record, batchexpansionstrategy.Record) int) ([]batchcandidategates.Record, Report) {
 	entries, loadReport := batchcandidategates.LoadRecords(root)
 	archiveIndex, archiveReport := batchcandidategates.BuildArchiveIndex(root)
 	readinessEntries, readinessReport := batchcandidateexpansion.LoadRecords(root)
@@ -66,7 +91,7 @@ func ExpandFromReadiness(root string) ([]batchcandidategates.Record, Report) {
 			}
 			selected = append(selected, intentID)
 		}
-		target := materializationTarget(readiness, strategy)
+		target := targetFor(readiness, strategy)
 		if len(selected) < target {
 			issues = append(issues, Issue{Code: "batch_candidate_too_few_paid_passed_intents", Message: fmt.Sprintf("%s=%d current=%d", record.BatchID, len(selected), target)})
 			continue
@@ -154,4 +179,14 @@ func materializationTarget(readiness batchcandidateexpansion.Record, strategy ba
 		return readiness.TargetCandidateCount
 	}
 	return strategy.CurrentCandidateCount
+}
+
+func nextTargetMaterialization(readiness batchcandidateexpansion.Record, strategy batchexpansionstrategy.Record) int {
+	if readiness.ReadinessStatus != batchcandidateexpansion.ReadyBlockedStatus {
+		return strategy.CurrentCandidateCount
+	}
+	if strategy.StrategyStatus != batchexpansionstrategy.ReadyNextCandidateGateStatus {
+		return strategy.CurrentCandidateCount
+	}
+	return strategy.NextCandidateTarget
 }

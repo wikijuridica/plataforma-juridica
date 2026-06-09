@@ -111,7 +111,7 @@ Camadas obrigatorias:
 - `batch_drafts`: rascunhos de amostra por lote massivo, com score e reescrita comprovada, ainda sem render, sitemap ou publicacao;
 - `batch_draft_expansion_archive`: arquivo permanente bloqueado de rascunhos validados em laboratorio, preservado para expansao futura ate prova contraria;
 - `batch_candidate_expansion_readiness`: prontidao bloqueada de expansao por familia, conectando 600 rascunhos permanentes a alvos de 30+ candidatos e diferenciando paid-intent ausente, paid-intent existente mas reprovado, fonte ampla, proximo gate pendente e flags publicas;
-- `batch_candidate_gates`: gate permanente de candidatos selecionados do arquivo, agora expansivel por `paidintent.AllowsExpansion` para 330 intenções internas, ainda sem render, sitemap, publicacao ou `public_path`;
+- `batch_candidate_gates`: gate permanente de candidatos selecionados do arquivo, agora expansivel por `paidintent.AllowsExpansion` para 510 intenções internas, ainda sem render, sitemap, publicacao ou `public_path`;
 - `batch_candidate_reviews`: revisao juridico-editorial bloqueada de cada candidato de lote selecionado, com fonte matricial auditada e CTA WhatsApp de origem rastreavel;
 - `batch_prepublication_gates`: pre-publicacao bloqueada de cada candidato revisado, com canonical oficial, title/meta, `noindex` e fonte final ainda pendente;
 - `batch_source_specificity_resolutions`: resolucao de fonte por candidato pre-publicado, marcando URL especifica auditada ou bloqueio explicito por fonte ampla, sem liberar render/sitemap/publicacao;
@@ -123,7 +123,7 @@ Camadas obrigatorias:
 - `batch_source_matrix`: matriz de fontes oficiais por subtema, usada como referência/proveniência sem scraping e sem publicação;
 - `batch_source_url_audits`: auditoria das URLs da matriz, separada da camada editorial, exigindo cobertura de cada URL por `matrix_id` antes de escalar rascunhos;
 
-Ferramentas operacionais de escala: `./tools/expand-batch-candidate-gates` recalcula a seleção a partir de `batch_candidate_expansion_readiness` e `batch_paid_intent_gates`; `./tools/refresh-batch-candidate-pipeline` propaga a seleção para revisões, pre-publicação, fonte específica, manifesto e rascunhos finais bloqueados. A ferramenta deve ser idempotente e não pode publicar: ela trava fonte por matriz quando existe URL oficial específica auditada, gera rascunhos finais bloqueados para manifests elegíveis, preserva apenas rascunhos antigos que ainda passam score/qualidade e mantém os demais candidatos em `final_source_blocked_needs_specific_url`.
+Ferramentas operacionais de escala: `./tools/expand-batch-candidate-gates` recalcula a seleção current sem salto implícito; `./tools/advance-batch-candidate-gates` promove explicitamente o `next_candidate_target` planejado pela estratégia; `./tools/refresh-batch-candidate-pipeline` propaga a seleção para revisões, pre-publicação, fonte específica, manifesto e rascunhos finais bloqueados. As ferramentas devem ser idempotentes e não podem publicar: elas travam fonte por matriz quando existe URL oficial específica auditada, geram rascunhos finais bloqueados para manifests elegíveis, preservam apenas rascunhos antigos que ainda passam score/qualidade e mantêm os demais candidatos em `final_source_blocked_needs_specific_url`.
 - `published_manifest`: manifesto leve de conteudo aprovado, sem substituir o renderizador.
 
 Camada operacional fora do banco de conteúdo:
