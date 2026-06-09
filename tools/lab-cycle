@@ -12,6 +12,7 @@ go test -count=1 ./...
 ./tools/check-term-intent-candidates
 ./tools/check-promoted-term-seeds
 ./tools/check-content-briefs
+./tools/check-authorial-content-drafts
 ./tools/check-editorial-drafts
 ./tools/check-review-queue
 ./tools/check-approvals

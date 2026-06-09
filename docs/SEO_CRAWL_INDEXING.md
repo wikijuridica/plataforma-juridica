@@ -21,6 +21,10 @@ Pagina publica indexavel deve ser facil de rastrear. O contrato atual reprova HT
 ## Orcamento de Search appearance
 
 Pesquisa oficial feita em 2026-06-09 na Central da Pesquisa Google:
+- Conteudo util para pessoas: `https://developers.google.com/search/docs/fundamentals/creating-helpful-content`
+- Crawling e indexing: `https://developers.google.com/search/docs/crawling-indexing`
+- Canonicalizacao: `https://developers.google.com/search/docs/crawling-indexing/consolidate-duplicate-urls`
+- Robots meta: `https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag`
 - Links de titulo: `https://developers.google.com/search/docs/appearance/title-link?hl=pt-BR`
 - Metadescricoes/snippets: `https://developers.google.com/search/docs/appearance/snippet?hl=pt-br`
 - Requisitos tecnicos minimos: `https://developers.google.com/search/docs/essentials/technical`
@@ -30,6 +34,7 @@ Pontos contratuais:
 - o Google informa que nao ha limite fixo oficial para metadescricoes;
 - ambos podem ser truncados conforme a largura do dispositivo;
 - Googlebot precisa conseguir acessar a pagina, receber HTTP 200 e encontrar conteudo indexavel que nao viole politicas de spam.
+- conteudo criado principalmente para manipular ranking, raso, mecanico, massificado ou sem valor adicional deve ser tratado como falha editorial antes de virar URL.
 
 Decisao do projeto: usar orcamento conservador interno, contado por caracteres Unicode, para reduzir truncagem e texto ruim:
 - `title`: 20 a 65 caracteres Unicode;

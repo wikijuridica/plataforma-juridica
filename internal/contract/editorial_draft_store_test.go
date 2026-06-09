@@ -57,6 +57,7 @@ func copyStorageFixture(t *testing.T) string {
 		"data/source-snapshots/payloads.jsonl",
 		"data/editorial/drafts.jsonl",
 		"data/editorial/content_briefs.jsonl",
+		"data/editorial/authorial_drafts.jsonl",
 		"data/editorial/review_queue.jsonl",
 		"data/editorial/approved_drafts.jsonl",
 		"data/editorial/publication_blockers.jsonl",
@@ -67,7 +68,7 @@ func copyStorageFixture(t *testing.T) string {
 		if err != nil {
 			t.Fatal(err)
 		}
-		if path == "data/editorial/drafts.jsonl" || path == "data/editorial/content_briefs.jsonl" || path == "data/editorial/review_queue.jsonl" || path == "data/editorial/approved_drafts.jsonl" || path == "data/editorial/publication_blockers.jsonl" || path == "data/editorial/source_blockers.jsonl" {
+		if path == "data/editorial/drafts.jsonl" || path == "data/editorial/content_briefs.jsonl" || path == "data/editorial/authorial_drafts.jsonl" || path == "data/editorial/review_queue.jsonl" || path == "data/editorial/approved_drafts.jsonl" || path == "data/editorial/publication_blockers.jsonl" || path == "data/editorial/source_blockers.jsonl" {
 			data = []byte{}
 		}
 		writeTestFile(t, filepath.Join(root, path), string(data))

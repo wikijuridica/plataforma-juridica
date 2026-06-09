@@ -36,6 +36,8 @@ A pesquisa editorial manual fica em `data/research/high_intent_terms.jsonl` e e 
 
 Briefs iniciais de conteudo ficam em `data/editorial/content_briefs.jsonl` e sao validados por `./tools/check-content-briefs`. Eles iniciam a construcao de conteudo, mas nao publicam, nao criam URL, nao entram em sitemap e nao autorizam CTA publico.
 
+Rascunhos autorais ficam em `data/editorial/authorial_drafts.jsonl` e sao validados por `./tools/check-authorial-content-drafts`. Eles transformam briefs em texto proprio natural, mas continuam sem publicacao, sem URL publica e sem sitemap ate fonte especifica, revisao, SEO/crawl e qualidade passarem.
+
 Quando um candidato e promovido para `term_seeds`, ele deve preservar `candidate_id`, URL de evidencia de demanda, grupo de consulta, modo `digital_only` e intencao alta de CTA WhatsApp. Essa promocao nao cria pagina, nao cria CTA publico e nao libera sitemap.
 
 Bloqueios de fonte especifica ficam em `data/editorial/source_blockers.jsonl` e sao validados por `./tools/check-source-specificity-blockers`. Eles registram a fonte atual, os tipos de fonte ainda exigidos e a proxima direcao de pesquisa para cada termo priorizado.

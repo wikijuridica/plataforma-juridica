@@ -91,6 +91,18 @@
       "description": "Briefs editoriais iniciais, naturais e nao-template, ainda sem publicacao e sem URL publica."
     },
     {
+      "name": "authorial_content_drafts",
+      "path": "data/editorial/authorial_drafts.jsonl",
+      "record_type": "authorial_content_draft",
+      "record_max_bytes": 32768,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": true,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Rascunhos autorais em PT-BR derivados de briefs, com anti-template e bloqueio total de publicacao ate revisao SEO, fonte e qualidade."
+    },
+    {
       "name": "review_queue",
       "path": "data/editorial/review_queue.jsonl",
       "record_type": "editorial_review_queue",

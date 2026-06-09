@@ -8,6 +8,7 @@ import (
 
 	"portaljuridico/internal/approvals"
 	"portaljuridico/internal/architecture"
+	"portaljuridico/internal/authorialdrafts"
 	"portaljuridico/internal/build"
 	"portaljuridico/internal/content"
 	"portaljuridico/internal/contentbriefs"
@@ -45,6 +46,7 @@ var Names = []string{
 	"term-intent-candidates",
 	"term-seed-promotions",
 	"content-briefs",
+	"authorial-content-drafts",
 	"editorial-drafts",
 	"review-queue",
 	"approvals",
@@ -84,6 +86,8 @@ func Run(name string, root string) []string {
 		return checkTermSeedPromotions(root)
 	case "content-briefs":
 		return checkContentBriefs(root)
+	case "authorial-content-drafts":
+		return checkAuthorialContentDrafts(root)
 	case "editorial-drafts":
 		return checkEditorialDrafts(root)
 	case "review-queue":
@@ -261,6 +265,10 @@ func checkTermSeedPromotions(root string) []string {
 
 func checkContentBriefs(root string) []string {
 	return contentbriefs.Validate(root).Messages()
+}
+
+func checkAuthorialContentDrafts(root string) []string {
+	return authorialdrafts.Validate(root).Messages()
 }
 
 func checkEditorialDrafts(root string) []string {

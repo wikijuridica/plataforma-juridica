@@ -353,3 +353,15 @@ Motivos:
 - a meta de 10 mil paginas exige uma base leve, organizada e escalavel sem template mecanico.
 
 Consequencia: `data/research/high_intent_terms.jsonl` vira o banco leve de pesquisa manual; `data/editorial/content_briefs.jsonl` inicia conteudos como briefs nao publicaveis; `./tools/check-manual-keyword-research` e `./tools/check-content-briefs` entram no laboratorio. Nenhum brief vira pagina publica sem fonte especifica, revisao, qualidade, SEO, CTA e nova validacao.
+
+## 2026-06-09 — Rascunhos autorais antes de qualquer pagina de alta intencao
+
+Decisao: briefs pesquisados podem virar rascunhos autorais no banco leve, mas esses rascunhos continuam bloqueados para publicacao ate passarem por fonte especifica, revisao editorial, SEO/crawl, qualidade, CTA e checkpoint.
+
+Motivos:
+- o projeto precisa comecar a construir conteudo sem gerar spam, clone ou pagina mecanica;
+- Googlebot e humanos devem receber apenas paginas com valor proprio, nao texto de molde;
+- CTA WhatsApp e critico, mas deve ser contextual e responsavel;
+- a escala de 10 mil paginas exige banco organizado antes de renderizacao publica.
+
+Consequencia: `data/editorial/authorial_drafts.jsonl` vira camada propria de rascunho autoral; `internal/authorialdrafts` e `./tools/check-authorial-content-drafts` reprovam abertura repetida, shape de secoes reaproveitado, heading generico, CTA raso, fonte ausente, publicacao permitida e path publico.

@@ -50,9 +50,11 @@ Alta intencao de contratacao online exige que o fluxo possa ser 100% digital: Wh
 
 Os caminhos seguros de pesquisa de demanda ficam em `docs/data-sources/search-demand.md`. O laboratorio deve validar `term_intent_candidates` antes de transformar qualquer termo pesquisado em seed, rascunho ou pauta publica.
 
-Para termos de alta intencao, a estrategia preferida e pesquisa editorial manual na web, nao script de descoberta. O laboratorio deve validar `manual-keyword-research` e `content-briefs`, revisando se os briefs possuem angulo unico e nao repetem molde. Google Trends orienta demanda, mas nao decide sozinho.
+Para termos de alta intencao, a estrategia preferida e pesquisa editorial manual na web, nao script de descoberta. O laboratorio deve validar `manual-keyword-research`, `content-briefs` e `authorial-content-drafts`, revisando se os briefs e rascunhos possuem angulo unico, nao repetem molde e nao tentam publicar. Google Trends orienta demanda, mas nao decide sozinho.
 
 Promocao de candidato para seed deve passar por ranking refinavel, nao por lista fixa. O score deve considerar area, risco, fonte oficial, adequacao digital, CTA WhatsApp e penalidades para fluxo presencial ou evidencia fraca. Quando falso positivo ou falso negativo aparecer, escrever teste e ajustar o algoritmo antes de continuar.
+
+Rascunho autoral deve passar por algoritmo anti-template antes de qualquer novo lote: abertura repetida, conjunto de secoes reaproveitado, heading generico, CTA raso, fonte ausente ou path publico devem reprovar. Contagem de palavras isolada nao basta para liberar conteudo.
 
 Se a inspeção mostrar grafia mecanica ou sem acento em rascunho PT-BR, tratar como falha de laboratorio. Refinar `internal/draftlab`, regenerar `data/editorial/drafts.jsonl`, atualizar `data/editorial/review_queue.jsonl` e rodar novamente os checks antes do commit.
 

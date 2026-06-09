@@ -78,6 +78,7 @@ Camadas obrigatorias:
 - `source_snapshots`: snapshots autorizados, pequenos, com hash e proveniencia;
 - `editorial_drafts`: texto editorial proprio em PT-BR, sempre noindex ate aprovacao;
 - `content_briefs`: brief inicial natural e especifico por termo, sem URL publica;
+- `authorial_content_drafts`: rascunhos autorais derivados de briefs, com anti-template, CTA digital contextual e publicacao bloqueada;
 - `source_specificity_blockers`: manifesto que impede aprovacao/publicacao quando o termo ainda precisa fonte primaria, norma especifica ou recorte juridico;
 - `published_manifest`: manifesto leve de conteudo aprovado, sem substituir o renderizador.
 
