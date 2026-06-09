@@ -268,7 +268,7 @@
       "allows_editorial_content": false,
       "requires_source_provenance": true,
       "requires_quality_state": true,
-      "description": "Prontidao bloqueada para ampliar candidatos por familia a partir do arquivo permanente; exige paid-intent, fonte, CTA, noindex e flags publicas falsas antes de qualquer selecao maior."
+      "description": "Prontidao bloqueada para ampliar candidatos por familia a partir do arquivo permanente; diferencia paid-intent ausente de paid-intent reprovado e exige fonte, CTA, noindex e flags publicas falsas antes de qualquer selecao maior."
     },
     {
       "name": "batch_candidate_reviews",
@@ -340,7 +340,7 @@
       "allows_editorial_content": false,
       "requires_source_provenance": true,
       "requires_quality_state": true,
-      "description": "Gate bloqueado de intencao comercial paga por rascunho final; separa contratacao particular forte de gratuidade, curiosidade, assistencia publica dominante e autoatendimento administrativo."
+      "description": "Gate bloqueado de intencao comercial paga por rascunho final ou alvo de expansao; separa sinal pago do corpo e do CTA, bloqueando CTA-only, gratuidade, curiosidade, assistencia publica dominante e autoatendimento administrativo."
     },
     {
       "name": "batch_generation_metrics",

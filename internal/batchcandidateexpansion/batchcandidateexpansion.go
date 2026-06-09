@@ -20,6 +20,7 @@ import (
 const (
 	ReadyBlockedStatus    = "batch_candidate_expansion_ready_blocked_publication"
 	PaidGateMissingStatus = "batch_candidate_expansion_blocked_paid_gate_missing"
+	PaidGateBlockedStatus = "batch_candidate_expansion_blocked_paid_gate_failed"
 	ArchivePath           = "data/editorial/batch_draft_expansion_archive.jsonl"
 	PaidIntentGatePath    = "data/editorial/batch_paid_intent_gates.jsonl"
 )
@@ -184,7 +185,7 @@ func ValidateRecordAgainstIndex(record Record, index ExpansionIndex) Report {
 	if strings.TrimSpace(record.LegalArea) == "" {
 		issues = append(issues, Issue{Code: "batch_candidate_expansion_missing_legal_area", Message: record.BatchID})
 	}
-	if record.ReadinessStatus != ReadyBlockedStatus && record.ReadinessStatus != PaidGateMissingStatus {
+	if record.ReadinessStatus != ReadyBlockedStatus && record.ReadinessStatus != PaidGateMissingStatus && record.ReadinessStatus != PaidGateBlockedStatus {
 		issues = append(issues, Issue{Code: "batch_candidate_expansion_status_not_blocked", Message: record.ReadinessStatus})
 	}
 	if record.TargetCandidateTier != "target_30" && record.TargetCandidateTier != "target_60" && record.TargetCandidateTier != "target_100" {
@@ -292,8 +293,8 @@ func ValidateRecordAgainstIndex(record Record, index ExpansionIndex) Report {
 	if len(paidMissing) > 0 && record.ReadinessStatus != PaidGateMissingStatus {
 		issues = append(issues, Issue{Code: "batch_candidate_expansion_paid_gate_missing", Message: fmt.Sprintf("%s missing=%d", record.BatchID, len(paidMissing))})
 	}
-	if record.PaidIntentRequired && len(paidBlocked) > 0 && record.ReadinessStatus == ReadyBlockedStatus {
-		issues = append(issues, Issue{Code: "batch_candidate_expansion_paid_status_not_ready", Message: fmt.Sprintf("%s blocked=%d", record.BatchID, len(paidBlocked))})
+	if record.PaidIntentRequired && len(paidMissing) == 0 && len(paidBlocked) > 0 && record.ReadinessStatus != PaidGateBlockedStatus {
+		issues = append(issues, Issue{Code: "batch_candidate_expansion_paid_gate_blocked", Message: fmt.Sprintf("%s blocked=%d", record.BatchID, len(paidBlocked))})
 	}
 	if record.PaidIntentRequired && len(paidMissing) == 0 && len(paidBlocked) == 0 && record.ReadinessStatus != ReadyBlockedStatus {
 		issues = append(issues, Issue{Code: "batch_candidate_expansion_ready_status_mismatch", Message: record.BatchID})
@@ -326,6 +327,38 @@ func ValidateRecordAgainstIndex(record Record, index ExpansionIndex) Report {
 		issues = append(issues, Issue{Code: "batch_candidate_expansion_without_checked_at", Message: record.BatchID})
 	}
 	return Report{Issues: issues}
+}
+
+func RefreshRecords(root string) ([]Record, Report) {
+	entries, loadReport := LoadRecords(root)
+	index, indexReport := BuildExpansionIndex(root)
+	issues := append([]Issue{}, loadReport.Issues...)
+	issues = append(issues, indexReport.Issues...)
+	if len(issues) > 0 {
+		return nil, Report{Issues: issues}
+	}
+
+	refreshed := make([]Record, 0, len(entries))
+	for _, entry := range entries {
+		record := entry.Record
+		paidPassed, paidBlocked, paidMissing := classifyPaidIntent(record.ExpansionCandidateIntentIDs, index.PaidIntentByIntent)
+		record.PaidIntentPassedCount = len(paidPassed)
+		record.PaidIntentBlockedCount = len(paidBlocked)
+		record.PaidIntentMissingCount = len(paidMissing)
+		record.PaidIntentMissingIntentIDs = paidMissing
+		record.PaidIntentBlockedIntentIDs = paidBlocked
+		record.KnownSourceBlockerIntentIDs = append([]string{}, index.SourceBlockersByBatch[record.BatchID]...)
+		record.ActionableBlockers = expectedActionableBlockers(len(paidMissing), len(paidBlocked), len(record.KnownSourceBlockerIntentIDs))
+		if len(paidMissing) > 0 {
+			record.ReadinessStatus = PaidGateMissingStatus
+		} else if len(paidBlocked) > 0 {
+			record.ReadinessStatus = PaidGateBlockedStatus
+		} else {
+			record.ReadinessStatus = ReadyBlockedStatus
+		}
+		refreshed = append(refreshed, record)
+	}
+	return refreshed, Report{}
 }
 
 func LoadRecords(root string) ([]Entry, Report) {

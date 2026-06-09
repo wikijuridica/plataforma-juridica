@@ -38,7 +38,7 @@ O projeto usa Go e biblioteca padrao como base tecnica. A escolha privilegia bin
 - `internal/batchcandidatereviews`: revisao juridico-editorial bloqueada de candidatos de lote, com CTA WhatsApp contextual e matriz de fonte auditada.
 - `internal/batchprepublication`: gates de pre-publicacao bloqueada por candidato revisado, com canonical oficial e `noindex`.
 - `internal/batchfinaldrafts`: rascunhos autorais finais bloqueados para candidatos com fonte travada e manifesto SEO pendente.
-- `internal/paidintent`: gate persistente de intenção comercial paga, bloqueando gratuidade/curiosidade/autoatendimento e exigindo contratação particular online com sinal de honorários, orçamento e contexto jurídico-econômico.
+- `internal/paidintent`: gate persistente de intenção comercial paga, bloqueando gratuidade/curiosidade/autoatendimento, separando sinal pago do corpo e do CTA, e exigindo contratação particular online com sinal de honorários, orçamento e contexto jurídico-econômico.
 - `cmd/refresh-editorial-drafts`: regeneracao segura de rascunhos persistidos quando o algoritmo de escrita e refinado.
 - `internal/provenance`: contrato de proveniencia por payload antes de qualquer conteudo.
 - `internal/architecture`: validacao de estrutura e proibicoes P0.
@@ -109,14 +109,14 @@ Camadas obrigatorias:
 - `human_content_score`: score de naturalidade/IA-like/mecânico para revisão algorítmica, reescrita e auditoria;
 - `batch_drafts`: rascunhos de amostra por lote massivo, com score e reescrita comprovada, ainda sem render, sitemap ou publicacao;
 - `batch_draft_expansion_archive`: arquivo permanente bloqueado de rascunhos validados em laboratorio, preservado para expansao futura ate prova contraria;
-- `batch_candidate_expansion_readiness`: prontidao bloqueada de expansao por familia, conectando 600 rascunhos permanentes a alvos de 30+ candidatos e bloqueando paid-intent ausente, fonte ampla e flags publicas;
+- `batch_candidate_expansion_readiness`: prontidao bloqueada de expansao por familia, conectando 600 rascunhos permanentes a alvos de 30+ candidatos e diferenciando paid-intent ausente, paid-intent existente mas reprovado, fonte ampla e flags publicas;
 - `batch_candidate_gates`: gate permanente de candidatos selecionados do arquivo, ainda sem render, sitemap, publicacao ou `public_path`;
 - `batch_candidate_reviews`: revisao juridico-editorial bloqueada de candidatos de lote, com fonte matricial auditada e CTA WhatsApp de origem rastreavel;
 - `batch_prepublication_gates`: pre-publicacao bloqueada de candidatos revisados, com canonical oficial, title/meta, `noindex` e fonte final ainda pendente;
 - `batch_source_specificity_resolutions`: resolucao de fonte por candidato pre-publicado, marcando URL especifica auditada ou bloqueio explicito por fonte ampla, sem liberar render/sitemap/publicacao;
 - `batch_public_manifest_gates`: manifesto publico bloqueado por candidato, permitindo SEO/conteudo pendente apenas quando a fonte esta travada e mantendo fonte ampla bloqueada;
 - `batch_final_authorial_drafts`: rascunhos autorais finais bloqueados, com fonte travada, score humano/naturalidade, CTA contextual e intenção comercial paga, ainda sem render, sitemap ou publicação;
-- `batch_paid_intent_gates`: gate bloqueado de intencao comercial paga por rascunho final, separando candidato comercial forte de BPC/assistencia publica, curiosidade, gratuidade e autoatendimento administrativo;
+- `batch_paid_intent_gates`: gate bloqueado de intencao comercial paga por rascunho final ou alvo de expansao, com `gate_scope`, `paid_signals` do corpo, `cta_paid_signals` do CTA e status especifico para CTA-only, BPC/assistencia publica, curiosidade, gratuidade e autoatendimento administrativo;
 - `batch_generation_metrics`: métricas agregadas de geração/refino por lote, provando volume, reescrita, score e similaridade sem criar URL pública;
 - `batch_source_matrix`: matriz de fontes oficiais por subtema, usada como referência/proveniência sem scraping e sem publicação;
 - `batch_source_url_audits`: auditoria das URLs da matriz, separada da camada editorial, exigindo cobertura de cada URL por `matrix_id` antes de escalar rascunhos;

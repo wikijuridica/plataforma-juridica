@@ -668,7 +668,7 @@ Decisao: intenção comercial paga agora fica registrada em `batch_paid_intent_g
 
 Motivos:
 - CTA com honorários não basta quando o tema dominante indica assistência pública, gratuidade provável ou autoatendimento administrativo;
-- BPC/LOAS, CadÚnico, renda familiar/vulnerabilidade e cumprimento de exigência precisam de bloqueio comercial explícito antes de escalar conteúdo;
+- BPC/LOAS, CadÚnico, renda familiar, baixa renda e cumprimento de exigência precisam de bloqueio comercial explícito antes de escalar conteúdo; vulnerabilidade isolada nao basta para inferir assistencia publica;
 - fonte ampla pode ser referência oficial, mas não substitui ato, súmula, regra, serviço ou orientação específica para o subtema;
 - agentes auxiliares podem acelerar pesquisa oficial e rascunho bloqueado, mas o Codex principal precisa validar evidência, integração e gates críticos.
 
@@ -685,3 +685,15 @@ Motivos:
 - readiness precisa sobreviver ao checkpoint e orientar agentes auxiliares sem concorrência no mesmo gate.
 
 Consequencia: `data/editorial/batch_candidate_expansion_readiness.jsonl`, `internal/batchcandidateexpansion` e `./tools/check-batch-candidate-expansion-readiness` entram no laboratório. O gate registra 6 famílias com 30 alvos cada, mas mantém status `batch_candidate_expansion_blocked_paid_gate_missing` enquanto as intenções expandidas não tiverem `batch_paid_intent_gates`. Nenhum registro permite manifesto, render, sitemap, publicação ou `public_path`.
+
+## 2026-06-09 — Paid gate em lote e bloqueio CTA-only
+
+Decisao: gerar `batch_paid_intent_gates` para os 180 alvos de `batch_candidate_expansion_readiness`, adicionar `gate_scope` para separar rascunho final de prontidao de expansao, e bloquear candidato cujo sinal de contratacao paga aparece apenas no CTA/WhatsApp.
+
+Motivos:
+- paid-intent ausente e paid-intent existente mas reprovado sao diagnosticos diferentes;
+- CTA contextual e importante, mas CTA colado nao pode salvar corpo informativo sem intencao de contratacao natural;
+- o algoritmo precisa explicar se reprovou por CTA-only, sinal pago ausente, baixa pontuacao de negocio, gratuidade, pesquisa sem contratacao, assistencia publica dominante ou autoatendimento;
+- `vulnerabilidade` isolada e termo juridico amplo e nao deve inferir assistencia publica sem BPC/LOAS, CadUnico, renda familiar, baixa renda, defensoria ou justica gratuita.
+
+Consequencia: `data/editorial/batch_paid_intent_gates.jsonl` agora tem 180 registros bloqueados, `internal/paidintent` separa `paid_signals` do corpo e `cta_paid_signals` do CTA, `cmd/generate-paid-intent-gates` materializa o banco leve e `cmd/refresh-expansion-readiness` recalcula os contadores de prontidao. `batch_candidate_expansion_readiness` passa a usar `batch_candidate_expansion_blocked_paid_gate_failed` quando nao falta gate, mas ainda ha bloqueio comercial. O proximo ciclo deve reescrever/refinar em lote os candidatos bloqueados por CTA-only ou sinal pago ausente, sem liberar render, sitemap, publicacao ou `public_path`.

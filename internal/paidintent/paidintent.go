@@ -10,6 +10,8 @@ import (
 	"strings"
 	"unicode"
 
+	"portaljuridico/internal/batchdraftarchive"
+	"portaljuridico/internal/batchdrafts"
 	"portaljuridico/internal/batchfinaldrafts"
 )
 
@@ -19,13 +21,21 @@ const RequirePaidSignal Mode = "require_paid_signal"
 
 const (
 	minimumPaidBusinessScore      = 4
+	FinalDraftGateScope           = "final_draft"
+	ExpansionReadinessGateScope   = "expansion_readiness"
 	PassedBlockedStatus           = "paid_intent_passed_blocked_publication"
 	PublicAssistanceBlockedStatus = "paid_intent_blocked_public_assistance_free_risk"
 	AdminSelfServiceBlockedStatus = "paid_intent_blocked_admin_self_service_risk"
+	FreeServiceBlockedStatus      = "paid_intent_blocked_free_service_signal"
+	ResearchOnlyBlockedStatus     = "paid_intent_blocked_research_only_signal"
+	CTAOnlyBlockedStatus          = "paid_intent_blocked_cta_only_paid_signal"
+	MissingPaidSignalStatus       = "paid_intent_blocked_missing_paid_signal"
+	LowBusinessScoreStatus        = "paid_intent_blocked_low_business_score"
 )
 
 type Record struct {
 	PaidIntentGateID   string   `json:"paid_intent_gate_id"`
+	GateScope          string   `json:"gate_scope"`
 	DraftID            string   `json:"draft_id"`
 	UniqueIntentID     string   `json:"unique_intent_id"`
 	BatchID            string   `json:"batch_id"`
@@ -34,7 +44,10 @@ type Record struct {
 	CandidatePath      string   `json:"candidate_path"`
 	PaidIntentStatus   string   `json:"paid_intent_status"`
 	PaidBusinessScore  int      `json:"paid_business_score"`
+	CorePaidScore      int      `json:"core_paid_business_score"`
+	CTAPaidScore       int      `json:"cta_paid_business_score"`
 	PaidSignals        []string `json:"paid_signals"`
+	CTAPaidSignals     []string `json:"cta_paid_signals"`
 	BusinessSignals    []string `json:"business_signals"`
 	RiskSignals        []string `json:"risk_signals"`
 	RoutingDecision    string   `json:"routing_decision"`
@@ -58,6 +71,10 @@ type Issue struct {
 
 type Report struct {
 	Issues []Issue
+}
+
+type readinessRecord struct {
+	ExpansionCandidateIntentIDs []string `json:"expansion_candidate_intent_ids"`
 }
 
 type textScore struct {
@@ -115,7 +132,6 @@ var publicAssistanceRiskSignals = []string{
 	"cadunico",
 	"beneficio assistencial",
 	"renda familiar",
-	"vulnerabilidade",
 	"baixa renda",
 	"miserabilidade",
 	"defensoria publica",
@@ -170,19 +186,26 @@ func Validate(root string) Report {
 	}
 	drafts, draftReport := batchfinaldrafts.LoadRecords(root)
 	issues = append(issues, convertDraftIssues(draftReport)...)
+	archiveEntries, archiveReport := batchdraftarchive.LoadRecords(root)
+	issues = append(issues, convertArchiveIssues(archiveReport)...)
+	readinessTargets, readinessReport := loadExpansionReadinessTargets(root)
+	issues = append(issues, readinessReport.Issues...)
 	if len(gates) == 0 && loadReport.Passed() {
 		issues = append(issues, Issue{Code: "paid_intent_gates_empty", Message: "data/editorial/batch_paid_intent_gates.jsonl"})
 	}
-	if len(gates) != len(drafts) {
-		issues = append(issues, Issue{Code: "paid_intent_gate_count_mismatch", Message: fmt.Sprintf("gates=%d drafts=%d", len(gates), len(drafts))})
-	}
 	draftByID := make(map[string]batchfinaldrafts.Record)
+	finalIntentIDs := make(map[string]bool)
 	for _, entry := range drafts {
 		draftByID[entry.Record.DraftID] = entry.Record
+		finalIntentIDs[entry.Record.UniqueIntentID] = true
+	}
+	archiveByIntent := make(map[string]batchdrafts.Record)
+	for _, entry := range archiveEntries {
+		archiveByIntent[entry.Record.UniqueIntentID] = entry.Record
 	}
 	seen := make(map[string]int)
 	for _, entry := range gates {
-		report := ValidateRecord(entry.Record, draftByID)
+		report := ValidateRecord(entry.Record, draftByID, archiveByIntent)
 		for _, issue := range report.Issues {
 			issue.Message = fmt.Sprintf("line=%d %s", entry.Line, issue.Message)
 			issues = append(issues, issue)
@@ -191,6 +214,16 @@ func Validate(root string) Report {
 			issues = append(issues, Issue{Code: "paid_intent_duplicate_intent", Message: fmt.Sprintf("line=%d previous_line=%d id=%s", entry.Line, previous, entry.Record.UniqueIntentID)})
 		}
 		seen[entry.Record.UniqueIntentID] = entry.Line
+	}
+	for intentID := range finalIntentIDs {
+		if seen[intentID] == 0 {
+			issues = append(issues, Issue{Code: "paid_intent_missing_final_draft_gate", Message: intentID})
+		}
+	}
+	for intentID := range readinessTargets {
+		if seen[intentID] == 0 {
+			issues = append(issues, Issue{Code: "paid_intent_missing_expansion_gate", Message: intentID})
+		}
 	}
 	return Report{Issues: issues}
 }
@@ -231,20 +264,95 @@ func LoadRecords(root string) ([]Entry, Report) {
 	return entries, Report{Issues: issues}
 }
 
-func ValidateRecord(record Record, draftsByID map[string]batchfinaldrafts.Record) Report {
+func BuildRepositoryRecords(root string) ([]Record, Report) {
+	drafts, draftReport := batchfinaldrafts.LoadRecords(root)
+	archiveEntries, archiveReport := batchdraftarchive.LoadRecords(root)
+	readinessTargets, readinessReport := loadExpansionReadinessTargets(root)
+	issues := append(convertDraftIssues(draftReport), convertArchiveIssues(archiveReport)...)
+	issues = append(issues, readinessReport.Issues...)
+	if len(issues) > 0 {
+		return nil, Report{Issues: issues}
+	}
+
+	archiveByIntent := make(map[string]batchdrafts.Record)
+	for _, entry := range archiveEntries {
+		archiveByIntent[entry.Record.UniqueIntentID] = entry.Record
+	}
+
+	recordsByIntent := make(map[string]Record)
+	for _, entry := range drafts {
+		record := EvaluateDraft(entry.Record)
+		recordsByIntent[record.UniqueIntentID] = record
+	}
+	for intentID := range readinessTargets {
+		if _, ok := recordsByIntent[intentID]; ok {
+			continue
+		}
+		draft, ok := archiveByIntent[intentID]
+		if !ok {
+			issues = append(issues, Issue{Code: "paid_intent_build_missing_archive_draft", Message: intentID})
+			continue
+		}
+		record := EvaluateArchiveDraft(draft)
+		recordsByIntent[record.UniqueIntentID] = record
+	}
+	if len(issues) > 0 {
+		return nil, Report{Issues: issues}
+	}
+
+	records := make([]Record, 0, len(recordsByIntent))
+	for _, record := range recordsByIntent {
+		records = append(records, record)
+	}
+	sort.Slice(records, func(left int, right int) bool {
+		if records[left].BatchID != records[right].BatchID {
+			return records[left].BatchID < records[right].BatchID
+		}
+		if records[left].GateScope != records[right].GateScope {
+			return records[left].GateScope < records[right].GateScope
+		}
+		return records[left].UniqueIntentID < records[right].UniqueIntentID
+	})
+	return records, Report{}
+}
+
+func ValidateRecord(record Record, draftsByID map[string]batchfinaldrafts.Record, archiveByIntent map[string]batchdrafts.Record) Report {
 	issues := make([]Issue, 0)
-	if record.PaidIntentGateID == "" || record.DraftID == "" || record.UniqueIntentID == "" || record.BatchID == "" || record.SourceMatrixID == "" {
+	if record.PaidIntentGateID == "" || record.GateScope == "" || record.UniqueIntentID == "" || record.BatchID == "" || record.SourceMatrixID == "" || record.Term == "" || record.CandidatePath == "" {
 		issues = append(issues, Issue{Code: "paid_intent_gate_missing_identity", Message: record.PaidIntentGateID})
 	}
-	draft, ok := draftsByID[record.DraftID]
-	if !ok {
-		issues = append(issues, Issue{Code: "paid_intent_gate_missing_draft", Message: record.DraftID})
-	} else {
+	switch record.GateScope {
+	case FinalDraftGateScope:
+		if record.DraftID == "" {
+			issues = append(issues, Issue{Code: "paid_intent_gate_missing_draft_id", Message: record.UniqueIntentID})
+			break
+		}
+		draft, ok := draftsByID[record.DraftID]
+		if !ok {
+			issues = append(issues, Issue{Code: "paid_intent_gate_missing_draft", Message: record.DraftID})
+			break
+		}
 		if record.UniqueIntentID != draft.UniqueIntentID || record.BatchID != draft.BatchID || record.SourceMatrixID != draft.SourceMatrixID || record.Term != draft.Term || record.CandidatePath != draft.CandidatePath {
 			issues = append(issues, Issue{Code: "paid_intent_gate_draft_mismatch", Message: record.UniqueIntentID})
 		}
 		expected := EvaluateDraft(draft)
 		issues = append(issues, compareGateToEvaluation(record, expected)...)
+	case ExpansionReadinessGateScope:
+		if record.DraftID != "" {
+			issues = append(issues, Issue{Code: "paid_intent_expansion_gate_has_draft_id", Message: record.UniqueIntentID})
+		}
+		draft, ok := archiveByIntent[record.UniqueIntentID]
+		if !ok {
+			issues = append(issues, Issue{Code: "paid_intent_gate_missing_archive_draft", Message: record.UniqueIntentID})
+			break
+		}
+		if record.BatchID != draft.BatchID || record.SourceMatrixID != draft.SourceMatrixID || record.Term != draft.Term || record.CandidatePath != candidatePathForIntent(draft.UniqueIntentID) {
+			issues = append(issues, Issue{Code: "paid_intent_gate_archive_mismatch", Message: record.UniqueIntentID})
+		}
+		expected := EvaluateArchiveDraft(draft)
+		issues = append(issues, compareGateToEvaluation(record, expected)...)
+	default:
+		issues = append(issues, Issue{Code: "paid_intent_gate_invalid_scope", Message: record.GateScope})
 	}
 	if !validStatus(record.PaidIntentStatus) {
 		issues = append(issues, Issue{Code: "paid_intent_gate_invalid_status", Message: record.PaidIntentStatus})
@@ -271,41 +379,110 @@ func ValidateRecord(record Record, draftsByID map[string]batchfinaldrafts.Record
 }
 
 func EvaluateDraft(record batchfinaldrafts.Record) Record {
-	text := strings.Join([]string{
+	core := strings.Join([]string{
 		record.Term,
 		record.CandidateTitle,
 		record.CandidateMetaDescription,
 		record.Opening,
+		record.SourceUse,
 		record.DocumentGuidance,
 		record.DigitalTriage,
-		record.CTAContextMessage,
 	}, " ")
-	score := scoreText(text)
+	return evaluateParts(EvaluationInput{
+		GateScope:      FinalDraftGateScope,
+		DraftID:        record.DraftID,
+		UniqueIntentID: record.UniqueIntentID,
+		BatchID:        record.BatchID,
+		SourceMatrixID: record.SourceMatrixID,
+		Term:           record.Term,
+		CandidatePath:  record.CandidatePath,
+		CoreText:       core,
+		CTAText:        record.CTAContextMessage,
+		CheckedAt:      record.CheckedAt,
+	})
+}
+
+func EvaluateArchiveDraft(record batchdrafts.Record) Record {
+	core := strings.Join([]string{
+		record.Term,
+		record.ReaderProblem,
+		record.SourceHook,
+		record.DocumentContext,
+		record.RiskContext,
+		record.DigitalAction,
+	}, " ")
+	return evaluateParts(EvaluationInput{
+		GateScope:      ExpansionReadinessGateScope,
+		DraftID:        "",
+		UniqueIntentID: record.UniqueIntentID,
+		BatchID:        record.BatchID,
+		SourceMatrixID: record.SourceMatrixID,
+		Term:           record.Term,
+		CandidatePath:  candidatePathForIntent(record.UniqueIntentID),
+		CoreText:       core,
+		CTAText:        record.CTAContext,
+		CheckedAt:      record.CheckedAt,
+	})
+}
+
+type EvaluationInput struct {
+	GateScope      string
+	DraftID        string
+	UniqueIntentID string
+	BatchID        string
+	SourceMatrixID string
+	Term           string
+	CandidatePath  string
+	CoreText       string
+	CTAText        string
+	CheckedAt      string
+}
+
+func evaluateParts(input EvaluationInput) Record {
+	coreScore := scoreText(input.CoreText)
+	ctaScore := scoreText(input.CTAText)
+	combinedScore := scoreText(strings.TrimSpace(input.CoreText + " " + input.CTAText))
 	status := PassedBlockedStatus
 	routing := "paid_intent_candidate_blocked_publication"
-	risks := append([]string{}, score.freeSignals...)
-	risks = append(risks, score.researchSignals...)
-	risks = append(risks, score.publicAssistanceSignals...)
-	risks = append(risks, score.adminSelfServiceSignals...)
-	if len(score.publicAssistanceSignals) > 0 {
+	risks := collectRiskSignals(combinedScore)
+	if len(combinedScore.publicAssistanceSignals) > 0 {
 		status = PublicAssistanceBlockedStatus
 		routing = "commercial_publication_blocked_public_assistance"
-	} else if len(score.adminSelfServiceSignals) > 0 {
+	} else if len(combinedScore.adminSelfServiceSignals) > 0 {
 		status = AdminSelfServiceBlockedStatus
 		routing = "commercial_publication_blocked_admin_self_service"
+	} else if len(combinedScore.freeSignals) > 0 {
+		status = FreeServiceBlockedStatus
+		routing = "commercial_publication_blocked_free_service_signal"
+	} else if len(combinedScore.researchSignals) > 0 {
+		status = ResearchOnlyBlockedStatus
+		routing = "commercial_publication_blocked_research_only_signal"
+	} else if len(coreScore.paidSignals) == 0 && len(ctaScore.paidSignals) > 0 {
+		status = CTAOnlyBlockedStatus
+		routing = "commercial_publication_blocked_cta_only_paid_signal"
+	} else if len(coreScore.paidSignals) == 0 {
+		status = MissingPaidSignalStatus
+		routing = "commercial_publication_blocked_missing_paid_signal"
+	} else if coreScore.paidBusinessScore < minimumPaidBusinessScore {
+		status = LowBusinessScoreStatus
+		routing = "commercial_publication_blocked_low_business_score"
 	}
 	return Record{
-		PaidIntentGateID:   "paid-intent-" + record.UniqueIntentID,
-		DraftID:            record.DraftID,
-		UniqueIntentID:     record.UniqueIntentID,
-		BatchID:            record.BatchID,
-		SourceMatrixID:     record.SourceMatrixID,
-		Term:               record.Term,
-		CandidatePath:      record.CandidatePath,
+		PaidIntentGateID:   "paid-intent-" + input.UniqueIntentID,
+		GateScope:          input.GateScope,
+		DraftID:            input.DraftID,
+		UniqueIntentID:     input.UniqueIntentID,
+		BatchID:            input.BatchID,
+		SourceMatrixID:     input.SourceMatrixID,
+		Term:               input.Term,
+		CandidatePath:      input.CandidatePath,
 		PaidIntentStatus:   status,
-		PaidBusinessScore:  score.paidBusinessScore,
-		PaidSignals:        score.paidSignals,
-		BusinessSignals:    score.businessSignals,
+		PaidBusinessScore:  coreScore.paidBusinessScore,
+		CorePaidScore:      coreScore.paidBusinessScore,
+		CTAPaidScore:       ctaScore.paidBusinessScore,
+		PaidSignals:        coreScore.paidSignals,
+		CTAPaidSignals:     ctaScore.paidSignals,
+		BusinessSignals:    coreScore.businessSignals,
 		RiskSignals:        uniqueStrings(risks),
 		RoutingDecision:    routing,
 		IndexPolicy:        "noindex",
@@ -313,50 +490,63 @@ func EvaluateDraft(record batchfinaldrafts.Record) Record {
 		SitemapAllowed:     false,
 		PublicationAllowed: false,
 		PublicPath:         "",
-		CheckedAt:          record.CheckedAt,
+		CheckedAt:          input.CheckedAt,
 	}
 }
 
 func ValidateText(text string, mode Mode) Report {
-	score := scoreText(text)
+	return ValidateTextParts(text, "", mode)
+}
+
+func ValidateTextParts(coreText string, ctaText string, mode Mode) Report {
+	coreScore := scoreText(coreText)
+	ctaScore := scoreText(ctaText)
+	combinedScore := scoreText(strings.TrimSpace(coreText + " " + ctaText))
 	issues := make([]Issue, 0)
-	if len(score.freeSignals) > 0 {
+	if len(combinedScore.freeSignals) > 0 {
 		issues = append(issues, Issue{
 			Code:    "paid_intent_free_service_signal",
-			Message: "texto induz gratuidade/nao-pagamento: " + strings.Join(score.freeSignals, ","),
+			Message: "texto induz gratuidade/nao-pagamento: " + strings.Join(combinedScore.freeSignals, ","),
 		})
 	}
-	if len(score.researchSignals) > 0 {
+	if len(combinedScore.researchSignals) > 0 {
 		issues = append(issues, Issue{
 			Code:    "paid_intent_research_only_signal",
-			Message: "texto parece pesquisa academica/curiosidade, nao contratacao: " + strings.Join(score.researchSignals, ","),
+			Message: "texto parece pesquisa academica/curiosidade, nao contratacao: " + strings.Join(combinedScore.researchSignals, ","),
 		})
 	}
-	if len(score.publicAssistanceSignals) > 0 {
+	if len(combinedScore.publicAssistanceSignals) > 0 {
 		issues = append(issues, Issue{
 			Code:    "paid_intent_public_assistance_free_risk",
-			Message: "texto indica assistencia publica/beneficio de baixa renda: " + strings.Join(score.publicAssistanceSignals, ","),
+			Message: "texto indica assistencia publica/beneficio de baixa renda: " + strings.Join(combinedScore.publicAssistanceSignals, ","),
 		})
 	}
-	if len(score.adminSelfServiceSignals) > 0 {
+	if len(combinedScore.adminSelfServiceSignals) > 0 {
 		issues = append(issues, Issue{
 			Code:    "paid_intent_admin_self_service_risk",
-			Message: "texto indica fluxo administrativo de autoatendimento: " + strings.Join(score.adminSelfServiceSignals, ","),
+			Message: "texto indica fluxo administrativo de autoatendimento: " + strings.Join(combinedScore.adminSelfServiceSignals, ","),
 		})
 	}
 	if len(issues) > 0 {
 		return Report{Issues: issues}
 	}
-	if mode == RequirePaidSignal && len(score.paidSignals) == 0 {
-		issues = append(issues, Issue{
-			Code:    "paid_intent_missing_paid_signal",
-			Message: "faltou sinal explicito de contratacao paga, honorarios, consulta paga ou atendimento particular",
-		})
+	if mode == RequirePaidSignal && len(coreScore.paidSignals) == 0 {
+		if len(ctaScore.paidSignals) > 0 {
+			issues = append(issues, Issue{
+				Code:    "paid_intent_cta_only_paid_signal",
+				Message: "sinal de contratacao paga ficou apenas no CTA/WhatsApp; o corpo precisa conter intencao de contratacao particular sem apelo artificial",
+			})
+		} else {
+			issues = append(issues, Issue{
+				Code:    "paid_intent_missing_paid_signal",
+				Message: "faltou sinal explicito de contratacao paga, honorarios, consulta paga ou atendimento particular no corpo do conteudo",
+			})
+		}
 	}
-	if mode == RequirePaidSignal && score.paidBusinessScore < minimumPaidBusinessScore {
+	if mode == RequirePaidSignal && coreScore.paidBusinessScore < minimumPaidBusinessScore {
 		issues = append(issues, Issue{
 			Code:    "paid_intent_low_business_score",
-			Message: fmt.Sprintf("score=%d minimo=%d paid=%s business=%s", score.paidBusinessScore, minimumPaidBusinessScore, strings.Join(score.paidSignals, ","), strings.Join(score.businessSignals, ",")),
+			Message: fmt.Sprintf("score=%d minimo=%d paid=%s business=%s", coreScore.paidBusinessScore, minimumPaidBusinessScore, strings.Join(coreScore.paidSignals, ","), strings.Join(coreScore.businessSignals, ",")),
 		})
 	}
 	return Report{Issues: issues}
@@ -387,6 +577,9 @@ func compareGateToEvaluation(record Record, expected Record) []Issue {
 	if record.PaidIntentGateID != expected.PaidIntentGateID {
 		issues = append(issues, Issue{Code: "paid_intent_gate_id_mismatch", Message: record.UniqueIntentID})
 	}
+	if record.GateScope != expected.GateScope {
+		issues = append(issues, Issue{Code: "paid_intent_gate_scope_mismatch", Message: fmt.Sprintf("%s record=%s expected=%s", record.UniqueIntentID, record.GateScope, expected.GateScope)})
+	}
 	if record.PaidIntentStatus != expected.PaidIntentStatus {
 		issues = append(issues, Issue{Code: "paid_intent_gate_status_mismatch", Message: fmt.Sprintf("%s record=%s expected=%s", record.UniqueIntentID, record.PaidIntentStatus, expected.PaidIntentStatus)})
 	}
@@ -396,8 +589,20 @@ func compareGateToEvaluation(record Record, expected Record) []Issue {
 	if record.PaidBusinessScore != expected.PaidBusinessScore {
 		issues = append(issues, Issue{Code: "paid_intent_gate_score_mismatch", Message: fmt.Sprintf("%s record=%d expected=%d", record.UniqueIntentID, record.PaidBusinessScore, expected.PaidBusinessScore)})
 	}
+	if record.CorePaidScore != expected.CorePaidScore {
+		issues = append(issues, Issue{Code: "paid_intent_gate_core_score_mismatch", Message: fmt.Sprintf("%s record=%d expected=%d", record.UniqueIntentID, record.CorePaidScore, expected.CorePaidScore)})
+	}
+	if record.CTAPaidScore != expected.CTAPaidScore {
+		issues = append(issues, Issue{Code: "paid_intent_gate_cta_score_mismatch", Message: fmt.Sprintf("%s record=%d expected=%d", record.UniqueIntentID, record.CTAPaidScore, expected.CTAPaidScore)})
+	}
 	if !sameStringSet(record.PaidSignals, expected.PaidSignals) {
 		issues = append(issues, Issue{Code: "paid_intent_gate_paid_signals_mismatch", Message: fmt.Sprintf("%s record=%s expected=%s", record.UniqueIntentID, strings.Join(record.PaidSignals, ","), strings.Join(expected.PaidSignals, ","))})
+	}
+	if !sameStringSet(record.CTAPaidSignals, expected.CTAPaidSignals) {
+		issues = append(issues, Issue{Code: "paid_intent_gate_cta_paid_signals_mismatch", Message: fmt.Sprintf("%s record=%s expected=%s", record.UniqueIntentID, strings.Join(record.CTAPaidSignals, ","), strings.Join(expected.CTAPaidSignals, ","))})
+	}
+	if !sameStringSet(record.BusinessSignals, expected.BusinessSignals) {
+		issues = append(issues, Issue{Code: "paid_intent_gate_business_signals_mismatch", Message: fmt.Sprintf("%s record=%s expected=%s", record.UniqueIntentID, strings.Join(record.BusinessSignals, ","), strings.Join(expected.BusinessSignals, ","))})
 	}
 	if !sameStringSet(record.RiskSignals, expected.RiskSignals) {
 		issues = append(issues, Issue{Code: "paid_intent_gate_risk_signals_mismatch", Message: fmt.Sprintf("%s record=%s expected=%s", record.UniqueIntentID, strings.Join(record.RiskSignals, ","), strings.Join(expected.RiskSignals, ","))})
@@ -406,7 +611,19 @@ func compareGateToEvaluation(record Record, expected Record) []Issue {
 }
 
 func validStatus(value string) bool {
-	return value == PassedBlockedStatus || value == PublicAssistanceBlockedStatus || value == AdminSelfServiceBlockedStatus
+	switch value {
+	case PassedBlockedStatus,
+		PublicAssistanceBlockedStatus,
+		AdminSelfServiceBlockedStatus,
+		FreeServiceBlockedStatus,
+		ResearchOnlyBlockedStatus,
+		CTAOnlyBlockedStatus,
+		MissingPaidSignalStatus,
+		LowBusinessScoreStatus:
+		return true
+	default:
+		return false
+	}
 }
 
 func matchedSignals(text string, signals []string) []string {
@@ -466,6 +683,18 @@ func uniqueStrings(values []string) []string {
 	return result
 }
 
+func collectRiskSignals(score textScore) []string {
+	risks := append([]string{}, score.freeSignals...)
+	risks = append(risks, score.researchSignals...)
+	risks = append(risks, score.publicAssistanceSignals...)
+	risks = append(risks, score.adminSelfServiceSignals...)
+	return risks
+}
+
+func candidatePathForIntent(intentID string) string {
+	return "/temas/" + intentID + "/"
+}
+
 func sameStringSet(left []string, right []string) bool {
 	if len(left) != len(right) {
 		return false
@@ -488,6 +717,52 @@ func convertDraftIssues(report batchfinaldrafts.Report) []Issue {
 		issues = append(issues, Issue{Code: "paid_intent_draft_" + issue.Code, Message: issue.Message})
 	}
 	return issues
+}
+
+func convertArchiveIssues(report batchdraftarchive.Report) []Issue {
+	issues := make([]Issue, 0, len(report.Issues))
+	for _, issue := range report.Issues {
+		issues = append(issues, Issue{Code: "paid_intent_archive_" + issue.Code, Message: issue.Message})
+	}
+	return issues
+}
+
+func loadExpansionReadinessTargets(root string) (map[string]bool, Report) {
+	projectRoot, err := findProjectRoot(root)
+	if err != nil {
+		return nil, Report{Issues: []Issue{{Code: "project_root_not_found", Message: err.Error()}}}
+	}
+	path := filepath.Join(projectRoot, "data", "editorial", "batch_candidate_expansion_readiness.jsonl")
+	file, err := os.Open(path)
+	if err != nil {
+		return nil, Report{Issues: []Issue{{Code: "paid_intent_expansion_readiness_missing", Message: err.Error()}}}
+	}
+	defer file.Close()
+
+	targets := make(map[string]bool)
+	issues := make([]Issue, 0)
+	scanner := bufio.NewScanner(file)
+	scanner.Buffer(make([]byte, 0, 4096), 131072)
+	lineNumber := 0
+	for scanner.Scan() {
+		lineNumber++
+		line := strings.TrimSpace(scanner.Text())
+		if line == "" {
+			continue
+		}
+		var record readinessRecord
+		if err := json.Unmarshal([]byte(line), &record); err != nil {
+			issues = append(issues, Issue{Code: "paid_intent_expansion_readiness_invalid_json", Message: fmt.Sprintf("line=%d %s", lineNumber, err.Error())})
+			continue
+		}
+		for _, intentID := range record.ExpansionCandidateIntentIDs {
+			targets[intentID] = true
+		}
+	}
+	if err := scanner.Err(); err != nil {
+		issues = append(issues, Issue{Code: "paid_intent_expansion_readiness_scan_failed", Message: err.Error()})
+	}
+	return targets, Report{Issues: issues}
 }
 
 func findProjectRoot(start string) (string, error) {
