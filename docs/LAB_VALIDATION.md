@@ -28,6 +28,7 @@ Esse comando combina:
 - `./tools/check-scalable-content-batches`;
 - `./tools/check-batch-drafts`;
 - `./tools/check-batch-draft-expansion-archive`;
+- `./tools/check-batch-candidate-gates`;
 - `./tools/check-batch-draft-generation`;
 - `./tools/check-batch-source-url-audits`;
 - `./tools/check-batch-source-matrix`;
@@ -88,6 +89,8 @@ Antes de ampliar produção, registrar `batch_drafts` e rodar `./tools/check-bat
 Antes de considerar o gerador pronto para volume maior, rodar `./tools/check-batch-draft-generation` e `./tools/generate-batch-drafts`. O gerador deve ser determinístico, produzir amostras temporárias em `/tmp`, persistir métricas agregadas, provar reescrita automática e manter `render_allowed=false`, `sitemap_allowed=false`, `publication_allowed=false` e `public_path=""`.
 
 Quando uma massa gerada em `/tmp` passar nos gates e tiver utilidade jurídica para páginas futuras, ela deve ser trazida para `data/editorial/batch_draft_expansion_archive.jsonl` e validada por `./tools/check-batch-draft-expansion-archive`. Laboratório validado não deve ser descartado por padrão; repo permanente bloqueado é o caminho de continuidade.
+
+Antes de preparar pré-publicação por lote, rodar `./tools/check-batch-candidate-gates`. O gate deve selecionar candidatos reais do arquivo permanente, manter base URL flexível enquanto a URL oficial não estiver travada, exigir CTA contextual e impedir render, sitemap, publicação ou `public_path`.
 
 Antes de ampliar subtemas, rodar `./tools/check-batch-source-matrix`. A matriz deve provar fonte oficial específica por subtema, política sem scraping e cobertura de cada draft gerado. Se a fonte estiver genérica, ausente ou sem revisão de robots, o lote fica bloqueado.
 

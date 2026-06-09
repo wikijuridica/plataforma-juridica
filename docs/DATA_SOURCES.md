@@ -76,6 +76,8 @@ Rascunhos de lote ficam em `data/editorial/batch_drafts.jsonl`. Eles podem guard
 
 Arquivo permanente de expansão fica em `data/editorial/batch_draft_expansion_archive.jsonl`. Ele preserva rascunhos massivos que passaram nos gates de laboratório, com fonte, score, reescrita e bloqueio público. Esse arquivo não é manifesto publicado, não guarda texto oficial bruto e não autoriza render, sitemap, CTA público ou indexação.
 
+Gates candidatos de lote ficam em `data/editorial/batch_candidate_gates.jsonl`. Eles selecionam intenções existentes no arquivo permanente para análise posterior, mas continuam bloqueados: sem HTML, sem sitemap, sem `public_path`, sem CTA público e sem URL oficial travada.
+
 Métricas de geração/refino em lote ficam em `data/editorial/batch_generation_metrics.jsonl`. Elas registram quantidade gerada, amostras aprovadas, reescritas, menor score humano, maior risco IA-like, similaridade máxima e próximo passo de validação. Esse arquivo é banco leve de rastreabilidade, não manifesto público.
 
 Matriz de fontes por lote fica em `data/editorial/batch_source_matrix.jsonl`. Cada registro conecta um subtema de alta intenção a URLs oficiais usadas como referência/proveniência, com política `reference_only_no_scraping`. A matriz não autoriza cópia de texto oficial, não faz scraping e não cria página pública.

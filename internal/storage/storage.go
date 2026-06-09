@@ -128,7 +128,7 @@ func (c Contract) Validate() Report {
 		issues = append(issues, Issue{Code: "content_start_policy_not_draft_only", Message: "termos so podem iniciar rascunhos bloqueados para indexacao"})
 	}
 
-	required := []string{"term_seeds", "term_intent_candidates", "manual_keyword_research", "source_audits", "batch_source_url_audits", "source_snapshots", "editorial_drafts", "content_briefs", "authorial_content_drafts", "source_specificity_blockers", "source_specificity_resolutions", "prepublication_gates", "legal_editorial_reviews", "human_content_score", "scalable_content_batches", "batch_drafts", "batch_draft_expansion_archive", "batch_generation_metrics", "batch_source_matrix", "published_manifest"}
+	required := []string{"term_seeds", "term_intent_candidates", "manual_keyword_research", "source_audits", "batch_source_url_audits", "source_snapshots", "editorial_drafts", "content_briefs", "authorial_content_drafts", "source_specificity_blockers", "source_specificity_resolutions", "prepublication_gates", "legal_editorial_reviews", "human_content_score", "scalable_content_batches", "batch_drafts", "batch_draft_expansion_archive", "batch_candidate_gates", "batch_generation_metrics", "batch_source_matrix", "published_manifest"}
 	paths := make(map[string]string)
 	for _, name := range required {
 		layer, ok := c.LayerByName(name)
@@ -258,6 +258,14 @@ func (c Contract) validateLayer(layer Layer, paths map[string]string) []Issue {
 		}
 		if !layer.RequiresSourceProvenance || !layer.RequiresQualityState {
 			issues = append(issues, Issue{Code: "batch_draft_archive_layer_missing_guards", Message: "batch_draft_expansion_archive exige fonte/proveniencia e estado de qualidade"})
+		}
+	}
+	if layer.Name == "batch_candidate_gates" {
+		if layer.AllowsRawOfficialText || layer.AllowsEditorialContent {
+			issues = append(issues, Issue{Code: "batch_candidate_gate_layer_invalid", Message: "batch_candidate_gates guarda gate de selecao, nao texto oficial bruto nem conteudo editorial"})
+		}
+		if !layer.RequiresSourceProvenance || !layer.RequiresQualityState {
+			issues = append(issues, Issue{Code: "batch_candidate_gate_layer_missing_guards", Message: "batch_candidate_gates exige fonte/proveniencia e estado de qualidade"})
 		}
 	}
 	if layer.Name == "batch_generation_metrics" {

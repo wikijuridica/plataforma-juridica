@@ -25,6 +25,7 @@ go test -count=1 ./...
 ./tools/check-scalable-content-batches
 ./tools/check-batch-drafts
 ./tools/check-batch-draft-expansion-archive
+./tools/check-batch-candidate-gates
 ./tools/check-batch-draft-generation
 ./tools/check-batch-source-url-audits
 ./tools/check-batch-source-matrix

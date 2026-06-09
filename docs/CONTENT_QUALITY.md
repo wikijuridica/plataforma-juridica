@@ -132,6 +132,8 @@ Publicação só pode avançar quando o texto atingir score alto, motivos de rep
 
 `./tools/check-batch-draft-expansion-archive` valida o arquivo permanente bloqueado de rascunhos massivos. O gate exige pelo menos 600 registros, mínimo de 100 por família, score de rascunho válido, reescrita automática comprovada, `source_matrix_id`, baixa similaridade e flags públicas falsas. Arquivo validado não é descartável; ele só pode ser removido ou rebaixado com prova registrada e novo gate.
 
+`./tools/check-batch-candidate-gates` valida a seleção bloqueada de candidatos a partir do arquivo permanente. O gate exige 6 famílias, pelo menos 3 intenções selecionadas por família, existência de cada intenção no arquivo, 100 registros mínimos por lote, CTA contextual, fonte matricial, base URL flexível e `render_allowed=false`, `sitemap_allowed=false`, `publication_allowed=false`, `public_path=""`.
+
 `./tools/check-batch-source-matrix` valida a matriz de fonte oficial por subtema. Cada subtema precisa ter pelo menos duas URLs oficiais, tipos de fonte, score de especificidade, revisão de robots exigida, política `reference_only_no_scraping` e publicação bloqueada. O gerador só pode escalar amostras quando cada draft tiver `source_matrix_id` coberto por essa matriz.
 
 `./tools/check-batch-source-url-audits` valida a auditoria URL-level da matriz. Cada URL oficial usada por subtema precisa ter hash, robots/termos revisados, status bloqueado, política `reference_only_no_scraping_no_ingestion`, `scraping_allowed=false`, `ingestion_allowed=false`, `publication_allowed=false` e vínculo com todos os `matrix_id` que a usam.

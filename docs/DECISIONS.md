@@ -516,3 +516,15 @@ Motivos:
 - pre-publicacao bloqueada pode planejar canonical candidato sem criar URL publica.
 
 Consequencia: `content/site.json` passa a declarar `base_url_mode`, `official_url_status` e `official_url_locked`. `internal/prepublication` valida canonical candidato contra a base carregada de `content/site.json`, e o teste `TestPrepublicationGateAcceptsConfigurableProjectBaseURL` prova que outro dominio HTTPS pode ser aceito sem alterar algoritmo. `portal-juridico.example` so pode ser tratado como placeholder enquanto `base_url_mode="lab_placeholder"`.
+
+## 2026-06-09 — Gate candidato bloqueado a partir do arquivo permanente
+
+Decisao: criar `batch_candidate_gates` como etapa intermediaria entre arquivo permanente de rascunhos e pre-publicacao, selecionando candidatos reais sem publicar.
+
+Motivos:
+- o arquivo de 600 rascunhos precisa virar continuidade operacional, nao ficar apenas como massa bruta;
+- seleção de candidato nao pode ser confundida com URL publica, sitemap ou CTA visivel;
+- a URL oficial ainda nao esta travada, entao o gate precisa respeitar `base_url_mode`;
+- cada candidato deve existir no arquivo permanente, carregar CTA contextual e continuar vinculado a fonte matricial.
+
+Consequencia: `data/editorial/batch_candidate_gates.jsonl`, `internal/batchcandidategates` e `./tools/check-batch-candidate-gates` entram no laboratorio. O gate exige 6 famílias, 3 intenções selecionadas por família, 100 registros mínimos no arquivo por lote, similaridade <=0.64, score humano mínimo, base URL flexível e flags públicas falsas. O próximo ciclo deve transformar candidatos selecionados em revisão jurídico-editorial por candidato, ainda sem render público.

@@ -247,6 +247,18 @@
       "description": "Arquivo permanente bloqueado de rascunhos de expansao que passaram em laboratorio; nao e lixo, nao publica e pode alimentar futuras paginas apos todos os gates."
     },
     {
+      "name": "batch_candidate_gates",
+      "path": "data/editorial/batch_candidate_gates.jsonl",
+      "record_type": "batch_candidate_gate_blocked",
+      "record_max_bytes": 16384,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": false,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Gate permanente de candidatos selecionados a partir do arquivo de rascunhos validado; nao publica, nao renderiza e nao cria sitemap."
+    },
+    {
       "name": "batch_generation_metrics",
       "path": "data/editorial/batch_generation_metrics.jsonl",
       "record_type": "batch_generation_scored_blocked",
