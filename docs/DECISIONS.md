@@ -440,3 +440,16 @@ Motivos:
 - produção continua leve, enquanto laboratório pode usar CPU para score e validação em massa.
 
 Consequencia: `data/editorial/scalable_content_batches.jsonl` registra 1.020.000 páginas planejadas em seis famílias jurídicas digitais, todas bloqueadas. `data/editorial/human_content_scores.jsonl` registra scores humanos/naturalidade sem publicar conteúdo. `internal/humanscore`, `internal/scalablebatches`, `./tools/check-human-content-score` e `./tools/check-scalable-content-batches` entram no laboratório. O próximo ciclo deve gerar drafts em lote e testar reescrita automática de falhas, sem exposição pública.
+
+## 2026-06-09 — Batch drafts com score e reescrita bloqueada
+
+Decisao: implementar `batch_drafts` como camada de rascunhos de amostra por lote massivo, com texto editorial próprio, score humano calculado, prova de reescrita automática em falhas iniciais, baixa similaridade e publicação bloqueada.
+
+Motivos:
+- manifestos de milhão de páginas precisam virar amostras editoriais verificáveis antes de qualquer página pública;
+- validar em massa sem amostra textual ainda não prova naturalidade, especificidade ou CTA contextual;
+- reescrita automática precisa deixar evidência de falha inicial e correção;
+- a escala deve evoluir por algoritmo, não por revisão manual página a página;
+- Googlebot não deve ver rascunho enquanto score, fonte, revisão, SEO e publicação não estiverem completos.
+
+Consequencia: `data/editorial/batch_drafts.jsonl` registra 18 rascunhos, três por família jurídica de lote, todos `batch_draft_scored_blocked`. `internal/batchdrafts` valida score via `internal/humanscore`, similaridade máxima, reescritas, origem de lote e bloqueio de render/sitemap/publicação. `./tools/check-batch-drafts` entra no laboratório. O próximo ciclo deve transformar amostras em geração programática ampliada e medição agregada por lote.

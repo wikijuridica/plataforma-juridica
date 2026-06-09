@@ -91,6 +91,7 @@ Camadas obrigatorias:
 - `legal_editorial_reviews`: revisao juridico-editorial bloqueada com CTA WhatsApp contextual em rascunho;
 - `scalable_content_batches`: lotes massivos de intenções únicas e rascunhos autorais, bloqueados quando houver spam, template ou score humano insuficiente;
 - `human_content_score`: score de naturalidade/IA-like/mecânico para revisão algorítmica, reescrita e auditoria;
+- `batch_drafts`: rascunhos de amostra por lote massivo, com score e reescrita comprovada, ainda sem render, sitemap ou publicacao;
 - `published_manifest`: manifesto leve de conteudo aprovado, sem substituir o renderizador.
 
 Regra P0: termos podem iniciar `draft_only`; nenhuma linha do banco vira pagina indexavel sem fonte, revisao, qualidade, SEO, intencao unica e checkpoint.

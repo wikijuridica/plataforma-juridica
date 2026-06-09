@@ -67,13 +67,14 @@ func copyStorageFixture(t *testing.T) string {
 		"data/editorial/legal_reviews.jsonl",
 		"data/editorial/human_content_scores.jsonl",
 		"data/editorial/scalable_content_batches.jsonl",
+		"data/editorial/batch_drafts.jsonl",
 		"data/editorial/published_manifest.jsonl",
 	} {
 		data, err := os.ReadFile(filepath.Join(findRoot(t), path))
 		if err != nil {
 			t.Fatal(err)
 		}
-		if path == "data/editorial/drafts.jsonl" || path == "data/editorial/content_briefs.jsonl" || path == "data/editorial/authorial_drafts.jsonl" || path == "data/editorial/review_queue.jsonl" || path == "data/editorial/approved_drafts.jsonl" || path == "data/editorial/publication_blockers.jsonl" || path == "data/editorial/source_blockers.jsonl" || path == "data/editorial/source_resolutions.jsonl" || path == "data/editorial/prepublication_gates.jsonl" || path == "data/editorial/legal_reviews.jsonl" || path == "data/editorial/human_content_scores.jsonl" || path == "data/editorial/scalable_content_batches.jsonl" {
+		if path == "data/editorial/drafts.jsonl" || path == "data/editorial/content_briefs.jsonl" || path == "data/editorial/authorial_drafts.jsonl" || path == "data/editorial/review_queue.jsonl" || path == "data/editorial/approved_drafts.jsonl" || path == "data/editorial/publication_blockers.jsonl" || path == "data/editorial/source_blockers.jsonl" || path == "data/editorial/source_resolutions.jsonl" || path == "data/editorial/prepublication_gates.jsonl" || path == "data/editorial/legal_reviews.jsonl" || path == "data/editorial/human_content_scores.jsonl" || path == "data/editorial/scalable_content_batches.jsonl" || path == "data/editorial/batch_drafts.jsonl" {
 			data = []byte{}
 		}
 		writeTestFile(t, filepath.Join(root, path), string(data))

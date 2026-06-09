@@ -429,6 +429,7 @@ Criar aliases ou scripts equivalentes:
 - `./tools/check-legal-editorial-reviews`
 - `./tools/check-human-content-score`
 - `./tools/check-scalable-content-batches`
+- `./tools/check-batch-drafts`
 - `./tools/check-sitemaps`
 - `./tools/check-canonicals`
 - `./tools/check-no-duplicate-content`

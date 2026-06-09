@@ -16,6 +16,7 @@ var requiredModules = map[string]string{
 	"scale":               "internal/scale",
 	"cta":                 "internal/cta",
 	"content":             "internal/content",
+	"batchdrafts":         "internal/batchdrafts",
 	"authorialdrafts":     "internal/authorialdrafts",
 	"contentbriefs":       "internal/contentbriefs",
 	"legal":               "internal/legal",

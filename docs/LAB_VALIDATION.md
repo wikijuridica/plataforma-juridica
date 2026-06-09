@@ -26,6 +26,7 @@ Esse comando combina:
 - `./tools/check-legal-editorial-reviews`;
 - `./tools/check-human-content-score`;
 - `./tools/check-scalable-content-batches`;
+- `./tools/check-batch-drafts`;
 - `./tools/lab-term-draft`;
 - `./tools/check-google-search-appearance`;
 - `./tools/check-mechanical-content`;
@@ -77,6 +78,8 @@ Antes de qualquer CTA visivel, registrar `legal_editorial_reviews` e rodar `./to
 Antes de qualquer lote massivo, registrar `scalable_content_batches` e rodar `./tools/check-scalable-content-batches`. O lote precisa ter validação em massa, score humano mínimo, limite IA-like, limite de similaridade, CTA contextual, fontes oficiais por família e publicação bloqueada.
 
 Antes de qualquer reescrita/publicação derivada de lote, registrar `human_content_score` e rodar `./tools/check-human-content-score`. Score baixo ou risco IA-like alto exige reescrita e nova validação, nunca publicação ou correção manual repetitiva pelo usuário.
+
+Antes de ampliar produção, registrar `batch_drafts` e rodar `./tools/check-batch-drafts`. Cada lote deve ter amostras suficientes, score calculado, reescrita automática comprovada quando houve falha inicial, baixa similaridade intra-lote e publicação bloqueada.
 
 ## Politica
 

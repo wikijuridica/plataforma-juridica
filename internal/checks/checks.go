@@ -9,6 +9,7 @@ import (
 	"portaljuridico/internal/approvals"
 	"portaljuridico/internal/architecture"
 	"portaljuridico/internal/authorialdrafts"
+	"portaljuridico/internal/batchdrafts"
 	"portaljuridico/internal/build"
 	"portaljuridico/internal/content"
 	"portaljuridico/internal/contentbriefs"
@@ -62,6 +63,7 @@ var Names = []string{
 	"legal-editorial-reviews",
 	"human-content-score",
 	"scalable-content-batches",
+	"batch-drafts",
 	"sitemaps",
 	"canonicals",
 	"no-duplicate-content",
@@ -118,6 +120,8 @@ func Run(name string, root string) []string {
 		return checkHumanContentScore(root)
 	case "scalable-content-batches":
 		return checkScalableContentBatches(root)
+	case "batch-drafts":
+		return checkBatchDrafts(root)
 	case "sitemaps":
 		return checkSitemaps(root)
 	case "canonicals":
@@ -329,6 +333,10 @@ func checkHumanContentScore(root string) []string {
 
 func checkScalableContentBatches(root string) []string {
 	return scalablebatches.Validate(root).Messages()
+}
+
+func checkBatchDrafts(root string) []string {
+	return batchdrafts.Validate(root).Messages()
 }
 
 func checkSitemaps(root string) []string {

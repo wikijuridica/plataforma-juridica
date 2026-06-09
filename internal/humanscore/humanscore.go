@@ -287,6 +287,17 @@ func specificityCount(words []string) int {
 		"central": true, "ans": true, "rol": true, "urgência": true, "urgencia": true, "cobertura": true, "documentos": true,
 		"triagem": true, "administrativa": true, "judicial": true, "lei": true, "artigo": true, "processo": true, "inss": true,
 		"benefício": true, "beneficio": true, "cartório": true, "cartorio": true, "notariado": true, "laudo": true,
+		"clt": true, "holerites": true, "mensagens": true, "advertências": true, "advertencias": true, "testemunhas": true,
+		"jornada": true, "rescisão": true, "rescisao": true, "verbas": true, "escala": true, "ponto": true,
+		"casamento": true, "filhos": true, "guarda": true, "convivência": true, "convivencia": true, "pensão": true,
+		"pensao": true, "renda": true, "acordo": true, "bens": true, "sentença": true, "sentenca": true, "despesas": true,
+		"criança": true, "crianca": true, "residência": true, "residencia": true, "calendário": true, "calendario": true,
+		"cadúnico": true, "cadunico": true, "cnis": true, "perícia": true, "pericia": true, "laudos": true,
+		"exames": true, "atestados": true, "comunicado": true, "decisão": true, "decisao": true, "recurso": true,
+		"cadastro": true, "dívida": true, "divida": true, "extratos": true, "fraude": true, "banco": true, "pix": true,
+		"certidão": true, "certidao": true, "óbito": true, "obito": true, "herdeiros": true, "matrícula": true,
+		"matricula": true, "testamento": true, "espólio": true, "espolio": true, "alvará": true, "alvara": true,
+		"extrato": true, "imóvel": true, "imovel": true, "dívidas": true, "dividas": true, "imposto": true,
 	}
 	count := 0
 	seen := make(map[string]bool)

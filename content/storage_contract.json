@@ -211,6 +211,18 @@
       "description": "Manifestos leves de lotes massivos com intencoes unicas, fonte, score humano, CTA contextual e publicacao bloqueada."
     },
     {
+      "name": "batch_drafts",
+      "path": "data/editorial/batch_drafts.jsonl",
+      "record_type": "batch_draft_scored_blocked",
+      "record_max_bytes": 32768,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": true,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Rascunhos de amostra gerados por lote massivo, com score humano, reescrita e publicacao bloqueada."
+    },
+    {
       "name": "published_manifest",
       "path": "data/editorial/published_manifest.jsonl",
       "record_type": "published_content_manifest",

@@ -19,6 +19,7 @@
 
 - Continuar P0: fortalecer arquitetura de escala, cache, roteamento, validadores e auditoria antes de publicar conteudo juridico em escala.
 - Continuar P0: expandir `scalable_content_batches` e `human_content_score` para sair de rascunho unitário, gerar lotes de drafts em massa e validar reescrita automática antes de qualquer publicação.
+- Continuar P0: transformar `batch_drafts` em geração programática ampliada por família jurídica, aumentando amostras e refinando similaridade.
 - Continuar P0: transformar autocrítica pré-commit e validação massiva em contrato testável, para impedir commit tratado como conclusão do `/goal`.
 - Continuar P0 em laboratorio: validar, refinar, testar novamente e inspecionar artefatos.
 - P2: ampliar contratos de tipos de pagina e fontes oficiais.

@@ -72,6 +72,8 @@ Dados de lote ficam em banco leve separado, `data/editorial/scalable_content_bat
 
 Scores humanos/naturalidade ficam em `data/editorial/human_content_scores.jsonl`. Esse arquivo guarda metadados de score e decisão de reescrita, não texto oficial bruto nem página pública.
 
+Rascunhos de lote ficam em `data/editorial/batch_drafts.jsonl`. Eles podem guardar texto editorial próprio de amostra para laboratório, mas continuam `noindex`, sem render, sem sitemap, sem `public_path` e sem publicação.
+
 Termos em massa não podem nascer de combinação infinita de cidade, palavra-chave e área. A escala deve vir de problemas jurídicos reais, etapas processuais/administrativas, documentos, riscos, fontes e intenções digitais distintas.
 
 Pesquisa de fonte em escala deve ser planejada por famílias e subtemas, nao improvisada por página. O lote deve carregar mapa de fontes suficientes para cada grupo de intenção, com fonte oficial/proveniência antes de rascunho público. Ausência de fonte específica bloqueia o lote, mesmo que a demanda e o CTA sejam fortes.

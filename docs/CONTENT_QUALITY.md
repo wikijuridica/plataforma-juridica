@@ -125,3 +125,5 @@ O gate `human_content_score` é obrigatório: pontuação de naturalidade e risc
 Publicação só pode avançar quando o texto atingir score alto, motivos de reprovação estiverem zerados e o lote provar diversidade real.
 
 `./tools/check-human-content-score` valida os registros de score. `./tools/check-scalable-content-batches` valida lotes massivos planejados, bloqueados para publicação e com escala real de produção, sem criar HTML ou sitemap.
+
+`./tools/check-batch-drafts` valida amostras de drafts em lote: mínimo por família, score humano aplicado, reescrita automática quando houve falha inicial, baixa similaridade e bloqueio total de publicação.

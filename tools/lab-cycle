@@ -23,6 +23,7 @@ go test -count=1 ./...
 ./tools/check-legal-editorial-reviews
 ./tools/check-human-content-score
 ./tools/check-scalable-content-batches
+./tools/check-batch-drafts
 ./tools/lab-term-draft
 ./tools/check-google-search-appearance
 ./tools/check-mechanical-content
