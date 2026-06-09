@@ -46,6 +46,8 @@ Regra de banco leve e ingestão de termos: se for para ingestão de termos jurí
 
 Regra de laboratório de rascunho: seed válida pode gerar rascunho temporário somente em `/tmp`, com estado `draft/noindex`, fonte, aviso informativo e qualidade natural comprovada. Esse rascunho não pode alterar `content/pages.json`, não pode criar URL pública, não pode entrar em sitemap e não pode receber CTA.
 
+Regra de migração segura e termos humanos: laboratório não é destino final. Se os gates passarem com segurança, o agente deve migrar o fluxo para host/produção controlada e ajudar a escolher termos jurídicos mais pesquisados por humanos, com alta intenção de contratar advogado, antes de criar conteúdos públicos. Alta intenção significa potencial real de contratação jurídica 100% digital, com atendimento online e CTA WhatsApp; termos que dependem primariamente de comparecimento presencial não são prioridade inicial. Essa escolha deve usar pesquisa atual, fontes confiáveis, intenção única, risco jurídico e potencial de CTA WhatsApp, sem criar spam ou páginas mecânicas.
+
 Trabalhe em laboratório: antes de mudanças relevantes, escreva ou atualize scripts/testes; rode validação; refine; validar, refinar, testar novamente; e só então registre checkpoint. Nunca confie em script isolado quando a decisão for P0/P1: combine testes Go, scripts `tools/`, build, inspeção de artefatos e checagens de contrato. Nada de mudar no chute.
 
 Sempre revisar e validar. Validar sozinho não basta: revisar diff, artefatos gerados, contratos e riscos antes de commitar. Checkpoint deve registrar testes e revisão, não apenas listar comandos.
@@ -391,6 +393,7 @@ Criar aliases ou scripts equivalentes:
 - `./tools/check-editorial-drafts`
 - `./tools/check-review-queue`
 - `./tools/check-approvals`
+- `./tools/check-publication-blockers`
 - `./tools/check-sitemaps`
 - `./tools/check-canonicals`
 - `./tools/check-no-duplicate-content`
@@ -403,6 +406,7 @@ Criar aliases ou scripts equivalentes:
 - `./tools/persist-term-drafts`
 - `./tools/queue-editorial-review`
 - `./tools/approve-editorial-review`
+- `./tools/block-publication`
 
 Todo ciclo deve rodar validações relevantes.
 

@@ -34,3 +34,7 @@ Rascunhos persistidos ficam em `data/editorial/drafts.jsonl`, separados de snaps
 A fila de revisao fica em `data/editorial/review_queue.jsonl`. Ela registra autoria, motivo, historico e estado `needs_review`, mas nao libera publicacao nem cria URL.
 
 Aprovacoes editoriais ficam em `data/editorial/approved_drafts.jsonl`. Mesmo aprovadas editorialmente, continuam separadas do manifesto publicado ate fonte especifica, revisao completa, qualidade, SEO, CTA e escala segura.
+
+O manifesto de bloqueio fica em `data/editorial/publication_blockers.jsonl`. Ele lista requisitos faltantes para publicar e orienta a priorizacao de termos por demanda humana, nao por permutacao de keyword.
+
+A pesquisa de demanda de termos deve separar evidencia de busca humana, fonte juridica e intencao comercial. Para a fase inicial, alta intencao significa contratacao juridica online, sem requisito presencial como padrao. Termos de alta demanda mas baixa adequacao a atendimento digital devem ser registrados como menor prioridade, nao mascarados como CTA forte.

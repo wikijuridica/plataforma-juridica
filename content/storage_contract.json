@@ -79,6 +79,18 @@
       "description": "Aprovacao editorial ainda sem publicacao; nao indexa, nao cria URL e nao entra em sitemap."
     },
     {
+      "name": "publication_blockers",
+      "path": "data/editorial/publication_blockers.jsonl",
+      "record_type": "publication_blocker_manifest",
+      "record_max_bytes": 8192,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": false,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Manifesto de requisitos faltantes antes de qualquer URL publica."
+    },
+    {
       "name": "published_manifest",
       "path": "data/editorial/published_manifest.jsonl",
       "record_type": "published_content_manifest",

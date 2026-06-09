@@ -17,6 +17,7 @@ Esse comando combina:
 - `./tools/check-editorial-drafts`;
 - `./tools/check-review-queue`;
 - `./tools/check-approvals`;
+- `./tools/check-publication-blockers`;
 - `./tools/lab-term-draft`;
 - `./tools/check-google-search-appearance`;
 - `./tools/check-mechanical-content`;
@@ -40,6 +41,12 @@ O gate `./tools/check-performance-budget` deve reprovar HTML publico pesado, `<s
 `./tools/queue-editorial-review` move rascunhos persistidos para fila de revisao `needs_review`, sem publicacao. `./tools/check-review-queue` exige `publication_allowed=false`, `public_path` vazio, fonte, autoria e historico.
 
 `./tools/approve-editorial-review` registra aprovacao editorial de laboratorio; `./tools/check-approvals` garante que essa aprovacao nao cria rota publica nem libera indexacao.
+
+`./tools/block-publication` cria manifesto de publicacao bloqueada; `./tools/check-publication-blockers` garante que aprovacao editorial ainda nao libera URL publica.
+
+Quando o laboratorio passar com seguranca, o ciclo seguinte deve migrar para host/produção controlada e priorizar termos juridicos pesquisados por humanos e com alta intencao de contratacao online, sem spam.
+
+Alta intencao de contratacao online exige que o fluxo possa ser 100% digital: WhatsApp, envio remoto de documentos, triagem remota e contratacao de advogado sem depender de atendimento presencial como caminho principal.
 
 ## Politica
 

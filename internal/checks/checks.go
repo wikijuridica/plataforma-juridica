@@ -13,6 +13,7 @@ import (
 	"portaljuridico/internal/crawl"
 	"portaljuridico/internal/editorial"
 	"portaljuridico/internal/editorialdrafts"
+	"portaljuridico/internal/publicationblockers"
 	"portaljuridico/internal/quality"
 	"portaljuridico/internal/reviewqueue"
 	"portaljuridico/internal/seo"
@@ -38,6 +39,7 @@ var Names = []string{
 	"editorial-drafts",
 	"review-queue",
 	"approvals",
+	"publication-blockers",
 	"sitemaps",
 	"canonicals",
 	"no-duplicate-content",
@@ -70,6 +72,8 @@ func Run(name string, root string) []string {
 		return checkReviewQueue(root)
 	case "approvals":
 		return checkApprovals(root)
+	case "publication-blockers":
+		return checkPublicationBlockers(root)
 	case "sitemaps":
 		return checkSitemaps(root)
 	case "canonicals":
@@ -233,6 +237,10 @@ func checkReviewQueue(root string) []string {
 
 func checkApprovals(root string) []string {
 	return approvals.Validate(root).Messages()
+}
+
+func checkPublicationBlockers(root string) []string {
+	return publicationblockers.Validate(root).Messages()
 }
 
 func checkSitemaps(root string) []string {

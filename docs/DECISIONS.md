@@ -63,6 +63,8 @@ Motivos:
 
 Consequencia: durante P0 o projeto cria plano de blueprints e politica de CTA, mas nao publica 10 mil paginas juridicas. A publicacao em escala depende dos gates P0/P1/P2.
 
+Adendo de intencao digital: alta intencao comercial significa potencial de contratacao juridica 100% online. O primeiro lote de termos deve favorecer problemas juridicos que podem ser triados, documentados e contratados por canais digitais, especialmente WhatsApp. Demanda alta com dependencia presencial predominante nao deve ser tratada como prioridade inicial.
+
 ## 2026-06-09 — Laboratorio antes de conteudo e mudancas P0
 
 Decisao: toda mudanca P0/P1 deve passar por laboratorio de testes, validacao, refinamento e reteste.
@@ -265,3 +267,26 @@ Motivos:
 - separar aprovacao editorial de manifesto publicado evita salto indevido do laboratorio para Googlebot.
 
 Consequencia: `internal/approvals`, `./tools/approve-editorial-review` e `./tools/check-approvals` validam aprovacao sem publicacao. O proximo contrato deve preparar manifest de publicacao bloqueado antes de qualquer URL publica.
+
+## 2026-06-09 — Manifesto de publicacao bloqueada
+
+Decisao: aprovacao editorial deve gerar manifesto de publicacao bloqueada antes de qualquer URL publica.
+
+Motivos:
+- explicitar requisitos faltantes evita mascarar laboratorio como producao;
+- publicacao em escala exige lista objetiva de pendencias por termo;
+- o fluxo precisa saber quando migrar do laboratorio para host/produção controlada.
+
+Consequencia: `internal/publicationblockers`, `./tools/block-publication` e `./tools/check-publication-blockers` registram `publication_status=blocked`, `publication_allowed=false`, `public_path=""` e requisitos como pesquisa de fonte especifica, revisor juridico real, intencao unica, canonical, SEO, CTA e capacidade de lote.
+
+## 2026-06-09 — Termos humanos de alta intencao antes de conteudo publico
+
+Decisao: quando os gates passarem com seguranca, o agente deve migrar o fluxo para host/produção controlada e priorizar termos juridicos mais pesquisados por humanos e com alta intencao de contratar advogado online.
+
+Motivos:
+- o objetivo e portal juridico util e comercial, nao laboratorio infinito;
+- termos reais de busca humana reduzem risco de pagina artificial;
+- CTA WhatsApp so faz sentido em temas com intencao de contratacao e utilidade juridica clara;
+- servicos juridicos digitais sao prioridade: triagem, envio de documentos e contratacao remota devem ser viaveis sem atendimento presencial como padrao.
+
+Consequencia: antes de criar conteudo publico, deve haver pesquisa atual de demanda/intencao, registro no banco leve, fonte confiavel, intencao unica e bloqueio contra spam. Essa regra nao libera publicacao automatica; ela define o proximo movimento apos gates seguros.

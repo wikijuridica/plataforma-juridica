@@ -23,6 +23,7 @@ O projeto usa Go e biblioteca padrao como base tecnica. A escolha privilegia bin
 - `internal/editorialdrafts`: persistencia de rascunhos em banco leve, sempre sem rota publica.
 - `internal/reviewqueue`: fila editorial `needs_review` com historico e publicacao bloqueada.
 - `internal/approvals`: aprovacao editorial separada de publicacao, ainda sem URL publica.
+- `internal/publicationblockers`: manifesto de requisitos faltantes antes de qualquer URL publica.
 - `internal/legal`: controle de conteudo juridico.
 - `internal/sources`: contratos de fontes oficiais.
 - `internal/storage`: banco leve proprio em JSONL para termos juridicos, auditorias, snapshots, rascunhos e manifesto publicado.
