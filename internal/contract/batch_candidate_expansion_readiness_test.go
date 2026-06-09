@@ -22,17 +22,17 @@ func TestBatchCandidateExpansionReadinessUsesArchiveWithoutPublishing(t *testing
 
 	for _, entry := range records {
 		record := entry.Record
-		if record.ReadinessStatus != batchcandidateexpansion.PaidGateBlockedStatus {
-			t.Fatalf("line=%d status=%q", entry.Line, record.ReadinessStatus)
-		}
 		if record.PaidIntentGatePath != batchcandidateexpansion.PaidIntentGatePath {
 			t.Fatalf("line=%d paid gate path=%q", entry.Line, record.PaidIntentGatePath)
 		}
 		if record.PaidIntentMissingCount != 0 {
 			t.Fatalf("line=%d paid-intent missing=%d, want 0 after generated gates", entry.Line, record.PaidIntentMissingCount)
 		}
-		if record.PaidIntentBlockedCount <= 0 {
-			t.Fatalf("line=%d expected blocked paid-intent gates before expansion", entry.Line)
+		if record.PaidIntentBlockedCount > 0 && record.ReadinessStatus != batchcandidateexpansion.PaidGateBlockedStatus {
+			t.Fatalf("line=%d paid blocked=%d status=%q", entry.Line, record.PaidIntentBlockedCount, record.ReadinessStatus)
+		}
+		if record.PaidIntentBlockedCount == 0 && record.ReadinessStatus != batchcandidateexpansion.ReadyBlockedStatus {
+			t.Fatalf("line=%d paid clear status=%q", entry.Line, record.ReadinessStatus)
 		}
 		totalPaidClassified := record.PaidIntentPassedCount + record.PaidIntentBlockedCount + record.PaidIntentMissingCount
 		if totalPaidClassified != len(record.ExpansionCandidateIntentIDs) {

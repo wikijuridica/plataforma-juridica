@@ -462,6 +462,9 @@ func expectedActionableBlockers(missingPaid int, blockedPaid int, sourceBlockers
 	if sourceBlockers > 0 {
 		blockers = append(blockers, "source_specificity_blocked")
 	}
+	if len(blockers) == 0 {
+		blockers = append(blockers, "batch_candidate_gate_pending")
+	}
 	sort.Strings(blockers)
 	return blockers
 }

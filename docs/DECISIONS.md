@@ -697,3 +697,16 @@ Motivos:
 - `vulnerabilidade` isolada e termo juridico amplo e nao deve inferir assistencia publica sem BPC/LOAS, CadUnico, renda familiar, baixa renda, defensoria ou justica gratuita.
 
 Consequencia: `data/editorial/batch_paid_intent_gates.jsonl` agora tem 180 registros bloqueados, `internal/paidintent` separa `paid_signals` do corpo e `cta_paid_signals` do CTA, `cmd/generate-paid-intent-gates` materializa o banco leve e `cmd/refresh-expansion-readiness` recalcula os contadores de prontidao. `batch_candidate_expansion_readiness` passa a usar `batch_candidate_expansion_blocked_paid_gate_failed` quando nao falta gate, mas ainda ha bloqueio comercial. O proximo ciclo deve reescrever/refinar em lote os candidatos bloqueados por CTA-only ou sinal pago ausente, sem liberar render, sitemap, publicacao ou `public_path`.
+
+## 2026-06-09 — Refinamento pago em lote sem publicar
+
+Decisao: criar `batch_paid_intent_refinements` e `internal/paidintentrefinement` para reescrever em lote apenas candidatos com paid-intent ausente ou CTA-only, movendo sinal de contratacao paga para o corpo informativo quando natural e mantendo o ledger bloqueado.
+
+Motivos:
+- CTA WhatsApp contextual e critico, mas sinal de honorarios somente no CTA nao basta para escalar conteudo;
+- paid-intent ausente/CTA-only pode ser corrigido por algoritmo quando o tema permite contratacao particular online;
+- BPC/assistencia publica dominante e autoatendimento administrativo continuam bloqueios comerciais, nao alvos de refinamento;
+- script de laboratorio precisa ser idempotente para nao falhar quando o ciclo ja foi aplicado;
+- readiness sem blocker antigo de paid/fonte precisa apontar o proximo gate real, nao ficar com blocker vazio.
+
+Consequencia: `./tools/refine-paid-intent-drafts` refinou 140 registros na primeira aplicacao (135 no arquivo permanente de expansao e 5 rascunhos finais), `./tools/check-paid-intent-refinements` entrou no check-all, `batch_paid_intent_gates` passou a registrar 168 candidatos pagos bloqueados para publicacao, 6 bloqueios de assistencia publica e 6 bloqueios de autoatendimento. `batch_candidate_expansion_readiness` usa `batch_candidate_gate_pending` quando a familia esta livre de paid/source blockers antigos, mas continua `noindex`, sem manifesto, render, sitemap, publicacao ou `public_path`. O proximo ciclo executavel e ampliar `batch_candidate_gates` a partir dos candidatos pagos aprovados internamente, mantendo bloqueio publico e fonte especifica como gates.

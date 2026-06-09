@@ -343,6 +343,18 @@
       "description": "Gate bloqueado de intencao comercial paga por rascunho final ou alvo de expansao; separa sinal pago do corpo e do CTA, bloqueando CTA-only, gratuidade, curiosidade, assistencia publica dominante e autoatendimento administrativo."
     },
     {
+      "name": "batch_paid_intent_refinements",
+      "path": "data/editorial/batch_paid_intent_refinements.jsonl",
+      "record_type": "batch_paid_intent_refinement_blocked",
+      "record_max_bytes": 16384,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": false,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Ledger bloqueado de refinamentos em lote que movem sinal de contratacao paga do CTA para o corpo informativo quando natural, sem render, sitemap ou publicacao."
+    },
+    {
       "name": "batch_generation_metrics",
       "path": "data/editorial/batch_generation_metrics.jsonl",
       "record_type": "batch_generation_scored_blocked",

@@ -147,7 +147,7 @@ func TestPaidIntentRepositoryGatesBlockWeakCommercialDrafts(t *testing.T) {
 			t.Fatalf("intent=%s status=%q, want %q", intent, statusByIntent[intent], status)
 		}
 	}
-	if statusByIntent["saude-suplementar-procedimento-urgente-negado"] != paidintent.CTAOnlyBlockedStatus {
-		t.Fatalf("health urgent draft should be blocked as CTA-only paid intent, got %q", statusByIntent["saude-suplementar-procedimento-urgente-negado"])
+	if statusByIntent["saude-suplementar-procedimento-urgente-negado"] != paidintent.PassedBlockedStatus {
+		t.Fatalf("health urgent draft should pass paid-intent after body refinement, got %q", statusByIntent["saude-suplementar-procedimento-urgente-negado"])
 	}
 }

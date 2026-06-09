@@ -32,6 +32,7 @@ import (
 	"portaljuridico/internal/legalreviews"
 	"portaljuridico/internal/manualresearch"
 	"portaljuridico/internal/paidintent"
+	"portaljuridico/internal/paidintentrefinement"
 	"portaljuridico/internal/prepublication"
 	"portaljuridico/internal/publicationblockers"
 	"portaljuridico/internal/quality"
@@ -87,6 +88,7 @@ var Names = []string{
 	"batch-public-manifest-gates",
 	"batch-final-authorial-drafts",
 	"paid-intent",
+	"paid-intent-refinements",
 	"batch-draft-generation",
 	"batch-source-url-audits",
 	"batch-source-matrix",
@@ -168,6 +170,8 @@ func Run(name string, root string) []string {
 		return checkBatchFinalAuthorialDrafts(root)
 	case "paid-intent":
 		return checkPaidIntent(root)
+	case "paid-intent-refinements":
+		return checkPaidIntentRefinements(root)
 	case "batch-draft-generation":
 		return checkBatchDraftGeneration(root)
 	case "batch-source-url-audits":
@@ -429,6 +433,10 @@ func checkBatchFinalAuthorialDrafts(root string) []string {
 
 func checkPaidIntent(root string) []string {
 	return paidintent.Validate(root).Messages()
+}
+
+func checkPaidIntentRefinements(root string) []string {
+	return paidintentrefinement.Validate(root).Messages()
 }
 
 func checkBatchDraftGeneration(root string) []string {
