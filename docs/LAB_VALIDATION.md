@@ -34,6 +34,7 @@ Esse comando combina:
 - `./tools/check-batch-candidate-reviews`;
 - `./tools/check-batch-prepublication-gates`;
 - `./tools/check-batch-source-specificity`;
+- `./tools/check-batch-public-manifest-gates`;
 - `./tools/check-batch-draft-generation`;
 - `./tools/check-batch-source-url-audits`;
 - `./tools/check-batch-source-matrix`;
@@ -104,6 +105,8 @@ Antes de transformar candidatos de lote em pré-publicação, rodar `./tools/che
 Antes de qualquer rota candidata de lote se aproximar de renderização, rodar `./tools/check-batch-prepublication-gates`. Esse gate registra canonical oficial e `noindex,follow`, mas mantém fonte final, revisão SEO e manifesto público como pendências. Render, sitemap, publicação e `public_path` devem continuar falsos.
 
 Antes de qualquer manifesto público bloqueado por lote, rodar `./tools/check-batch-source-specificity`. Esse gate cobre todos os candidatos de pré-publicação e separa `final_source_locked_reference_only` de `final_source_blocked_needs_specific_url`. Fonte ampla não pode ser mascarada como pronta; fonte travada continua apenas referência, sem scraping, ingestão, render, sitemap, publicação ou `public_path`.
+
+Antes de gerar rascunho final ou revisão SEO de candidato de lote, rodar `./tools/check-batch-public-manifest-gates`. Esse gate nao publica: ele apenas separa candidatos com fonte travada que ainda precisam SEO/conteudo final de candidatos bloqueados por fonte ampla. Candidato com `final_source_blocked_needs_specific_url` nao pode entrar em revisão SEO como se a fonte estivesse pronta.
 
 Antes de ampliar subtemas, rodar `./tools/check-batch-source-matrix`. A matriz deve provar fonte oficial específica por subtema, política sem scraping e cobertura de cada draft gerado. Se a fonte estiver genérica, ausente ou sem revisão de robots, o lote fica bloqueado.
 

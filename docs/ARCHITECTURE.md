@@ -108,6 +108,7 @@ Camadas obrigatorias:
 - `batch_candidate_reviews`: revisao juridico-editorial bloqueada de candidatos de lote, com fonte matricial auditada e CTA WhatsApp de origem rastreavel;
 - `batch_prepublication_gates`: pre-publicacao bloqueada de candidatos revisados, com canonical oficial, title/meta, `noindex` e fonte final ainda pendente;
 - `batch_source_specificity_resolutions`: resolucao de fonte por candidato pre-publicado, marcando URL especifica auditada ou bloqueio explicito por fonte ampla, sem liberar render/sitemap/publicacao;
+- `batch_public_manifest_gates`: manifesto publico bloqueado por candidato, permitindo SEO/conteudo pendente apenas quando a fonte esta travada e mantendo fonte ampla bloqueada;
 - `batch_generation_metrics`: métricas agregadas de geração/refino por lote, provando volume, reescrita, score e similaridade sem criar URL pública;
 - `batch_source_matrix`: matriz de fontes oficiais por subtema, usada como referência/proveniência sem scraping e sem publicação;
 - `batch_source_url_audits`: auditoria das URLs da matriz, separada da camada editorial, exigindo cobertura de cada URL por `matrix_id` antes de escalar rascunhos;

@@ -600,3 +600,15 @@ Motivos:
 - candidatos com fonte ampla precisam registrar motivo, detalhe necessario e permanecer fora de render/sitemap/publicacao.
 
 Consequencia: `data/editorial/batch_source_specificity_resolutions.jsonl`, `internal/batchsourcespecificity`, `./tools/check-batch-source-specificity`, `internal/checks`, `content/storage_contract.json` e `tools/lab-cycle` entram no laboratorio. O gate exige 18 resolucoes, uma por candidato pre-publicado, fonte URL-level auditada, politica `reference_only_no_scraping_no_ingestion`, `candidate_robots=noindex,follow`, canonical oficial e flags publicas falsas. O ciclo usa validacao proporcional focada; `check-all` e `lab-cycle` ficam reservados para alteracao ampla ou risco transversal.
+
+## 2026-06-09 — Manifesto publico bloqueado por candidato de lote
+
+Decisao: criar `batch_public_manifest_gates` como camada bloqueada depois de `batch_source_specificity_resolutions`, cobrindo todos os candidatos e permitindo avanço interno para SEO/conteudo final apenas quando a fonte esta travada.
+
+Motivos:
+- fonte travada ainda nao autoriza publicacao, render ou sitemap;
+- candidatos com fonte ampla nao podem entrar em revisao SEO como se estivessem prontos;
+- o pipeline precisa separar backlog de fonte de backlog de SEO/conteudo;
+- manifesto publico real deve ser posterior e mais restrito que este gate bloqueado.
+
+Consequencia: `data/editorial/batch_public_manifest_gates.jsonl`, `internal/batchpublicmanifest`, `./tools/check-batch-public-manifest-gates`, `internal/checks`, `content/storage_contract.json` e `tools/lab-cycle` entram no laboratorio. O gate exige 18 registros, 7 com `public_manifest_blocked_seo_review_pending` e 11 com `public_manifest_blocked_source_specificity`, mantendo `index_policy=noindex`, `manifest_allowed=false`, `render_allowed=false`, `sitemap_allowed=false`, `publication_allowed=false` e `public_path=""`.

@@ -295,6 +295,18 @@
       "description": "Resolucao de especificidade de fonte por candidato de lote pre-publicado, com fonte auditada ou bloqueio explicito, sem scraping, render, sitemap ou publicacao."
     },
     {
+      "name": "batch_public_manifest_gates",
+      "path": "data/editorial/batch_public_manifest_gates.jsonl",
+      "record_type": "batch_public_manifest_gate_blocked",
+      "record_max_bytes": 16384,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": false,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Gate bloqueado de manifesto publico por candidato de lote; separa fonte travada de fonte bloqueada, sem render, sitemap ou publicacao."
+    },
+    {
       "name": "batch_generation_metrics",
       "path": "data/editorial/batch_generation_metrics.jsonl",
       "record_type": "batch_generation_scored_blocked",
