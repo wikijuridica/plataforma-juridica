@@ -8,7 +8,7 @@ import (
 	"portaljuridico/internal/seo"
 )
 
-func TestProjectBaseURLIsConfigurableUntilOfficialURLLocks(t *testing.T) {
+func TestProjectBaseURLUsesOfficialWikiJuridicaDomain(t *testing.T) {
 	repo, err := content.LoadRepository(".")
 	if err != nil {
 		t.Fatalf("could not load repository: %v", err)
@@ -16,23 +16,17 @@ func TestProjectBaseURLIsConfigurableUntilOfficialURLLocks(t *testing.T) {
 	if !seo.IsAbsoluteHTTPSURL(repo.BaseURL) {
 		t.Fatalf("base_url must be absolute HTTPS, got %q", repo.BaseURL)
 	}
-	if repo.BaseURLMode == "" {
-		t.Fatal("base_url_mode must state whether URL is lab_placeholder or official_configured")
+	if repo.BaseURL != "https://wikijuridica.com.br" {
+		t.Fatalf("base_url=%q, want official project domain https://wikijuridica.com.br", repo.BaseURL)
 	}
-	switch repo.BaseURLMode {
-	case "lab_placeholder":
-		if repo.OfficialURLLocked {
-			t.Fatal("lab placeholder base_url cannot be marked as official locked")
-		}
-		if repo.OfficialURLStatus != "not_locked" {
-			t.Fatalf("lab placeholder official_url_status=%q, want not_locked", repo.OfficialURLStatus)
-		}
-	case "official_configured":
-		if !repo.OfficialURLLocked {
-			t.Fatal("official_configured base_url must be locked intentionally")
-		}
-	default:
-		t.Fatalf("unsupported base_url_mode=%q", repo.BaseURLMode)
+	if repo.BaseURLMode != "official_configured" {
+		t.Fatalf("base_url_mode=%q, want official_configured", repo.BaseURLMode)
+	}
+	if repo.OfficialURLStatus != "locked" {
+		t.Fatalf("official_url_status=%q, want locked", repo.OfficialURLStatus)
+	}
+	if !repo.OfficialURLLocked {
+		t.Fatal("official project URL must be locked after wikijuridica.com.br was defined")
 	}
 	if strings.Contains(repo.BaseURL, ".example") && repo.BaseURLMode != "lab_placeholder" {
 		t.Fatalf("example domain can only be used as lab placeholder, got mode=%q", repo.BaseURLMode)

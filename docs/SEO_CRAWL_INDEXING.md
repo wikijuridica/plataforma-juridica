@@ -14,11 +14,11 @@ Toda pagina indexavel precisa de:
 - links internos rastreaveis;
 - conteudo util e nao duplicado.
 
-## URL base configurável
+## URL base oficial
 
-O projeto ainda nao esta usando URL oficial travada. `content/site.json` declara a base atual e seu estado. Quando `base_url_mode` for `lab_placeholder`, o dominio serve apenas para laboratorio, canonical candidato bloqueado, robots e sitemap de teste; ele nao e marca publica nem URL final.
+O dominio oficial do projeto e `wikijuridica.com.br`. `content/site.json` deve declarar `base_url="https://wikijuridica.com.br"`, `base_url_mode="official_configured"`, `official_url_status="locked"` e `official_url_locked=true`.
 
-Os testes devem validar base HTTPS, canonical absoluto, path limpo e correspondencia entre canonical e rota usando a base configurada. Eles nao devem hardcodar `portal-juridico.example` como requisito permanente. Quando a URL oficial for escolhida, a troca deve ocorrer por configuracao e atualizacao dos canonicals, mantendo os mesmos gates.
+Os testes devem validar base HTTPS, canonical absoluto, path limpo e correspondencia entre canonical e rota usando a base configurada. Eles nao devem voltar a `portal-juridico.example` nem hardcodar dominio de laboratorio no algoritmo. URL oficial travada nao libera publicacao: candidatos e pre-publicacao continuam `noindex` e bloqueados ate fonte, revisao, qualidade, CTA, sitemap e manifesto publico finito passarem.
 
 ## Orcamento de HTML
 

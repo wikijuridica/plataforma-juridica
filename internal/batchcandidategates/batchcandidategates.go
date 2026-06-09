@@ -173,10 +173,10 @@ func ValidateRecordAgainstArchive(record Record, index ArchiveIndex) Report {
 		issues = append(issues, Issue{Code: "batch_candidate_prefix_not_clean", Message: record.CandidatePathPrefix})
 	}
 	if index.BaseURLMode != "" && record.BaseURLMode != index.BaseURLMode {
-		issues = append(issues, Issue{Code: "batch_candidate_base_url_mode_mismatch", Message: fmt.Sprintf("record=%s site=%s", record.BaseURLMode, index.BaseURLMode)})
+		issues = append(issues, Issue{Code: "batch_candidate_url_config_mismatch", Message: fmt.Sprintf("mode record=%s site=%s", record.BaseURLMode, index.BaseURLMode)})
 	}
-	if record.OfficialURLLocked || index.OfficialURLLocked {
-		issues = append(issues, Issue{Code: "batch_candidate_url_locked_before_publication", Message: record.BatchID})
+	if record.OfficialURLLocked != index.OfficialURLLocked {
+		issues = append(issues, Issue{Code: "batch_candidate_url_config_mismatch", Message: fmt.Sprintf("locked record=%t site=%t", record.OfficialURLLocked, index.OfficialURLLocked)})
 	}
 	if record.MaxSimilarityAllowed > 0.64 || record.MaxSimilarityAllowed <= 0 {
 		issues = append(issues, Issue{Code: "batch_candidate_similarity_limit_invalid", Message: fmt.Sprintf("%.4f", record.MaxSimilarityAllowed)})

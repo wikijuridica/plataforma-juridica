@@ -539,3 +539,40 @@ Motivos:
 - cada candidato deve existir no arquivo permanente, carregar CTA contextual e continuar vinculado a fonte matricial.
 
 Consequencia: `data/editorial/batch_candidate_gates.jsonl`, `internal/batchcandidategates` e `./tools/check-batch-candidate-gates` entram no laboratorio. O gate exige 6 famílias, 3 intenções selecionadas por família, 100 registros mínimos no arquivo por lote, similaridade <=0.64, score humano mínimo, base URL flexível e flags públicas falsas. O próximo ciclo deve transformar candidatos selecionados em revisão jurídico-editorial por candidato, ainda sem render público.
+
+## 2026-06-09 — URL oficial travada em wikijuridica.com.br
+
+Decisao: travar a URL oficial do projeto como `https://wikijuridica.com.br` e remover o placeholder `portal-juridico.example` dos canonicals e gates vivos.
+
+Motivos:
+- o usuario definiu `wikijuridica.com.br` como dominio oficial do projeto;
+- canonical, sitemap e robots precisam de base real antes de evoluir pre-publicacao;
+- testes continuam lendo `content/site.json` para evitar algoritmo hardcoded, mas o contrato agora exige `official_configured`;
+- URL oficial travada nao e autorizacao para publicar candidatos de lote ou rascunhos.
+
+Consequencia: `content/site.json` passa para `base_url_mode="official_configured"`, `official_url_status="locked"` e `official_url_locked=true`. `content/pages.json`, `data/editorial/prepublication_gates.jsonl` e `data/editorial/batch_candidate_gates.jsonl` acompanham a base oficial. O proximo ciclo deve manter candidatos bloqueados e preparar pre-publicacao em lote apenas depois de fonte e revisao especificas.
+
+## 2026-06-09 — Revisao juridico-editorial bloqueada de candidatos de lote
+
+Decisao: criar `batch_candidate_reviews` como camada obrigatoria entre `batch_candidate_gates` e qualquer pre-publicacao em lote.
+
+Motivos:
+- selecionar candidato nao basta para preparar pagina juridica publica;
+- cada candidato precisa de revisao juridico-editorial, CTA WhatsApp contextual e fonte matricial auditada;
+- escala massiva nao pode depender de revisao manual pagina a pagina, mas a revisao algoritmica precisa deixar rastro por candidato;
+- URL oficial travada nao remove os gates de fonte, qualidade, SEO e publicacao;
+- promessa de resultado, CTA raso, path com dominio e fonte nao auditada precisam reprovar antes de qualquer render.
+
+Consequencia: `data/editorial/batch_candidate_reviews.jsonl`, `internal/batchcandidatereviews`, `./tools/check-batch-candidate-reviews`, `internal/checks` e `tools/lab-cycle` entram no laboratorio. O gate exige 18 revisoes bloqueadas, uma por intencao selecionada, com `Origem`, `Gate` e `Intent` na mensagem de WhatsApp, matriz auditada, notas especificas e flags publicas falsas. O proximo ciclo deve transformar essas revisoes em pre-publication gates de lote com canonical oficial e `noindex`, ainda sem sitemap/publicacao.
+
+## 2026-06-09 — Validacao global proporcional ao risco
+
+Decisao: tratar `go test -count=1 ./...`, `./tools/check-all`, `./tools/lab-cycle` e equivalentes completos como validacao global de alto custo, nao como ritual automatico para toda alteracao pequena.
+
+Motivos:
+- validacao global consome tempo e pode atrasar ciclos localizados;
+- engenharia agressiva exige prova suficiente, nao excesso de ritual;
+- mudancas pequenas podem ser comprovadas com teste focado, check especifico, diff check e inspecao direta;
+- mudancas amplas ou criticas ainda exigem prova global para evitar regressao em varias camadas.
+
+Consequencia: o proximo ciclo deve escolher validacao proporcional. Rodar validacao global quando houver alteracao ampla, contrato central, risco P0/P1 critico, HTML/sitemap/canonical/robots/indexacao/performance, gerador em massa, preparacao de publicacao ou falha transversal. Em ciclos localizados, registrar no checkpoint os checks focados usados e por que eles cobrem o risco.

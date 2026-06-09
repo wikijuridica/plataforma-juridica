@@ -52,9 +52,9 @@ type Report struct {
 }
 
 var (
-	termIDPattern      = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
-	cleanCandidatePath = regexp.MustCompile(`^/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*/$`)
-	defaultLabBaseURL  = "https://portal-juridico.example"
+	termIDPattern         = regexp.MustCompile(`^[a-z0-9]+(-[a-z0-9]+)*$`)
+	cleanCandidatePath    = regexp.MustCompile(`^/[a-z0-9]+(-[a-z0-9]+)*/[a-z0-9]+(-[a-z0-9]+)*/$`)
+	defaultProjectBaseURL = "https://wikijuridica.com.br"
 )
 
 func Validate(root string) Report {
@@ -67,7 +67,7 @@ func Validate(root string) Report {
 		issues = append(issues, Issue{Code: "prepublication_gates_empty", Message: "data/editorial/prepublication_gates.jsonl"})
 	}
 	repo, repoErr := content.LoadRepository(root)
-	baseURL := defaultLabBaseURL
+	baseURL := defaultProjectBaseURL
 	if repoErr != nil {
 		issues = append(issues, Issue{Code: "prepublication_base_url_unavailable", Message: repoErr.Error()})
 	} else {
@@ -134,7 +134,7 @@ func LoadRecords(root string) ([]Entry, Report) {
 }
 
 func ValidateRecord(record Record) Report {
-	return ValidateRecordWithBaseURL(record, defaultLabBaseURL)
+	return ValidateRecordWithBaseURL(record, defaultProjectBaseURL)
 }
 
 func ValidateRecordWithBaseURL(record Record, baseURL string) Report {

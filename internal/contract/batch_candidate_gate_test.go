@@ -27,8 +27,8 @@ func TestBatchCandidateGatesSelectArchiveDraftsWithoutPublishing(t *testing.T) {
 		if record.RenderAllowed || record.SitemapAllowed || record.PublicationAllowed || record.PublicPath != "" {
 			t.Fatalf("%s escaped blocked gate: render=%t sitemap=%t publication=%t public_path=%q", record.BatchID, record.RenderAllowed, record.SitemapAllowed, record.PublicationAllowed, record.PublicPath)
 		}
-		if record.BaseURLMode == "" || record.OfficialURLLocked {
-			t.Fatalf("%s must preserve flexible URL base while P0 is blocked, mode=%q locked=%t", record.BatchID, record.BaseURLMode, record.OfficialURLLocked)
+		if record.BaseURLMode != "official_configured" || !record.OfficialURLLocked {
+			t.Fatalf("%s must track locked official URL while preserving blocked publication, mode=%q locked=%t", record.BatchID, record.BaseURLMode, record.OfficialURLLocked)
 		}
 	}
 }
@@ -42,8 +42,8 @@ func TestBatchCandidateGateRejectsPublicOrUnknownArchiveIntent(t *testing.T) {
 		ArchiveMinimumRecords:   100,
 		SelectedUniqueIntentIDs: []string{"intent-inexistente"},
 		CandidatePathPrefix:     "/temas/",
-		BaseURLMode:             "official_configured",
-		OfficialURLLocked:       true,
+		BaseURLMode:             "lab_placeholder",
+		OfficialURLLocked:       false,
 		MaxSimilarityAllowed:    0.64,
 		MaxSimilarityObserved:   0.64,
 		MinimumHumanScore:       88,
@@ -57,7 +57,10 @@ func TestBatchCandidateGateRejectsPublicOrUnknownArchiveIntent(t *testing.T) {
 		CheckedAt:               "2026-06-09",
 	}
 
-	report := batchcandidategates.ValidateRecordAgainstArchive(record, batchcandidategates.ArchiveIndex{})
+	report := batchcandidategates.ValidateRecordAgainstArchive(record, batchcandidategates.ArchiveIndex{
+		BaseURLMode:       "official_configured",
+		OfficialURLLocked: true,
+	})
 	for _, code := range []string{
 		"batch_candidate_selected_intent_missing",
 		"batch_candidate_render_allowed",
@@ -65,7 +68,7 @@ func TestBatchCandidateGateRejectsPublicOrUnknownArchiveIntent(t *testing.T) {
 		"batch_candidate_publication_allowed",
 		"batch_candidate_has_public_path",
 		"batch_candidate_missing_block_reason",
-		"batch_candidate_url_locked_before_publication",
+		"batch_candidate_url_config_mismatch",
 	} {
 		if !report.HasIssue(code) {
 			t.Fatalf("missing issue %q in %v", code, report.Codes())

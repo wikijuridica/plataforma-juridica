@@ -259,6 +259,18 @@
       "description": "Gate permanente de candidatos selecionados a partir do arquivo de rascunhos validado; nao publica, nao renderiza e nao cria sitemap."
     },
     {
+      "name": "batch_candidate_reviews",
+      "path": "data/editorial/batch_candidate_reviews.jsonl",
+      "record_type": "batch_candidate_review_blocked",
+      "record_max_bytes": 16384,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": false,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Revisoes juridico-editoriais bloqueadas dos candidatos de lote, com CTA contextual e origem WhatsApp rastreavel, sem render, sitemap ou publicacao."
+    },
+    {
       "name": "batch_generation_metrics",
       "path": "data/editorial/batch_generation_metrics.jsonl",
       "record_type": "batch_generation_scored_blocked",

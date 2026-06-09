@@ -6,7 +6,9 @@ O projeto deve operar como laboratorio: testar, validar, refinar, testar novamen
 
 Laboratorio deve usar engenharia agressiva inteligente. O agente deve planejar a hipótese do ciclo, rodar validação em massa quando o escopo for massa, usar CPU disponível para acelerar prova e refinar algoritmo antes de expor qualquer conteúdo público. Passividade, pergunta desnecessária, commit sem autocrítica e validação pequena para decisão massiva são falhas de laboratório.
 
-## Comando principal
+Validação deve ser proporcional ao risco. Validação global completa é cara em tempo e só deve rodar quando houver alteração ampla, mudança em contrato central, risco P0/P1 crítico, modificação de HTML/sitemap/canonical/robots/indexação/performance, gerador em massa, preparação de publicação ou falha que possa contaminar várias camadas. Em ciclo pequeno/localizado, use teste focado, check específico, inspeção do diff/artefato e `git diff --check`.
+
+## Comando global
 
 `./tools/lab-cycle`
 
@@ -29,6 +31,7 @@ Esse comando combina:
 - `./tools/check-batch-drafts`;
 - `./tools/check-batch-draft-expansion-archive`;
 - `./tools/check-batch-candidate-gates`;
+- `./tools/check-batch-candidate-reviews`;
 - `./tools/check-batch-draft-generation`;
 - `./tools/check-batch-source-url-audits`;
 - `./tools/check-batch-source-matrix`;
@@ -41,6 +44,8 @@ Esse comando combina:
 - `go list -m all`;
 - `git diff --check`;
 - busca por residuos `.py` e `.pyc`.
+
+Use `./tools/lab-cycle` como prova global em momentos críticos ou alterações de grande alcance. Não transforme esse comando em ritual automático para toda edição pequena: isso aumenta custo sem melhorar a prova. O checkpoint deve explicar por que a validação escolhida foi suficiente; se a validação global foi pulada, registrar os checks focados usados.
 
 O gate `./tools/check-performance-budget` deve reprovar HTML publico pesado, `<script>`, runtime cliente, bundle JavaScript, WebAssembly, mapas, `modulepreload`, import map, marcadores de hidratacao e CSS inline excessivo. Leveza e parte da prova de indexacao para Googlebot e bots valiosos.
 
@@ -90,7 +95,9 @@ Antes de considerar o gerador pronto para volume maior, rodar `./tools/check-bat
 
 Quando uma massa gerada em `/tmp` passar nos gates e tiver utilidade jurídica para páginas futuras, ela deve ser trazida para `data/editorial/batch_draft_expansion_archive.jsonl` e validada por `./tools/check-batch-draft-expansion-archive`. Laboratório validado não deve ser descartado por padrão; repo permanente bloqueado é o caminho de continuidade.
 
-Antes de preparar pré-publicação por lote, rodar `./tools/check-batch-candidate-gates`. O gate deve selecionar candidatos reais do arquivo permanente, manter base URL flexível enquanto a URL oficial não estiver travada, exigir CTA contextual e impedir render, sitemap, publicação ou `public_path`.
+Antes de preparar pré-publicação por lote, rodar `./tools/check-batch-candidate-gates`. O gate deve selecionar candidatos reais do arquivo permanente, acompanhar a base oficial configurada em `content/site.json`, exigir CTA contextual e impedir render, sitemap, publicação ou `public_path`.
+
+Antes de transformar candidatos de lote em pré-publicação, rodar `./tools/check-batch-candidate-reviews`. Cada candidato selecionado precisa de revisão jurídico-editorial bloqueada, fonte matricial auditada e CTA WhatsApp de origem rastreável. URL oficial travada não dispensa revisão; promessa de resultado, path com domínio, fonte sem auditoria ou flag pública verdadeira bloqueiam o lote.
 
 Antes de ampliar subtemas, rodar `./tools/check-batch-source-matrix`. A matriz deve provar fonte oficial específica por subtema, política sem scraping e cobertura de cada draft gerado. Se a fonte estiver genérica, ausente ou sem revisão de robots, o lote fica bloqueado.
 
@@ -100,7 +107,7 @@ Se a similaridade subir em volume maior, investigar a semântica: verificar se o
 
 ## Politica
 
-Nenhum script isolado e prova suficiente para mudanca P0/P1. Use o laboratorio como conjunto minimo e inspecione os artefatos quando a mudanca afetar HTML, sitemap, robots, canonical, indexacao, qualidade ou conteudo.
+Nenhum script isolado e prova suficiente para mudanca P0/P1 ampla. Use o laboratorio como conjunto proporcional de provas e inspecione os artefatos quando a mudanca afetar HTML, sitemap, robots, canonical, indexacao, qualidade ou conteudo. Mudança localizada deve priorizar validação focada, desde que cubra diretamente o risco alterado.
 
 Validar nao basta. Todo ciclo deve revisar o diff, os artefatos gerados, os riscos e o contrato antes de commitar. A revisao deve procurar atalhos, spam, conteudo mecanico, regressao de P0 e dependencia indevida.
 

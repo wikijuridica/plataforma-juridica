@@ -1,6 +1,6 @@
 {
-  "base_url": "https://portal-juridico.example",
-  "base_url_mode": "lab_placeholder",
-  "official_url_status": "not_locked",
-  "official_url_locked": false
+  "base_url": "https://wikijuridica.com.br",
+  "base_url_mode": "official_configured",
+  "official_url_status": "locked",
+  "official_url_locked": true
 }
