@@ -51,7 +51,7 @@ Adendo de persistencia: cada ciclo deve ser commitado apos validacao, incluindo 
 
 ## 2026-06-09 — Meta de 10 mil paginas com CTA subordinado a qualidade
 
-Decisao: a meta de produto inclui no minimo 10 mil paginas juridicas informativas, com CTA proprio de WhatsApp para contratar advogado quando apropriado.
+Decisao: a meta de produto inclui no minimo 10 mil paginas juridicas informativas, com alta intencao de contratar advogado e CTA proprio de WhatsApp quando apropriado.
 
 Motivos:
 - o portal deve ter escala nacional e alta intencao comercial;

@@ -6,7 +6,7 @@ Este repositório é um novo projeto de site jurídico brasileiro de alta escala
 
 O produto deve servir primeiro a humanos: advogados, estudantes, pesquisadores, jornalistas, empresas e cidadãos. Bots de busca e IA são importantes, mas não podem dirigir a criação de conteúdo raso, duplicado ou artificial.
 
-Meta de produto: crescer até no mínimo 10 mil páginas de conteúdo jurídico informativo, com intenção comercial legítima e CTA para contratação de advogado via WhatsApp quando a página for adequada. Essa meta não autoriza publicar conteúdo jurídico antes de P0/P1/P2 estarem comprovados. Antes de publicar conteúdo jurídico em escala, a arquitetura, fontes, proveniência, revisão editorial, qualidade e indexação precisam estar validadas.
+Meta de produto: crescer até no mínimo 10 mil páginas de conteúdo jurídico informativo, com alta intenção de contratar advogado e CTA crítico para contratação via WhatsApp quando a página for adequada. Essa meta não autoriza publicar conteúdo jurídico antes de P0/P1/P2 estarem comprovados. Antes de publicar conteúdo jurídico em escala, a arquitetura, fontes, proveniência, revisão editorial, qualidade e indexação precisam estar validadas.
 
 ## Postura obrigatória do agente
 
@@ -31,6 +31,8 @@ Não pare em checkpoint. Checkpoint não é ordem de parada. Depois de registrar
 Regra literal de continuidade: o agente não deve parar. Sempre planejar o próximo passo, registrar esse próximo passo no checkpoint e continuar executando o próximo passo enquanto não houver bloqueio P0 real comprovado. Resposta final no thread não significa parar o projeto; significa apenas registrar o estado antes de seguir.
 
 Trabalhe em laboratório: antes de mudanças relevantes, escreva ou atualize scripts/testes; rode validação; refine; validar, refinar, testar novamente; e só então registre checkpoint. Nunca confie em script isolado quando a decisão for P0/P1: combine testes Go, scripts `tools/`, build, inspeção de artefatos e checagens de contrato. Nada de mudar no chute.
+
+Sempre revisar e validar. Validar sozinho não basta: revisar diff, artefatos gerados, contratos e riscos antes de commitar. Checkpoint deve registrar testes e revisão, não apenas listar comandos.
 
 ## Prioridades
 
@@ -97,7 +99,7 @@ Trabalhe em laboratório: antes de mudanças relevantes, escreva ou atualize scr
 
 ### P5 — Evolução
 
-- CTAs comerciais e WhatsApp de contratação devem ser próprios, configuráveis, auditáveis e subordinados à qualidade jurídica.
+- CTA WhatsApp é componente crítico do produto para páginas informativas de alta intenção de contratar advogado, mas deve ser próprio, configurável, auditável e subordinado à qualidade jurídica.
 - Busca interna própria.
 - Grafo jurídico.
 - Recomendações internas.

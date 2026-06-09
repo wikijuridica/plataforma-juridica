@@ -79,3 +79,25 @@
 - proximo ciclo: P0 auditoria robots/termos e CTA gating.
 - riscos: termos e robots ainda estao marcados como `pendente_verificacao_final`; nenhuma ingestao ou publicacao juridica em escala autorizada.
 - adendo do ciclo: fontes oficiais sao referencia/proveniencia, nao alvo de scraping, clone ou espelho; o site deve produzir conteudo proprio, natural e unico.
+- adendo operacional: sempre revisar e validar; validacao isolada nao basta; revisar diff, artefatos, contratos e riscos antes de commit.
+- adendo de produto: CTA WhatsApp e critico para paginas informativas de alta intencao de contratar advogado, mas continua bloqueado por fonte, revisao, aprovacao e qualidade.
+
+## 2026-06-09 — Ciclo 5 — P0 CTA WhatsApp gating
+
+- ciclo: 5
+- prioridade: P0
+- objetivo: tratar CTA WhatsApp como componente critico de produto sem permitir que ele burle fonte, revisao, aprovacao e qualidade.
+- natureza do checkpoint: rastreabilidade operacional para continuar; nao e aceite final, nao e ordem de parada.
+- continuidade: continuar P0; proximo passo deve fortalecer auditoria de robots/termos e depois preparar componente visual de CTA sem ativar em paginas nao aprovadas.
+- entregas registradas no ciclo: contrato atualizado para CTA critico de alta intencao; `internal/cta.CanRender`; teste `internal/contract/cta_gate_test.go`; revisao explicita de diff e HTML gerado.
+- arquivos alterados: `AGENTS.md`, `GOAL.md`, `docs/PROJECT_VISION.md`, `docs/ARCHITECTURE.md`, `docs/DECISIONS.md`, `docs/LAB_VALIDATION.md`, `CHECKPOINT.md`, `internal/cta/cta.go`, `internal/contract/cta_gate_test.go`.
+- decisoes: CTA WhatsApp e critico, mas so renderiza quando a pagina for publicada, indexavel, de tipo permitido, revisada e com fonte aprovada; paginas atuais nao exibem CTA.
+- comandos executados: `GOCACHE=/tmp/opt-wiki-go-cache go test -count=1 ./internal/contract`; `gofmt -w internal/cta/cta.go`; `./tools/lab-cycle`; `git diff --stat`; `rg` de contrato/CTA; inspecao de `public/index.html`.
+- resultados: `./tools/lab-cycle` passou; `go test -count=1 ./...` passou; `./tools/check-all` passou; `./tools/check-sources` passou; build gerou `generated_pages=3 indexable_pages=1 output_dir=public`; HTML atual nao exibe CTA.
+- falhas: teste RED indicou ausencia de `cta.CanRender`.
+- correcoes: `CanRender` implementado com gates de politica, status, indexacao, tipo de pagina, revisao, proveniencia e fonte aprovada.
+- provas: `cta_gate_test.go` bloqueia CTA em pagina `noindex`, bloqueia fonte preliminar e permite apenas fixture com fonte aprovada.
+- commit: este ciclo deve ser persistido em Git apos validacao final desta entrada.
+- plano de continuidade: continuar P0; criar auditoria robots/termos por fonte e preparar renderizacao visual do CTA em modo bloqueado/testado, sem ativar nas paginas atuais.
+- proximo ciclo: P0 robots/termos e componente visual de CTA gated.
+- riscos: telefone real de WhatsApp ainda e placeholder; nao configurar numero nem ativar CTA publico antes dos gates.

@@ -42,6 +42,8 @@ O plano de escala e um contrato de capacidade, nao um gerador de spam para Googl
 
 `content/cta_policy.json` registra a arquitetura de CTA proprio por WhatsApp para paginas de alta intencao de contratar advogado. O CTA nao pode aparecer como atalho para publicar conteudo sem fonte ou sem revisao; ele depende de pagina juridica aprovada, proveniencia e revisao editorial.
 
+CTA WhatsApp e critico para o produto: as paginas devem ser informativas, mas desenhadas para alta intencao de contratar advogado quando o contexto for adequado. A criticidade comercial nao remove os gates juridicos.
+
 ## Proveniencia por payload
 
 Antes de qualquer dado oficial virar conteudo, o payload precisa de registro com fonte, URL oficial, data de acesso, hash SHA-256, snapshot de robots, snapshot de termos, campos usados e finalidade. Fonte pesquisada nao equivale a conteudo aprovado.
