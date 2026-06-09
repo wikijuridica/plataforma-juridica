@@ -55,6 +55,18 @@
       "description": "Rascunhos editoriais proprios em PT-BR, sempre noindex ate revisao, fonte e qualidade passarem."
     },
     {
+      "name": "review_queue",
+      "path": "data/editorial/review_queue.jsonl",
+      "record_type": "editorial_review_queue",
+      "record_max_bytes": 8192,
+      "public_indexable": false,
+      "allows_raw_official_text": false,
+      "allows_editorial_content": false,
+      "requires_source_provenance": true,
+      "requires_quality_state": true,
+      "description": "Fila editorial de revisao com historico; nao publica, nao indexa e nao cria URL publica."
+    },
+    {
       "name": "published_manifest",
       "path": "data/editorial/published_manifest.jsonl",
       "record_type": "published_content_manifest",

@@ -24,6 +24,19 @@ type Record struct {
 	Text        string `json:"text"`
 }
 
+func (r Record) AsDraft() draftlab.Draft {
+	return draftlab.Draft{
+		TermID:      r.TermID,
+		Term:        r.Term,
+		Status:      r.Status,
+		IndexPolicy: r.IndexPolicy,
+		PublicPath:  r.PublicPath,
+		SourceID:    r.SourceID,
+		SourceURL:   r.SourceURL,
+		Text:        r.Text,
+	}
+}
+
 type Issue struct {
 	Code    string
 	Message string

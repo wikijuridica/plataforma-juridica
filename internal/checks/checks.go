@@ -13,6 +13,7 @@ import (
 	"portaljuridico/internal/editorial"
 	"portaljuridico/internal/editorialdrafts"
 	"portaljuridico/internal/quality"
+	"portaljuridico/internal/reviewqueue"
 	"portaljuridico/internal/seo"
 	"portaljuridico/internal/sources"
 	"portaljuridico/internal/storage"
@@ -34,6 +35,7 @@ var Names = []string{
 	"storage-contract",
 	"term-seeds",
 	"editorial-drafts",
+	"review-queue",
 	"sitemaps",
 	"canonicals",
 	"no-duplicate-content",
@@ -62,6 +64,8 @@ func Run(name string, root string) []string {
 		return checkTermSeeds(root)
 	case "editorial-drafts":
 		return checkEditorialDrafts(root)
+	case "review-queue":
+		return checkReviewQueue(root)
 	case "sitemaps":
 		return checkSitemaps(root)
 	case "canonicals":
@@ -217,6 +221,10 @@ func checkTermSeeds(root string) []string {
 
 func checkEditorialDrafts(root string) []string {
 	return editorialdrafts.Validate(root).Messages()
+}
+
+func checkReviewQueue(root string) []string {
+	return reviewqueue.Validate(root).Messages()
 }
 
 func checkSitemaps(root string) []string {

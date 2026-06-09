@@ -9,6 +9,7 @@ go test -count=1 ./...
 ./tools/check-storage-contract
 ./tools/check-term-seeds
 ./tools/check-editorial-drafts
+./tools/check-review-queue
 ./tools/lab-term-draft
 ./tools/check-google-search-appearance
 ./tools/check-mechanical-content

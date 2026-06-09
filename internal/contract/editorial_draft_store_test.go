@@ -54,13 +54,14 @@ func copyStorageFixture(t *testing.T) string {
 		"data/source-audit/robots_terms.jsonl",
 		"data/source-snapshots/payloads.jsonl",
 		"data/editorial/drafts.jsonl",
+		"data/editorial/review_queue.jsonl",
 		"data/editorial/published_manifest.jsonl",
 	} {
 		data, err := os.ReadFile(filepath.Join(findRoot(t), path))
 		if err != nil {
 			t.Fatal(err)
 		}
-		if path == "data/editorial/drafts.jsonl" {
+		if path == "data/editorial/drafts.jsonl" || path == "data/editorial/review_queue.jsonl" {
 			data = []byte{}
 		}
 		writeTestFile(t, filepath.Join(root, path), string(data))

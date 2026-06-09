@@ -389,6 +389,7 @@ Criar aliases ou scripts equivalentes:
 - `./tools/check-storage-contract`
 - `./tools/check-term-seeds`
 - `./tools/check-editorial-drafts`
+- `./tools/check-review-queue`
 - `./tools/check-sitemaps`
 - `./tools/check-canonicals`
 - `./tools/check-no-duplicate-content`
@@ -399,6 +400,7 @@ Criar aliases ou scripts equivalentes:
 - `./tools/lab-content-quality`
 - `./tools/lab-term-draft`
 - `./tools/persist-term-drafts`
+- `./tools/queue-editorial-review`
 
 Todo ciclo deve rodar validações relevantes.
 

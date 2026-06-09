@@ -15,6 +15,7 @@ Esse comando combina:
 - `./tools/check-storage-contract`;
 - `./tools/check-term-seeds`;
 - `./tools/check-editorial-drafts`;
+- `./tools/check-review-queue`;
 - `./tools/lab-term-draft`;
 - `./tools/check-google-search-appearance`;
 - `./tools/check-mechanical-content`;
@@ -34,6 +35,8 @@ O gate `./tools/check-performance-budget` deve reprovar HTML publico pesado, `<s
 `./tools/lab-term-draft` usa seeds juridicas aprovadas pelo contrato de `term_seeds` para criar rascunho temporario em `/tmp`. O rascunho deve ser `draft/noindex`, nao pode escrever em `content/pages.json`, nao pode entrar em sitemap e nao pode receber CTA.
 
 `./tools/persist-term-drafts` e ferramenta de ciclo para gravar rascunho validado na camada `editorial_drafts`; `./tools/check-editorial-drafts` e o gate permanente no laboratorio para garantir que o draft persistido continua fora da publicacao.
+
+`./tools/queue-editorial-review` move rascunhos persistidos para fila de revisao `needs_review`, sem publicacao. `./tools/check-review-queue` exige `publication_allowed=false`, `public_path` vazio, fonte, autoria e historico.
 
 ## Politica
 

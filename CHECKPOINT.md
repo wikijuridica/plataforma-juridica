@@ -272,3 +272,24 @@
 - plano de continuidade: continuar P0 no ciclo 14; criar fila editorial revisavel com estados e historico de revisao/autoria para drafts persistidos, ainda sem publicar; depois preparar contrato de promocao de draft para `needs_review`.
 - proximo ciclo: P0 fila editorial e historico de revisao para drafts, sem publicacao.
 - riscos: ha apenas um draft persistido e ele ainda e generico; nao satisfaz meta publica, nao autoriza goal completo e nao deve sair do laboratorio sem pesquisa/revisao especifica.
+
+## 2026-06-09 — Ciclo 14 — P0 fila editorial needs_review sem publicacao
+
+- data/hora local conferida antes do commit: `2026-06-09 09:33:59 -03`.
+- ciclo: 14
+- prioridade: P0
+- objetivo: continuar sem parada; criar fila editorial revisavel com autoria, motivo e historico para drafts persistidos, mantendo publicacao bloqueada.
+- natureza do checkpoint: rastreabilidade operacional para continuar; nenhum ciclo e final e parada; nao e aceite final, nao e ordem de parada.
+- continuidade: continuar P0; proximo ciclo deve criar contrato de promocao controlada de `needs_review` para `approved` sem ainda publicar URL.
+- entregas registradas no ciclo: camada `review_queue` em `content/storage_contract.json`; arquivo `data/editorial/review_queue.jsonl`; modulo `internal/reviewqueue`; teste `internal/contract/review_queue_test.go`; comando `cmd/queue-editorial-review`; tools `./tools/queue-editorial-review` e `./tools/check-review-queue`; integracao ao `./tools/lab-cycle`; docs de fila editorial.
+- arquivos alterados: `AGENTS.md`, `GOAL.md`, `CHECKPOINT.md`, `cmd/queue-editorial-review/`, `content/storage_contract.json`, `data/editorial/review_queue.jsonl`, `docs/ARCHITECTURE.md`, `docs/CONTENT_QUALITY.md`, `docs/DATA_SOURCES.md`, `docs/DECISIONS.md`, `docs/LAB_VALIDATION.md`, `internal/architecture/architecture.go`, `internal/checks/checks.go`, `internal/contract/editorial_draft_store_test.go`, `internal/contract/review_queue_test.go`, `internal/editorialdrafts/`, `internal/reviewqueue/`, `tools/check-review-queue`, `tools/queue-editorial-review`, `tools/lab-cycle`.
+- decisoes: fila editorial e uma camada separada de draft e manifesto publicado; estado inicial e `needs_review`; `publication_allowed=false`; `public_path` deve ficar vazio; autoria, motivo e historico sao obrigatorios.
+- comandos executados: `env GOCACHE=/tmp/wiki-go-build-cache go test -count=1 ./internal/contract`; `env GOCACHE=/tmp/wiki-go-build-cache go test -count=1 ./internal/reviewqueue`; `./tools/queue-editorial-review`; `./tools/check-review-queue`; `./tools/lab-cycle`; `git diff -- content/pages.json public/sitemap.xml public/sitemaps/pages-0001.xml public/index.html`; `date '+%Y-%m-%d %H:%M:%S %Z'`.
+- resultados: `./tools/lab-cycle` passou; `review-queue: pass`; `queued=responsabilidade-civil status=needs_review publication_allowed=false`; build continuou `generated_pages=3 indexable_pages=1 output_dir=public`; diff publico sem output.
+- falhas: RED inicial apontou ausencia de `internal/reviewqueue`; storage ainda nao tinha camada `review_queue`.
+- correcoes: camada JSONL separada criada; `reviewqueue.ValidateRecord` reprova publicacao, rota publica, fonte ausente, metadados editoriais ausentes e historico ausente; `queue-editorial-review` ficou idempotente.
+- provas: `review_queue_test.go` exige `needs_review`, `publication_allowed=false`, `public_path=""`, autoria e evento `queued_for_review`; teste negativo reprova registro publicavel; `lab-cycle` cobre `review-queue`.
+- commit: este ciclo deve ser persistido em Git apos validacao final desta entrada.
+- plano de continuidade: continuar P0 no ciclo 15; criar contrato de aprovacao editorial `approved` em camada separada, ainda sem publicacao, exigindo revisor, motivo, fonte e qualidade; depois preparar manifest de publicacao bloqueado.
+- proximo ciclo: P0 aprovacao editorial sem publicacao e sem URL publica.
+- riscos: fila tem um item e ainda nao tem revisao juridica real; aprovacao futura precisa continuar bloqueando publicacao ate fonte especifica, revisao e escala segura.

@@ -23,6 +23,7 @@ var requiredModules = map[string]string{
 	"crawl":           "internal/crawl",
 	"editorial":       "internal/editorial",
 	"editorialdrafts": "internal/editorialdrafts",
+	"reviewqueue":     "internal/reviewqueue",
 	"tools":           "tools",
 	"docs":            "docs",
 	"build":           "internal/build",

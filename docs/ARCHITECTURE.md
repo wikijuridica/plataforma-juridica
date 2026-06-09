@@ -20,6 +20,8 @@ O projeto usa Go e biblioteca padrao como base tecnica. A escolha privilegia bin
 - `internal/sitemap`: sitemap index e sitemap particionado.
 - `internal/quality`: gates contra duplicidade, conteudo raso, falta de fonte e falta de revisao.
 - `internal/editorial`: estados editoriais e politica index/noindex.
+- `internal/editorialdrafts`: persistencia de rascunhos em banco leve, sempre sem rota publica.
+- `internal/reviewqueue`: fila editorial `needs_review` com historico e publicacao bloqueada.
 - `internal/legal`: controle de conteudo juridico.
 - `internal/sources`: contratos de fontes oficiais.
 - `internal/storage`: banco leve proprio em JSONL para termos juridicos, auditorias, snapshots, rascunhos e manifesto publicado.

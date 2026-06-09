@@ -243,3 +243,14 @@ Motivos:
 - validacao de qualidade deve acompanhar a persistencia, nao ficar apenas no texto temporario.
 
 Consequencia: `internal/editorialdrafts`, `./tools/persist-term-drafts` e `./tools/check-editorial-drafts` controlam a camada editorial. O fluxo atual e seed -> draft temporario -> draft persistido; ainda nao existe publicacao indexavel desse conteudo.
+
+## 2026-06-09 — Fila editorial antes de promocao
+
+Decisao: draft persistido deve entrar em `data/editorial/review_queue.jsonl` como `needs_review`, com autoria, motivo e historico, ainda com `publication_allowed=false`.
+
+Motivos:
+- revisao precisa ser rastreavel antes de qualquer promocao;
+- separar fila de revisao de draft e manifesto publicado evita confundir laboratorio com publicacao;
+- a meta de 10 mil paginas exige processo repetivel, nao improviso por pagina.
+
+Consequencia: `internal/reviewqueue`, `./tools/queue-editorial-review` e `./tools/check-review-queue` validam a fila. Nenhuma entrada da fila cria URL publica, sitemap, canonical ou CTA.

@@ -30,3 +30,5 @@ O contrato de armazenamento fica em `content/storage_contract.json` e e validado
 As sementes iniciais ficam em `data/terms/legal_terms.jsonl` e sao validadas por `./tools/check-term-seeds`. Isso permite iniciar laboratorio editorial por termos sem gerar paginas para Googlebot.
 
 Rascunhos persistidos ficam em `data/editorial/drafts.jsonl`, separados de snapshots oficiais e de paginas publicas. Eles devem permanecer `draft/noindex` ate fonte, revisao, qualidade e decisao editorial completa.
+
+A fila de revisao fica em `data/editorial/review_queue.jsonl`. Ela registra autoria, motivo, historico e estado `needs_review`, mas nao libera publicacao nem cria URL.
