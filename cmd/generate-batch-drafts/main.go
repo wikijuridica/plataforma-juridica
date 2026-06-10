@@ -14,7 +14,9 @@ import (
 func main() {
 	samples := flag.Int("samples-per-batch", 5, "quantidade de amostras por lote juridico")
 	checkedAt := flag.String("checked-at", "2026-06-09", "data de validacao em YYYY-MM-DD")
+	writeSamples := flag.Bool("write-samples", false, "persistir amostras validadas em data/editorial/batch_drafts.jsonl")
 	writeMetrics := flag.Bool("write-metrics", false, "persistir metricas em data/editorial/batch_generation_metrics.jsonl")
+	writeArchive := flag.Bool("write-archive", false, "persistir rascunhos validados em data/editorial/batch_draft_expansion_archive.jsonl")
 	flag.Parse()
 
 	root := "."
@@ -27,8 +29,20 @@ func main() {
 		fmt.Println(strings.Join(report.Messages(), "\n"))
 		os.Exit(1)
 	}
+	if *writeSamples {
+		if err := batchdraftgen.WriteSamples(root, result.Drafts); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	}
 	if *writeMetrics {
 		if err := batchdraftgen.WriteMetrics(root, result.Metrics); err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+	}
+	if *writeArchive {
+		if err := batchdraftgen.WriteArchive(root, result.Drafts); err != nil {
 			fmt.Println(err)
 			os.Exit(1)
 		}

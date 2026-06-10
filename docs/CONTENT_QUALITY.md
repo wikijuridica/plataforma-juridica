@@ -24,6 +24,10 @@ O projeto não deve operar como redação manual página a página. A escala cor
 
 Conteúdo massivo exige engenharia agressiva inteligente: planejar a família jurídica, gerar muitas intenções únicas, validar em massa, refinar o algoritmo e repetir. Não é aceitável liberar lote por confiança em um script isolado, por revisão manual lenta ou por texto que apenas parece diferente.
 
+Contrato anti-mascaramento: nenhum gate verde pode substituir leitura técnica do contexto. Antes de avançar lote, revisar artefatos JSONL, mensagens de blockers, trechos gerados, fonte/proveniência, CTA, família jurídica, similaridade e paid-intent. Se o script passar mas o texto parecer raso, mecânico, sem utilidade, comercial demais, sem autoridade jurídica ou semanticamente repetido, tratar como bug do algoritmo ou falso negativo e corrigir. Se o script reprovar conteúdo bom, tratar como possível falso positivo e investigar sem afrouxar regra por conveniência. É proibido reduzir limite, ignorar blocker ou mudar status apenas para passar validação.
+
+Contrato de evidência real: toda correção de algoritmo de conteúdo deve começar por dados concretos do lote, não por inferência abstrata. O diagnóstico mínimo inclui par/registro que falhou, área jurídica, `source_matrix_id`, `unique_intent_id`, título/termo candidato, campos textuais, blockers, métrica de similaridade ou n-grama e código que gerou o padrão. O algoritmo deve validar coerência de área e contexto: pensão/família não pode ser confundida com trabalhista sem fonte contextual, e repetição de título/termo não pode ser aceita como variação semântica. Quando faltar evidência, criar diagnóstico ou teste antes de alterar regra.
+
 Regras de lote:
 - criar famílias de alta intenção de contratação jurídica 100% digital;
 - derivar intenções únicas por problema, documento, fonte, risco, etapa e cenário, não por permutação de palavra-chave;
@@ -41,7 +45,7 @@ Validação massiva é obrigatória antes de publicação massiva. O lote precis
 
 ## Escrita natural
 
-Conteúdo visível ao público deve ser escrito em PT-BR, com grafia correta, acentuação correta, pontuação clara e linguagem natural. Rascunho técnico interno pode ficar sem polimento, mas texto público não.
+Conteúdo visível ao público deve ser escrito em PT-BR, com grafia correta, acentuação correta, pontuação clara e linguagem natural. Rascunhos técnicos bloqueados, IDs, slugs, status, logs e código podem ficar ASCII quando isso for contrato técnico; antes de qualquer publicação, o texto visível ao humano precisa ser normalizado/revisado para PT-BR com acentuação correta.
 
 Antes de criar conteúdo jurídico, pesquisar a fonte correta e documentar a proveniência. A redação deve ser natural, clara e útil para humanos. É proibido publicar texto mecânico, permutação de termos, páginas quase iguais ou conteúdo criado apenas para atrair busca.
 
@@ -132,7 +136,7 @@ Publicação só pode avançar quando o texto atingir score alto, motivos de rep
 
 `./tools/check-batch-draft-generation` valida que o gerador/refinador em lote produz amostras determinísticas, com score calculado, reescrita automática, CTA WhatsApp com origem e métricas agregadas persistidas. `./tools/generate-batch-drafts` deve escrever amostras temporárias em `/tmp` durante o laboratório; quando a massa passa nos gates e contém informação jurídica útil, ela deve ser arquivada no repo como `batch_draft_expansion_archive`, sem render, sitemap, publicação ou `public_path`.
 
-`./tools/check-batch-draft-expansion-archive` valida o arquivo permanente bloqueado de rascunhos massivos. O gate exige pelo menos 600 registros, mínimo de 100 por família, score de rascunho válido, reescrita automática comprovada, `source_matrix_id`, baixa similaridade e flags públicas falsas. Arquivo validado não é descartável; ele só pode ser removido ou rebaixado com prova registrada e novo gate.
+`./tools/check-batch-draft-expansion-archive` valida o arquivo permanente bloqueado de rascunhos massivos. O gate exige pelo menos 600 registros, mínimo de 100 por família, score de rascunho válido, reescrita automática comprovada, `source_matrix_id`, baixa similaridade e flags públicas falsas. Na fase atual, o archive validado foi expandido para 780 registros, 130 por família, e não deve ser rebaixado para o mínimo antigo sem prova técnica registrada. Arquivo validado não é descartável; ele só pode ser removido ou rebaixado com prova registrada e novo gate.
 
 `./tools/check-batch-candidate-expansion-readiness` valida `data/editorial/batch_candidate_expansion_readiness.jsonl`. O gate atravessa os 600 rascunhos permanentes e registra alvos de expansão de pelo menos 30 candidatos por família, podendo carregar o próximo alvo planejado antes de ele virar candidato materializado. Depois de aplicar `batch_expansion_strategy`, contadores de paid-intent, blockers, status e current count precisam ser recalculados; dado stale é falha de contrato. Readiness mantém tudo bloqueado quando falta `batch_paid_intent_gates` por intenção, quando o paid intent existe mas foi reprovado, quando há fonte específica pendente ou qualquer flag pública. Readiness não publica: exige `index_policy=noindex`, `manifest_allowed=false`, `render_allowed=false`, `sitemap_allowed=false`, `publication_allowed=false`, `public_path=""` e blockers acionáveis. Status ausente (`batch_candidate_expansion_blocked_paid_gate_missing`) e status reprovado (`batch_candidate_expansion_blocked_paid_gate_failed`) são diagnósticos diferentes e não devem ser mascarados. Quando uma família não tem paid blocker nem source blocker antigo, o blocker acionável correto é `batch_candidate_gate_pending`, para orientar a próxima seleção sem fingir publicação pronta.
 
@@ -163,3 +167,5 @@ Regra OAB aplicada ao conteúdo: o projeto deve respeitar a ética da OAB, o Est
 `./tools/check-batch-source-url-audits` valida a auditoria URL-level da matriz. Cada URL oficial usada por subtema precisa ter hash, robots/termos revisados, status bloqueado, política `reference_only_no_scraping_no_ingestion`, `scraping_allowed=false`, `ingestion_allowed=false`, `publication_allowed=false` e vínculo com todos os `matrix_id` que a usam.
 
 Similaridade e score devem operar por semântica de intenção, não por troca mecânica de palavras. O algoritmo deve separar sinais fortes de tema, subtema, faceta, documento, risco e fonte de termos operacionais de laboratório. Para escala em centenas por família, subtema e faceta semântica devem pesar no comparador; se uma amostra falhar por repetição, a correção correta é enriquecer faceta e contexto do subtema, não baixar o limite.
+
+Título, meta description, termo e headings também entram no contrato anti-spam. Não repetir a mesma expressão com pequenas variações, não criar título mecânico por keyword e não permitir que slug ou facet esconda conteúdo semanticamente igual. Quando houver suspeita, usar teste negativo de n-grama/semântica antes de avançar lote.

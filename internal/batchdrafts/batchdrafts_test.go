@@ -33,6 +33,69 @@ func TestMaximumPairSimilarityDetailCachesByContentFingerprint(t *testing.T) {
 	}
 }
 
+func TestMaximumPairSimilarityDetailDoesNotHideDuplicateTextBehindExpansionProfiles(t *testing.T) {
+	left := similarityTestRecord(
+		"consumidor-financeiro-negativacao-divida-desconhecida-prova-digital-recurso-decisao-recorrida-prova-nova-rodada-02",
+		"O consumidor descobriu a mesma restricao no cadastro, reuniu o mesmo protocolo, contrato contestado, extratos e resposta do credor para triagem online.",
+	)
+	left.SourceMatrixID = "consumidor-financeiro-negativacao-divida-desconhecida"
+	left.LegalArea = "consumidor-financeiro"
+	right := left
+	right.UniqueIntentID = "consumidor-financeiro-negativacao-divida-desconhecida-prazo-e-urgencia-divergencia-cadastral-base-antiga-rodada-02"
+
+	pair := MaximumPairSimilarityDetail([]Entry{
+		{Line: 1, Record: left},
+		{Line: 2, Record: right},
+	})
+	if pair.Score <= 0.64 {
+		t.Fatalf("near-duplicate text hidden by expansion profiles: pair=%s/%s score=%.4f, want >0.64", pair.LeftID, pair.RightID, pair.Score)
+	}
+}
+
+func TestMaximumPairSimilarityDetailCatchesDuplicateTextAcrossDifferentSourceMatrix(t *testing.T) {
+	left := similarityTestRecord(
+		"consumidor-financeiro-tarifa-bancaria-indevida-prova-digital",
+		"O consumidor reuniu contrato, extratos, protocolo, resposta do banco e impacto financeiro para triagem juridica online.",
+	)
+	left.SourceMatrixID = "consumidor-financeiro-tarifa-bancaria-indevida"
+	left.LegalArea = "consumidor-financeiro"
+	right := left
+	right.UniqueIntentID = "consumidor-financeiro-pix-fraude-resposta-banco-prazo-e-urgencia"
+	right.SourceMatrixID = "consumidor-financeiro-pix-fraude-resposta-banco"
+
+	pair := MaximumPairSimilarityDetail([]Entry{
+		{Line: 1, Record: left},
+		{Line: 2, Record: right},
+	})
+	if pair.Score <= 0.64 {
+		t.Fatalf("duplicate text across source matrix passed: pair=%s/%s score=%.4f, want >0.64", pair.LeftID, pair.RightID, pair.Score)
+	}
+}
+
+func TestMaximumPairSimilarityDetailIgnoresExpansionBoilerplateAcrossDifferentSourceMatrix(t *testing.T) {
+	left := similarityTestRecord(
+		"familia-partilha-bens-conta-digital-negociacao-previa-recurso-decisao-recorrida-prova-nova-rodada-02",
+		"Histórico de tentativa prévia em família trata recurso documentado. A rodada nova muda o eixo do rascunho para fase recursal no subtema partilha de bens com conta digital e usa o caso matriz apenas como vínculo de origem editorial.",
+	)
+	left.SourceMatrixID = "familia-partilha-bens-conta-digital"
+	left.DocumentContext = "Razões do recurso, decisão recorrida, protocolo e prova nova ficam em trilha separada. A documentação da rodada usa eixo documental partilha bens, separando prova nova, lacuna corrigida e fase atual sem repetir a lista do caso matriz."
+	left.RiskContext = "Tratar recurso como simples novo pedido pode fazer a pessoa perder prazo. Risco operacional partilha bens mede se o complemento muda prazo, valor, fase ou prova, sem transformar repetição de pedido em conteúdo novo."
+	right := left
+	right.UniqueIntentID = "familia-pensao-revisao-desemprego-negociacao-previa-recurso-decisao-recorrida-prova-nova-rodada-02"
+	right.SourceMatrixID = "familia-pensao-revisao-desemprego"
+	right.ReaderProblem = "Histórico de tentativa prévia em família trata recurso documentado. A rodada nova muda o eixo do rascunho para fase recursal no subtema revisão de pensão após desemprego e usa o caso matriz apenas como vínculo de origem editorial."
+	right.DocumentContext = "Razões do recurso, decisão recorrida, protocolo e prova nova ficam em trilha separada. A documentação da rodada usa eixo documental pensão desemprego, separando prova nova, lacuna corrigida e fase atual sem repetir a lista do caso matriz."
+	right.RiskContext = "Tratar recurso como simples novo pedido pode fazer a pessoa perder prazo. Risco operacional pensão desemprego mede se o complemento muda prazo, valor, fase ou prova, sem transformar repetição de pedido em conteúdo novo."
+
+	pair := MaximumPairSimilarityDetail([]Entry{
+		{Line: 1, Record: left},
+		{Line: 2, Record: right},
+	})
+	if pair.Score > 0.64 {
+		t.Fatalf("expansion boilerplate dominated similarity: pair=%s/%s score=%.4f, want <=0.64", pair.LeftID, pair.RightID, pair.Score)
+	}
+}
+
 func similarityTestRecord(intentID string, readerProblem string) Record {
 	return Record{
 		BatchID:         "batch-consumidor-financeiro-digital",

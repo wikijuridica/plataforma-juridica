@@ -59,6 +59,8 @@ var specificitySignals = map[string]bool{
 	"contrato": true, "pedido": true, "médico": true, "medico": true, "resposta": true, "operadora": true, "protocolo": true,
 	"relatório": true, "relatorio": true, "clínico": true, "clinico": true, "procedimento": true, "prazo": true, "aplicativo": true,
 	"central": true, "ans": true, "rol": true, "urgência": true, "urgencia": true, "cobertura": true, "documentos": true,
+	"prescrição": true, "prescricao": true, "especialista": true, "orçamento": true, "orcamento": true,
+	"terapêutica": true, "terapeutica": true, "exclusão": true, "exclusao": true,
 	"triagem": true, "administrativa": true, "judicial": true, "lei": true, "artigo": true, "processo": true, "inss": true,
 	"benefício": true, "beneficio": true, "cartório": true, "cartorio": true, "notariado": true, "laudo": true,
 	"clt": true, "holerites": true, "mensagens": true, "advertências": true, "advertencias": true, "testemunhas": true,
@@ -69,9 +71,16 @@ var specificitySignals = map[string]bool{
 	"cadúnico": true, "cadunico": true, "cnis": true, "perícia": true, "pericia": true, "laudos": true,
 	"exames": true, "atestados": true, "comunicado": true, "decisão": true, "decisao": true, "recurso": true,
 	"cadastro": true, "dívida": true, "divida": true, "extratos": true, "fraude": true, "banco": true, "pix": true,
+	"comprovante": true, "comprovantes": true, "boletim": true, "protocolos": true, "eletrônico": true,
+	"eletronico": true, "eletrônicos": true, "eletronicos": true, "identidade": true, "autenticação": true,
+	"autenticacao": true, "instituição": true, "instituicao": true, "titularidade": true, "transferência": true,
+	"transferencia": true, "contestação": true, "contestacao": true,
 	"certidão": true, "certidao": true, "óbito": true, "obito": true, "herdeiros": true, "matrícula": true,
-	"matricula": true, "testamento": true, "espólio": true, "espolio": true, "alvará": true, "alvara": true,
+	"matricula": true, "certidões": true, "certidoes": true, "testamento": true, "espólio": true, "espolio": true, "alvará": true, "alvara": true,
 	"extrato": true, "imóvel": true, "imovel": true, "dívidas": true, "dividas": true, "imposto": true,
+	"vínculo": true, "vinculo": true, "vínculos": true, "vinculos": true, "carteira": true, "guias": true,
+	"ppp": true, "requerimento": true, "exigência": true, "exigencia": true, "fgts": true, "trct": true,
+	"aviso": true, "pagamento": true, "recibos": true, "homologação": true, "homologacao": true,
 }
 
 func ScoreText(value string) Score {
@@ -96,7 +105,7 @@ func ScoreText(value string) Score {
 		penalty += 25
 		ai += 22
 	}
-	if code, message, ok := repeatedNGram(words, 3, 3); ok {
+	if code, message, ok := repeatedNGram(signalWords, 3, 3); ok {
 		issues = append(issues, Issue{Code: code, Message: message})
 		penalty += 24
 		ai += 22
@@ -228,6 +237,14 @@ func (s Score) Codes() []string {
 	}
 	sort.Strings(codes)
 	return codes
+}
+
+func (s Score) Messages() []string {
+	messages := make([]string, 0, len(s.BlockingIssues))
+	for _, issue := range s.BlockingIssues {
+		messages = append(messages, issue.Code+": "+issue.Message)
+	}
+	return messages
 }
 
 func (r Report) Passed() bool { return len(r.Issues) == 0 }
@@ -368,7 +385,16 @@ func monotoneSentenceStarts(value string) bool {
 		if len(words) == 0 {
 			continue
 		}
-		start := words[0]
+		start := ""
+		for _, word := range words {
+			if !scoreStopWords[word] && len(word) > 2 {
+				start = word
+				break
+			}
+		}
+		if start == "" {
+			continue
+		}
 		starts[start]++
 		if starts[start] >= 4 {
 			return true

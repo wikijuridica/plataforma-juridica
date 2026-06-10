@@ -21,7 +21,7 @@ func TestBatchExpansionStrategyPlansNextScaleWithoutPublishing(t *testing.T) {
 	}
 
 	readyFamilies := 0
-	archiveGrowthFamilies := 0
+	paidBlockedFamilies := 0
 	totalCurrent := 0
 	totalNext := 0
 	for _, entry := range records {
@@ -34,13 +34,16 @@ func TestBatchExpansionStrategyPlansNextScaleWithoutPublishing(t *testing.T) {
 				t.Fatalf("line=%d next target=%d, want at least 60 for ready family", entry.Line, record.NextCandidateTarget)
 			}
 		}
-		if record.StrategyStatus == batchexpansionstrategy.ArchiveGrowthRequiredStatus {
-			archiveGrowthFamilies++
+		if record.StrategyStatus == batchexpansionstrategy.BlockedPaidIntentStatus {
+			paidBlockedFamilies++
 			if record.NextCandidateTarget != record.CurrentCandidateCount {
-				t.Fatalf("line=%d archive growth target=%d, want current=%d until archive expands", entry.Line, record.NextCandidateTarget, record.CurrentCandidateCount)
+				t.Fatalf("line=%d paid blocked target=%d, want current=%d until paid-intent is refined", entry.Line, record.NextCandidateTarget, record.CurrentCandidateCount)
 			}
-			if record.ArchiveRecordsObserved != record.CurrentCandidateCount {
-				t.Fatalf("line=%d archive growth should only happen at archive limit, archive=%d current=%d", entry.Line, record.ArchiveRecordsObserved, record.CurrentCandidateCount)
+			if record.PaidIntentBlockedCount == 0 {
+				t.Fatalf("line=%d paid blocked strategy without blocked paid-intent count", entry.Line)
+			}
+			if record.ArchiveRecordsObserved <= record.CurrentCandidateCount {
+				t.Fatalf("line=%d paid blocked family should already have archive headroom, archive=%d current=%d", entry.Line, record.ArchiveRecordsObserved, record.CurrentCandidateCount)
 			}
 		}
 		if record.BatchID == "batch-previdenciario-digital" {
@@ -63,9 +66,6 @@ func TestBatchExpansionStrategyPlansNextScaleWithoutPublishing(t *testing.T) {
 	}
 	if readyFamilies < 1 {
 		t.Fatalf("ready families=%d, want at least previdenciario ready for next expansion", readyFamilies)
-	}
-	if archiveGrowthFamilies < 5 {
-		t.Fatalf("archive growth families=%d, want at least 5 families requiring more permanent blocked archive drafts", archiveGrowthFamilies)
 	}
 	if totalNext <= totalCurrent {
 		t.Fatalf("strategy did not plan growth: current=%d next=%d", totalCurrent, totalNext)

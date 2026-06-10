@@ -96,6 +96,24 @@ func TestBatchFinalAuthorialDraftsKeepPrevidenciarioSemanticVariation(t *testing
 	}
 }
 
+func TestBatchFinalAuthorialDraftsAvoidMechanicalBeforeAnythingPhrase(t *testing.T) {
+	records, loadReport := batchfinaldrafts.LoadRecords(".")
+	if !loadReport.Passed() {
+		t.Fatalf("could not load batch final authorial drafts: %v", loadReport.Messages())
+	}
+
+	for _, entry := range records {
+		record := entry.Record
+		if record.BatchID != "batch-previdenciario-digital" {
+			continue
+		}
+		count := strings.Count(strings.ToLower(record.FullText()), "antes de qualquer")
+		if count >= 3 {
+			t.Fatalf("line=%d %s repeats 'antes de qualquer' %d times; final draft must polish archive snippets instead of compounding boilerplate", entry.Line, record.UniqueIntentID, count)
+		}
+	}
+}
+
 func TestBatchFinalAuthorialDraftRejectsSourceBlockedOrPublicDraft(t *testing.T) {
 	index := batchfinaldrafts.ManifestIndex{
 		BaseURL: "https://wikijuridica.com.br",

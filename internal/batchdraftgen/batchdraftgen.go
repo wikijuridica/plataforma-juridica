@@ -2,6 +2,7 @@ package batchdraftgen
 
 import (
 	"bufio"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -80,6 +81,16 @@ type semanticFacet struct {
 	RiskFocus          string
 	DigitalFocus       string
 	OperationalContext string
+}
+
+type cycleProfile struct {
+	ID            string
+	TermContext   string
+	ReaderFocus   string
+	SourceFocus   string
+	DocumentFocus string
+	RiskFocus     string
+	DigitalFocus  string
 }
 
 func DefaultOptions() Options {
@@ -332,6 +343,209 @@ func WriteMetrics(root string, metrics []Metric) error {
 	return nil
 }
 
+func WriteSamples(root string, drafts []batchdrafts.Record) error {
+	contract, err := storage.LoadContract(root)
+	if err != nil {
+		return err
+	}
+	layer, ok := contract.LayerByName("batch_drafts")
+	if !ok {
+		return fmt.Errorf("unknown_layer=batch_drafts")
+	}
+	payload, err := prepareSamplesPayload(drafts, layer.RecordMaxBytes)
+	if err != nil {
+		return err
+	}
+	path := filepath.Join(contract.Root, layer.Path)
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return err
+	}
+	tempFile, err := os.CreateTemp(filepath.Dir(path), ".batch_drafts-*.tmp")
+	if err != nil {
+		return err
+	}
+	tempPath := tempFile.Name()
+	cleanup := true
+	defer func() {
+		if cleanup {
+			_ = os.Remove(tempPath)
+		}
+	}()
+	if _, err := tempFile.Write(payload); err != nil {
+		_ = tempFile.Close()
+		return err
+	}
+	if err := tempFile.Close(); err != nil {
+		return err
+	}
+	if err := os.Rename(tempPath, path); err != nil {
+		return err
+	}
+	cleanup = false
+	return nil
+}
+
+func WriteArchive(root string, drafts []batchdrafts.Record) error {
+	contract, err := storage.LoadContract(root)
+	if err != nil {
+		return err
+	}
+	layer, ok := contract.LayerByName("batch_draft_expansion_archive")
+	if !ok {
+		return fmt.Errorf("unknown_layer=batch_draft_expansion_archive")
+	}
+	payload, err := prepareArchivePayload(drafts, layer.RecordMaxBytes)
+	if err != nil {
+		return err
+	}
+	path := filepath.Join(contract.Root, layer.Path)
+	if err := os.MkdirAll(filepath.Dir(path), 0755); err != nil {
+		return err
+	}
+	tempFile, err := os.CreateTemp(filepath.Dir(path), ".batch_draft_expansion_archive-*.tmp")
+	if err != nil {
+		return err
+	}
+	tempPath := tempFile.Name()
+	cleanup := true
+	defer func() {
+		if cleanup {
+			_ = os.Remove(tempPath)
+		}
+	}()
+	if _, err := tempFile.Write(payload); err != nil {
+		_ = tempFile.Close()
+		return err
+	}
+	if err := tempFile.Close(); err != nil {
+		return err
+	}
+	if err := os.Rename(tempPath, path); err != nil {
+		return err
+	}
+	cleanup = false
+	return nil
+}
+
+func prepareSamplesPayload(drafts []batchdrafts.Record, recordMaxBytes int) ([]byte, error) {
+	if err := validateSampleDrafts(drafts); err != nil {
+		return nil, err
+	}
+	var buffer bytes.Buffer
+	for _, draft := range drafts {
+		if report := batchdrafts.ValidateRecord(draft); !report.Passed() {
+			return nil, fmt.Errorf("invalid_sample_draft=%s %s", draft.UniqueIntentID, strings.Join(report.Messages(), " | "))
+		}
+		data, err := json.Marshal(draft)
+		if err != nil {
+			return nil, err
+		}
+		if len(data)+1 > recordMaxBytes {
+			return nil, fmt.Errorf("record_too_large=batch_drafts bytes=%d max=%d id=%s", len(data)+1, recordMaxBytes, draft.UniqueIntentID)
+		}
+		buffer.Write(data)
+		buffer.WriteByte('\n')
+	}
+	return buffer.Bytes(), nil
+}
+
+func prepareArchivePayload(drafts []batchdrafts.Record, recordMaxBytes int) ([]byte, error) {
+	if err := validateArchiveDrafts(drafts); err != nil {
+		return nil, err
+	}
+	var buffer bytes.Buffer
+	for _, draft := range drafts {
+		if report := batchdrafts.ValidateRecord(draft); !report.Passed() {
+			return nil, fmt.Errorf("invalid_archive_draft=%s %s", draft.UniqueIntentID, strings.Join(report.Messages(), " | "))
+		}
+		data, err := json.Marshal(draft)
+		if err != nil {
+			return nil, err
+		}
+		if len(data)+1 > recordMaxBytes {
+			return nil, fmt.Errorf("record_too_large=batch_draft_expansion_archive bytes=%d max=%d id=%s", len(data)+1, recordMaxBytes, draft.UniqueIntentID)
+		}
+		buffer.Write(data)
+		buffer.WriteByte('\n')
+	}
+	return buffer.Bytes(), nil
+}
+
+func validateSampleDrafts(drafts []batchdrafts.Record) error {
+	if len(drafts) < 18 {
+		return fmt.Errorf("sample_drafts_too_few=%d", len(drafts))
+	}
+	entries := make([]batchdrafts.Entry, 0, len(drafts))
+	perBatch := make(map[string]int)
+	seenIntent := make(map[string]int)
+	rewritten := 0
+	for index, draft := range drafts {
+		if report := batchdrafts.ValidateRecord(draft); !report.Passed() {
+			return fmt.Errorf("invalid_sample_draft=%s %s", draft.UniqueIntentID, strings.Join(report.Messages(), " | "))
+		}
+		if previous := seenIntent[draft.UniqueIntentID]; previous > 0 {
+			return fmt.Errorf("sample_draft_duplicate_intent=line:%d previous_line:%d id:%s", index+1, previous, draft.UniqueIntentID)
+		}
+		seenIntent[draft.UniqueIntentID] = index + 1
+		perBatch[draft.BatchID]++
+		if draft.RewriteStatus == "rewritten_after_score_failure" {
+			rewritten++
+		}
+		entries = append(entries, batchdrafts.Entry{Line: index + 1, Record: draft})
+	}
+	for batchID, count := range perBatch {
+		if count < 3 {
+			return fmt.Errorf("sample_drafts_too_few_per_batch=%s:%d", batchID, count)
+		}
+	}
+	if rewritten < 3 {
+		return fmt.Errorf("sample_drafts_too_few_rewrites=%d", rewritten)
+	}
+	if pair := batchdrafts.MaximumPairSimilarityDetail(entries); pair.Score > 0.64 {
+		return fmt.Errorf("sample_drafts_similarity_too_high=%.4f left=%s right=%s", pair.Score, pair.LeftID, pair.RightID)
+	}
+	return nil
+}
+
+func validateArchiveDrafts(drafts []batchdrafts.Record) error {
+	if len(drafts) < 600 {
+		return fmt.Errorf("archive_drafts_too_few=%d", len(drafts))
+	}
+	entries := make([]batchdrafts.Entry, 0, len(drafts))
+	perBatch := make(map[string]int)
+	seenIntent := make(map[string]int)
+	rewritten := 0
+	for index, draft := range drafts {
+		if report := batchdrafts.ValidateRecord(draft); !report.Passed() {
+			return fmt.Errorf("invalid_archive_draft=%s %s", draft.UniqueIntentID, strings.Join(report.Messages(), " | "))
+		}
+		if previous := seenIntent[draft.UniqueIntentID]; previous > 0 {
+			return fmt.Errorf("archive_draft_duplicate_intent=line:%d previous_line:%d id:%s", index+1, previous, draft.UniqueIntentID)
+		}
+		seenIntent[draft.UniqueIntentID] = index + 1
+		if draft.SourceMatrixID == "" {
+			return fmt.Errorf("archive_draft_without_source_matrix=%s", draft.UniqueIntentID)
+		}
+		perBatch[draft.BatchID]++
+		if draft.RewriteStatus == "rewritten_after_score_failure" {
+			rewritten++
+		}
+		entries = append(entries, batchdrafts.Entry{Line: index + 1, Record: draft})
+	}
+	for batchID, count := range perBatch {
+		if count < 100 {
+			return fmt.Errorf("archive_drafts_too_few_per_batch=%s:%d", batchID, count)
+		}
+	}
+	if rewritten < 300 {
+		return fmt.Errorf("archive_drafts_too_few_rewrites=%d", rewritten)
+	}
+	if pair := batchdrafts.MaximumPairSimilarityDetail(entries); pair.Score > 0.64 {
+		return fmt.Errorf("archive_drafts_similarity_too_high=%.4f left=%s right=%s", pair.Score, pair.LeftID, pair.RightID)
+	}
+	return nil
+}
+
 func (r Result) DraftIDs() []string {
 	ids := make([]string, 0, len(r.Drafts))
 	for _, draft := range r.Drafts {
@@ -390,6 +604,7 @@ func buildDraft(batch scalablebatches.Record, scenario scenario, checkedAt strin
 		PublicPath:         "",
 		CheckedAt:          checkedAt,
 	}
+	record.DigitalAction = addEditorialDepth(record.DigitalAction, scenario, record.LegalArea)
 	sourceFamily := ""
 	if len(batch.SourceFamilies) > 0 {
 		sourceFamily = batch.SourceFamilies[0]
@@ -400,6 +615,33 @@ func buildDraft(batch scalablebatches.Record, scenario scenario, checkedAt strin
 	record.HumanScore = score.HumanScore
 	record.AILikeScore = score.AILikeScore
 	return record
+}
+
+func addEditorialDepth(current string, scenario scenario, area string) string {
+	facetID := scenarioFacetID(scenario.IntentID)
+	lead := readerLead(facetID)
+	template := (scenarioTemplateIndex(scenario.IntentID) + scenarioTemplateIndex(facetID)) % 5
+	switch template {
+	case 0:
+		return current + " Revisao informativa de " + lead + " separa fato, prova e duvida juridica para consulta online, sem promessa de resultado."
+	case 1:
+		return current + " Contexto editorial de " + lead + ": documentos, fonte e risco economico precisam conversar antes de contratar atendimento digital para " + areaContext(area) + "."
+	case 2:
+		return current + " Filtro juridico de " + lead + ": o leitor entende limite da fonte, utilidade dos arquivos e diferenca entre orientacao geral e consulta particular."
+	case 3:
+		return current + " Validacao de " + lead + ": o texto bloqueado cruza relato, documento e fonte antes de rota publica, mantendo CTA apenas como triagem contextual."
+	default:
+		return current + " Utilidade de " + lead + ": a pauta organiza documentos, fase do problema e pergunta juridica para conversa objetiva com advogado."
+	}
+}
+
+func scenarioFacetID(intentID string) string {
+	for _, facet := range allSemanticFacets() {
+		if strings.Contains(intentID, "-"+facet.ID) {
+			return facet.ID
+		}
+	}
+	return "contexto-juridico"
 }
 
 func initialIssueCodes(term string) []string {
@@ -479,8 +721,8 @@ func sourceMatrixID(scenario scenario) string {
 		if strings.HasSuffix(scenario.IntentID, suffix) {
 			return strings.TrimSuffix(scenario.IntentID, suffix)
 		}
-		roundMarker := suffix + "-rodada-"
-		if index := strings.LastIndex(scenario.IntentID, roundMarker); index > 0 {
+		profiledMarker := suffix + "-"
+		if index := strings.LastIndex(scenario.IntentID, profiledMarker); index > 0 && strings.Contains(scenario.IntentID[index+len(profiledMarker):], "rodada-") {
 			return scenario.IntentID[:index]
 		}
 	}
@@ -547,30 +789,424 @@ func expandScenarios(area string, base []scenario, count int) []scenario {
 			if len(expanded) >= count {
 				break
 			}
-			expanded = append(expanded, scenarioVariant(area, item, variant+index))
+			expanded = append(expanded, scenarioVariant(area, item, variant+index, len(expanded)))
 		}
 		variant++
 	}
 	return expanded
 }
 
-func scenarioVariant(area string, base scenario, variant int) scenario {
+func scenarioVariant(area string, base scenario, variant int, ordinal int) scenario {
 	facets := semanticFacetsFor(area)
 	facet := facets[(variant-1)%len(facets)]
 	cycle := (variant - 1) / len(facets)
+	profile := cycleProfile{}
+	if ordinal >= 100 {
+		profile = scenarioCycleProfile(area, cycle+ordinal-100)
+	}
 	facetID := facet.ID
 	if cycle > 0 {
 		facetID = fmt.Sprintf("%s-rodada-%02d", facet.ID, cycle+1)
+		if profile.ID != "" {
+			facetID = fmt.Sprintf("%s-%s-rodada-%02d", facet.ID, profile.ID, cycle+1)
+		}
+	}
+	template := scenarioTemplateIndex(base.IntentID + "-" + facet.ID + "-" + profile.ID)
+	term := variantTerm(template, base.Term, facet, profile)
+	readerFocus := facet.ReaderFocus
+	if profile.ReaderFocus != "" {
+		readerFocus = readerFocus + "; " + profile.ReaderFocus
+	}
+	sourceFocus := facet.SourceFocus
+	if profile.SourceFocus != "" {
+		sourceFocus = sourceFocus + " " + profile.SourceFocus
+	}
+	documentFocus := facet.DocumentFocus
+	if profile.DocumentFocus != "" {
+		documentFocus = joinDistinctContext(documentFocus, profile.DocumentFocus)
+	}
+	riskFocus := facet.RiskFocus
+	if profile.RiskFocus != "" {
+		riskFocus = riskFocus + " " + profile.RiskFocus
+	}
+	digitalFocus := facet.DigitalFocus
+	if profile.DigitalFocus != "" {
+		digitalFocus = digitalFocus + " " + profile.DigitalFocus
 	}
 	return scenario{
 		IntentID:        base.IntentID + "-" + facetID,
-		Term:            base.Term + " com foco em " + facet.OperationalContext,
-		ReaderProblem:   readerLead(facetID) + " em " + areaContext(area) + " exige " + facet.ReaderFocus + ", sem perder datas, documento principal, fonte oficial e decisao que muda o rumo do caso.",
-		SourceHook:      facet.SourceFocus + " " + areaSourceContext(area) + " Matriz URL-a-URL segue bloqueada para coleta, com tipo de fonte e uso apenas referencial.",
-		DocumentContext: facet.DocumentFocus + ". " + areaDocumentContext(area) + " Recorte do caso: " + compactContext(base.DocumentContext),
-		RiskContext:     facet.RiskFocus + ". " + areaRiskContext(area) + " Sinal especifico: " + compactContext(base.RiskContext),
-		DigitalAction:   facet.DigitalFocus + ". " + areaDigitalContext(area) + " Origem do WhatsApp recebe identificador do rascunho, subtema e motivo da consulta remota.",
+		Term:            term,
+		ReaderProblem:   variantReaderProblem(template, facetID, area, readerFocus, base, profile),
+		SourceHook:      variantSourceHook(template, facetID, sourceFocus, base, profile),
+		DocumentContext: variantDocumentContext(template, facetID, documentFocus, base, profile),
+		RiskContext:     variantRiskContext(template, facetID, riskFocus, base, profile),
+		DigitalAction:   variantDigitalAction(template, facetID, digitalFocus, base, profile),
 	}
+}
+
+func variantTerm(template int, baseTerm string, facet semanticFacet, profile cycleProfile) string {
+	focus := facet.OperationalContext
+	if profile.TermContext != "" {
+		focus = profile.TermContext + " em " + facet.OperationalContext
+	}
+	switch template {
+	case 0:
+		return uppercaseFirst(focus) + " no caso de " + baseTerm
+	case 1:
+		return baseTerm + ": " + focus
+	case 2:
+		return baseTerm + " quando há " + focus
+	case 3:
+		return "Como analisar " + baseTerm + " com " + focus
+	default:
+		return "Documentos e risco em " + baseTerm + " com " + focus
+	}
+}
+
+func subthemeCue(term string) string {
+	words := make([]string, 0, 2)
+	for _, word := range normalizedWords(term) {
+		if len(word) > 3 && !localStopWord(word) {
+			words = append(words, word)
+		}
+		if len(words) == 2 {
+			break
+		}
+	}
+	if len(words) == 0 {
+		return "subtema especifico"
+	}
+	return strings.Join(words, " ")
+}
+
+func contextCue(value string, limit int) string {
+	return contextCueFrom(value, limit, 0)
+}
+
+func contextCueFrom(value string, limit int, offset int) string {
+	candidates := make([]string, 0, limit)
+	seen := make(map[string]bool)
+	for _, word := range normalizedWords(value) {
+		if len(word) <= 3 || localStopWord(word) || seen[word] {
+			continue
+		}
+		seen[word] = true
+		candidates = append(candidates, word)
+	}
+	if len(candidates) == 0 {
+		return "pista especifica pendente"
+	}
+	words := make([]string, 0, limit)
+	start := offset % len(candidates)
+	if start < 0 {
+		start = 0
+	}
+	for index := 0; index < len(candidates); index++ {
+		words = append(words, candidates[(start+index)%len(candidates)])
+		if len(words) == limit {
+			break
+		}
+	}
+	if len(words) == 0 {
+		return "pista especifica pendente"
+	}
+	return strings.Join(words, " ")
+}
+
+func joinDistinctContext(parts ...string) string {
+	accepted := make([]string, 0, len(parts))
+	for _, part := range parts {
+		part = strings.TrimSpace(part)
+		if part == "" {
+			continue
+		}
+		current := strings.Join(accepted, " ")
+		if current != "" && sharesSignalNGram(current, part, 3) {
+			continue
+		}
+		accepted = append(accepted, part)
+	}
+	return strings.Join(accepted, ". ")
+}
+
+func sharesSignalNGram(left string, right string, size int) bool {
+	leftSet := signalNGrams(left, size)
+	if len(leftSet) == 0 {
+		return false
+	}
+	for ngram := range signalNGrams(right, size) {
+		if leftSet[ngram] {
+			return true
+		}
+	}
+	return false
+}
+
+func signalNGrams(value string, size int) map[string]bool {
+	words := make([]string, 0)
+	for _, word := range normalizedWords(value) {
+		if len(word) > 3 && !localStopWord(word) {
+			words = append(words, word)
+		}
+	}
+	ngrams := make(map[string]bool)
+	for i := 0; i+size <= len(words); i++ {
+		ngrams[strings.Join(words[i:i+size], " ")] = true
+	}
+	return ngrams
+}
+
+func localStopWord(word string) bool {
+	return localStopWords[word]
+}
+
+func normalizedWords(value string) []string {
+	return strings.Fields(strings.Map(func(r rune) rune {
+		if unicode.IsLetter(r) || unicode.IsDigit(r) {
+			return unicode.ToLower(r)
+		}
+		return ' '
+	}, value))
+}
+
+func uppercaseFirst(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return value
+	}
+	runes := []rune(value)
+	runes[0] = unicode.ToUpper(runes[0])
+	return string(runes)
+}
+
+func scenarioTemplateIndex(intentID string) int {
+	sum := 0
+	for _, r := range intentID {
+		sum += int(r)
+	}
+	return sum % 5
+}
+
+func variantReaderProblem(template int, facetID string, area string, readerFocus string, base scenario, profile cycleProfile) string {
+	lead := readerLead(facetID)
+	context := areaContext(area)
+	facetOffset := scenarioTemplateIndex(facetID)
+	style := (template + facetOffset) % 5
+	baseProblem := contextCueFrom(base.ReaderProblem, 8, template+facetOffset)
+	if profile.ID != "" {
+		cue := contextCueFrom(base.ReaderProblem, 8, template+facetOffset)
+		switch style {
+		case 0:
+			return lead + " em " + context + " trata " + readerFocus + ". A rodada nova muda o eixo para " + profile.TermContext + " e preserva pista concreta: " + cue + "."
+		case 1:
+			return lead + " parte da pergunta do usuario e testa " + readerFocus + ". O recorte de " + profile.TermContext + " usa estes sinais do caso matriz: " + cue + "."
+		case 2:
+			return "Neste subtema, " + lead + " nao basta como etiqueta. A leitura cruza " + readerFocus + " com pista material do caso: " + cue + "."
+		case 3:
+			return lead + " organiza a duvida antes do CTA. O perfil " + profile.TermContext + " so avanca quando conversa com sinais concretos: " + cue + "."
+		default:
+			return lead + " em " + context + " separa relato e prova. A expansao usa " + profile.TermContext + " com pista editorial especifica: " + cue + "."
+		}
+	}
+	switch style {
+	case 0:
+		return lead + " no contexto de " + context + ": o ponto central e " + readerFocus + ", conectado ao problema original do leitor: " + baseProblem
+	case 1:
+		return lead + " em " + context + " parte do fato narrado pelo usuario e confere " + readerFocus + ". Base concreta: " + baseProblem
+	case 2:
+		return lead + " nao pode virar frase generica; neste subtema, a leitura exige " + readerFocus + " e compara o relato com a situacao documentada: " + baseProblem
+	case 3:
+		return lead + " torna o recorte de " + context + " util quando mostra " + readerFocus + " e separa o que ja esta provado do que ainda falta: " + baseProblem
+	default:
+		return lead + " antes de qualquer CTA precisa explicar " + readerFocus + " em linguagem direta para quem vive este problema: " + baseProblem
+	}
+}
+
+func variantSourceHook(template int, facetID string, sourceFocus string, base scenario, profile cycleProfile) string {
+	facetOffset := scenarioTemplateIndex(facetID)
+	style := (template + facetOffset) % 5
+	if profile.ID != "" {
+		cue := contextCueFrom(base.SourceHook, 7, template+facetOffset)
+		switch style {
+		case 0:
+			return sourceFocus + " Fonte do subtema: " + cue + "."
+		case 1:
+			return "Autoridade juridica do recorte: " + cue + ". " + sourceFocus
+		case 2:
+			return sourceFocus + " Sinais de autoridade: " + cue + "."
+		case 3:
+			return sourceFocus + " Recorte de fonte exigido: " + cue + "."
+		default:
+			return sourceFocus + " Matriz oficial ligada a: " + cue + "."
+		}
+	}
+	switch style {
+	case 0:
+		return sourceFocus + " Referencia bloqueada: " + contextCueFrom(base.SourceHook, 5, template+facetOffset) + "."
+	case 1:
+		return "Autoridade do rascunho: " + sourceFocus + " Pista: " + contextCueFrom(base.SourceHook, 5, template+facetOffset) + "."
+	case 2:
+		return sourceFocus + " Uso editorial proprio, sem espelhar fonte. Pista: " + contextCueFrom(base.SourceHook, 5, template+facetOffset) + "."
+	case 3:
+		return sourceFocus + " Auditoria bloqueada com pista: " + contextCueFrom(base.SourceHook, 5, template+facetOffset) + "."
+	default:
+		return sourceFocus + " Rascunho proprio noindex; pista: " + contextCueFrom(base.SourceHook, 5, template+facetOffset) + "."
+	}
+}
+
+func variantDocumentContext(template int, facetID string, documentFocus string, base scenario, profile cycleProfile) string {
+	facetOffset := scenarioTemplateIndex(facetID)
+	style := (template + facetOffset) % 5
+	baseDocument := contextCueFrom(base.DocumentContext, 8, template+facetOffset+1)
+	if profile.ID != "" {
+		cue := contextCueFrom(base.DocumentContext, 8, template+facetOffset+1)
+		switch style {
+		case 0:
+			return documentFocus + " Pista documental propria: " + cue + "."
+		case 1:
+			return documentFocus + " Arquivo central da rodada: " + cue + "."
+		case 2:
+			return documentFocus + " Sinais documentais: " + cue + "."
+		case 3:
+			return documentFocus + " Pista de fase e arquivo: " + cue + "."
+		default:
+			return documentFocus + " Documento que altera analise: " + cue + "."
+		}
+	}
+	if sharesSignalNGram(documentFocus, baseDocument, 3) {
+		baseDocument = "O caso matriz e resumido por fase, periodo e lacuna documental, sem repetir a mesma sequencia de arquivos."
+	}
+	switch style {
+	case 0:
+		return documentFocus + " Recorte documental: " + baseDocument + "."
+	case 1:
+		return documentFocus + " Arquivos relevantes: " + baseDocument + "."
+	case 2:
+		return documentFocus + " Diferença pratica: " + baseDocument + "."
+	case 3:
+		return documentFocus + " Referencia documental: " + baseDocument + "."
+	default:
+		return documentFocus + " Analise documental parte de: " + baseDocument + "."
+	}
+}
+
+func variantRiskContext(template int, facetID string, riskFocus string, base scenario, profile cycleProfile) string {
+	facetOffset := scenarioTemplateIndex(facetID)
+	style := (template + facetOffset) % 5
+	baseRisk := contextCueFrom(base.RiskContext, 8, template+facetOffset+2)
+	if profile.ID != "" {
+		cue := contextCueFrom(base.RiskContext, 8, template+facetOffset+2)
+		switch style {
+		case 0:
+			return riskFocus + " Pista concreta: " + cue + "."
+		case 1:
+			return riskFocus + " Conferencia exigida: " + cue + "."
+		case 2:
+			return riskFocus + " Sinais de prejuizo ou suposicao: " + cue + "."
+		case 3:
+			return riskFocus + " Diferenca juridica: " + cue + "."
+		default:
+			return riskFocus + " Pista de decisao informada: " + cue + "."
+		}
+	}
+	switch style {
+	case 0:
+		return riskFocus + " Risco concreto: " + baseRisk + "."
+	case 1:
+		return riskFocus + " Cautela do caso: " + baseRisk + "."
+	case 2:
+		return riskFocus + " Prejuizo ou suposicao: " + baseRisk + "."
+	case 3:
+		return riskFocus + " Limite juridico: " + baseRisk + "."
+	default:
+		return riskFocus + " Decisao informada considera: " + baseRisk + "."
+	}
+}
+
+func variantDigitalAction(template int, facetID string, digitalFocus string, base scenario, profile cycleProfile) string {
+	facetOffset := scenarioTemplateIndex(facetID)
+	style := (template + facetOffset) % 5
+	if profile.ID != "" {
+		cue := contextCueFrom(base.DigitalAction, 7, template+facetOffset+3)
+		switch style {
+		case 0:
+			return digitalFocus + " WhatsApp contextual: " + cue + "."
+		case 1:
+			return digitalFocus + " Contexto remoto: " + cue + "."
+		case 2:
+			return digitalFocus + " CTA separado preserva: " + cue + "."
+		case 3:
+			return digitalFocus + " Triagem usa: " + cue + "."
+		default:
+			return digitalFocus + " Contexto rastreavel: " + cue + "."
+		}
+	}
+	switch style {
+	case 0:
+		return digitalFocus + " WhatsApp contextual: " + contextCueFrom(base.DigitalAction, 5, template+facetOffset+3) + "."
+	case 1:
+		return digitalFocus + " Atendimento remoto recebe: " + contextCueFrom(base.DigitalAction, 5, template+facetOffset+3) + "."
+	case 2:
+		return digitalFocus + " CTA separado com pista: " + contextCueFrom(base.DigitalAction, 5, template+facetOffset+3) + "."
+	case 3:
+		return digitalFocus + " Triagem digital usa: " + contextCueFrom(base.DigitalAction, 5, template+facetOffset+3) + "."
+	default:
+		return digitalFocus + " Origem rastreavel: " + contextCueFrom(base.DigitalAction, 5, template+facetOffset+3) + "."
+	}
+}
+
+func scenarioCycleProfile(area string, cycle int) cycleProfile {
+	if cycle <= 0 {
+		return cycleProfile{}
+	}
+	profiles := []cycleProfile{
+		{
+			ID:            "complemento-posterior-anexo-corrigido",
+			TermContext:   "documento complementar posterior",
+			ReaderFocus:   "comparar arquivo novo, resposta posterior e documento inicial",
+			SourceFocus:   "Etapa posterior precisa de apoio proprio, nao apenas do direito em abstrato.",
+			DocumentFocus: "Comprovante de reenvio, anexo corrigido e comunicacao mais recente entram como camada propria.",
+			RiskFocus:     "Repetir pedido sem corrigir lacuna ja apontada no protocolo aumenta o risco.",
+			DigitalFocus:  "Triagem remota separa arquivo inicial, complemento enviado depois e resposta recebida.",
+		},
+		{
+			ID:            "recurso-decisao-recorrida-prova-nova",
+			TermContext:   "fase recursal documentada",
+			ReaderFocus:   "distinguir pedido inicial, recurso, revisao e resposta complementar",
+			SourceFocus:   "Rito, prazo ou autoridade da etapa recursal precisam aparecer na fonte.",
+			DocumentFocus: "Razoes do recurso, decisao recorrida, protocolo e prova nova ficam em trilha separada.",
+			RiskFocus:     "Tratar recurso como simples novo pedido pode fazer a pessoa perder prazo.",
+			DigitalFocus:  "Fluxo remoto marca fase recursal, prazo, documento novo e pergunta juridica objetiva.",
+		},
+		{
+			ID:            "divergencia-cadastral-base-antiga",
+			TermContext:   "erro cadastral verificavel",
+			ReaderFocus:   "separar erro de cadastro, documento faltante e divergencia de versoes",
+			SourceFocus:   "Cadastro, registro, contrato ou base administrativa precisam orientar a fonte oficial.",
+			DocumentFocus: "Historico cadastral, comprovante antigo e dado divergente explicam o recorte.",
+			RiskFocus:     "Pedir providencia errada quando o problema e acerto de base atrasa a solucao.",
+			DigitalFocus:  "Conferencia digital lista campo divergente, prova do dado correto e canal ja usado.",
+		},
+		{
+			ID:            "recorrencia-prejuizo-continuado-valores-repetidos",
+			TermContext:   "impacto continuado comprovado",
+			ReaderFocus:   "medir recorrencia, continuidade do prejuizo e evento que tornou o caso urgente",
+			SourceFocus:   "Prazo, dever de resposta ou criterio objetivo de continuidade delimitam a fonte.",
+			DocumentFocus: "Extratos, historico de pagamentos, comunicados e datas repetidas mostram continuidade.",
+			RiskFocus:     "Urgencia generica sem prejuizo continuado demonstrado enfraquece a analise.",
+			DigitalFocus:  "Roteiro online organiza recorrencia, valores, datas e documento que muda a prioridade.",
+		},
+	}
+	profile := profiles[(cycle-1)%len(profiles)]
+	if area == "previdenciario" && profile.ID == "divergencia-cadastral-base-antiga" {
+		profile.TermContext = "divergencia no CNIS ou cadastro previdenciario"
+		profile.ReaderFocus = "separar erro de CNIS, vinculo faltante, laudo incompleto e fase do requerimento"
+		profile.SourceFocus = "Cadastro, recurso ou exigencia concreta precisam aparecer na fonte do INSS ou Previdencia."
+		profile.DocumentFocus = "CNIS antigo, carteira, PPP, guia, comunicado de decisao e protocolo mostram a divergencia."
+		profile.RiskFocus = "Protocolar beneficio com base cadastral incompleta pode gerar indeferimento evitavel."
+		profile.DigitalFocus = "Conferencia remota separa acerto de CNIS, recurso, novo pedido e possivel analise judicial."
+	}
+	return profile
 }
 
 func areaContext(area string) string {
@@ -709,12 +1345,27 @@ func readerLead(facetID string) string {
 	if lead := leads[facetID]; lead != "" {
 		return lead
 	}
+	for _, facet := range allSemanticFacets() {
+		if strings.HasPrefix(facetID, facet.ID+"-") {
+			if lead := leads[facet.ID]; lead != "" {
+				return lead
+			}
+		}
+	}
 	if index := strings.LastIndex(facetID, "-rodada-"); index > 0 {
 		if lead := leads[facetID[:index]]; lead != "" {
 			return lead
 		}
 	}
 	return "Contexto juridico especifico"
+}
+
+var localStopWords = map[string]bool{
+	"para": true, "pela": true, "pelo": true, "pelas": true, "pelos": true, "quando": true, "sobre": true,
+	"documento": true, "documentos": true, "fonte": true, "fontes": true, "oficial": true, "oficiais": true,
+	"juridico": true, "jurídico": true, "juridica": true, "jurídica": true, "digital": true, "online": true,
+	"triagem": true, "contexto": true, "caso": true, "subtema": true, "leitor": true, "rascunho": true,
+	"prova": true, "provas": true, "data": true, "datas": true, "resposta": true, "protocolo": true,
 }
 
 func allSemanticFacets() []semanticFacet {

@@ -145,3 +145,88 @@ func TestBatchCandidateExpansionReadinessRejectsWeakOrPublicExpansion(t *testing
 		}
 	}
 }
+
+func TestBatchCandidateExpansionRefreshUsesCurrentArchiveCounts(t *testing.T) {
+	record := batchcandidateexpansion.Record{
+		ReadinessID:                 "candidate-expansion-familia",
+		BatchID:                     "batch-familia-digital",
+		LegalArea:                   "familia",
+		ReadinessStatus:             batchcandidateexpansion.ReadyBlockedStatus,
+		SourceArchivePath:           batchcandidateexpansion.ArchivePath,
+		ArchiveRecordsRequired:      100,
+		ArchiveRecordsObserved:      100,
+		CurrentCandidateCount:       100,
+		TargetCandidateCount:        100,
+		ExpansionCandidateIntentIDs: []string{"familia-divorcio-consensual-filhos-bens"},
+		PaidIntentGatePath:          batchcandidateexpansion.PaidIntentGatePath,
+		MinimumHumanScore:           88,
+		MaxSimilarityAllowed:        0.64,
+		MaxSimilarityObserved:       0.64,
+		CTAContextRequired:          true,
+		SourceURLAuditRequired:      true,
+		SourceSpecificityRequired:   true,
+		PaidIntentRequired:          true,
+		ActionableBlockers:          []string{"batch_candidate_gate_pending"},
+		NextGate:                    "batch_candidate_gates",
+		PublicationBlockReason:      "bloqueado",
+		IndexPolicy:                 "noindex",
+		CheckedAt:                   "2026-06-09",
+	}
+	index := batchcandidateexpansion.ExpansionIndex{
+		ArchiveCountByBatch:          map[string]int{"batch-familia-digital": 130},
+		CurrentCandidateCountByBatch: map[string]int{"batch-familia-digital": 100},
+		MaxSimilarity:                0.60,
+	}
+
+	refreshed := batchcandidateexpansion.RefreshRecordAgainstIndex(record, index)
+	if refreshed.ArchiveRecordsObserved != 130 {
+		t.Fatalf("archive_records_observed=%d, want current archive count 130", refreshed.ArchiveRecordsObserved)
+	}
+	if refreshed.MaxSimilarityObserved != 0.60 {
+		t.Fatalf("max_similarity_observed=%.2f, want current archive similarity 0.60", refreshed.MaxSimilarityObserved)
+	}
+}
+
+func TestBatchCandidateExpansionRefreshDoesNotKeepStaleZeroableMetrics(t *testing.T) {
+	record := batchcandidateexpansion.Record{
+		ReadinessID:                 "candidate-expansion-familia",
+		BatchID:                     "batch-familia-digital",
+		LegalArea:                   "familia",
+		ReadinessStatus:             batchcandidateexpansion.ReadyBlockedStatus,
+		SourceArchivePath:           batchcandidateexpansion.ArchivePath,
+		ArchiveRecordsRequired:      100,
+		ArchiveRecordsObserved:      130,
+		CurrentCandidateCount:       100,
+		TargetCandidateCount:        130,
+		ExpansionCandidateIntentIDs: []string{"familia-divorcio-consensual-filhos-bens"},
+		PaidIntentGatePath:          batchcandidateexpansion.PaidIntentGatePath,
+		MinimumHumanScore:           88,
+		MaxSimilarityAllowed:        0.64,
+		MaxSimilarityObserved:       0.60,
+		CTAContextRequired:          true,
+		SourceURLAuditRequired:      true,
+		SourceSpecificityRequired:   true,
+		PaidIntentRequired:          true,
+		ActionableBlockers:          []string{"batch_candidate_gate_pending"},
+		NextGate:                    "batch_candidate_gates",
+		PublicationBlockReason:      "bloqueado",
+		IndexPolicy:                 "noindex",
+		CheckedAt:                   "2026-06-09",
+	}
+	index := batchcandidateexpansion.ExpansionIndex{
+		ArchiveCountByBatch:          map[string]int{"batch-familia-digital": 0},
+		CurrentCandidateCountByBatch: map[string]int{"batch-familia-digital": 0},
+		MaxSimilarity:                0,
+	}
+
+	refreshed := batchcandidateexpansion.RefreshRecordAgainstIndex(record, index)
+	if refreshed.ArchiveRecordsObserved != 0 {
+		t.Fatalf("archive_records_observed=%d, want 0 from current index", refreshed.ArchiveRecordsObserved)
+	}
+	if refreshed.MaxSimilarityObserved != 0 {
+		t.Fatalf("max_similarity_observed=%.2f, want 0 from current index", refreshed.MaxSimilarityObserved)
+	}
+	if refreshed.CurrentCandidateCount != 0 {
+		t.Fatalf("current_candidate_count=%d, want 0 from current index", refreshed.CurrentCandidateCount)
+	}
+}

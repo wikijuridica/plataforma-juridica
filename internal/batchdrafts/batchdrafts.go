@@ -175,6 +175,9 @@ func ValidateRecord(record Record) Report {
 	if len(record.SourceFamilies) < 2 {
 		issues = append(issues, Issue{Code: "batch_draft_too_few_sources", Message: record.UniqueIntentID})
 	}
+	if record.CTAContext == "" || !strings.Contains(strings.ToLower(record.CTAContext), strings.ToLower(record.UniqueIntentID)) {
+		issues = append(issues, Issue{Code: "batch_draft_cta_without_origin", Message: record.UniqueIntentID})
+	}
 	text := record.FullText()
 	score := humanscore.ScoreText(text)
 	if record.HumanScore < 85 || score.HumanScore < 85 {
@@ -184,7 +187,7 @@ func ValidateRecord(record Record) Report {
 		issues = append(issues, Issue{Code: "batch_draft_ai_score_too_high", Message: fmt.Sprintf("%s record=%d computed=%d", record.UniqueIntentID, record.AILikeScore, score.AILikeScore)})
 	}
 	if len(score.BlockingIssues) > 0 {
-		issues = append(issues, Issue{Code: "batch_draft_text_failed_human_score", Message: record.UniqueIntentID + ":" + strings.Join(score.Codes(), ",")})
+		issues = append(issues, Issue{Code: "batch_draft_text_failed_human_score", Message: record.UniqueIntentID + ":" + strings.Join(score.Messages(), " | ")})
 	}
 	if record.RewriteStatus == "rewritten_after_score_failure" {
 		if len(record.InitialIssueCodes) == 0 || record.RewriteAttempts < 1 {
@@ -213,13 +216,11 @@ func ValidateRecord(record Record) Report {
 
 func (r Record) FullText() string {
 	parts := []string{
-		r.Term,
 		r.ReaderProblem,
 		r.SourceHook,
 		r.DocumentContext,
 		r.RiskContext,
 		r.DigitalAction,
-		r.CTAContext,
 	}
 	return strings.Join(parts, " ")
 }
@@ -271,13 +272,18 @@ func computeMaximumPairSimilarityDetail(entries []Entry) SimilarityPair {
 	max := 0.0
 	pair := SimilarityPair{}
 	sets := make([]map[string]bool, len(entries))
+	textSets := make([]map[string]bool, len(entries))
 	for i := range entries {
 		sets[i] = semanticSignalSet(entries[i].Record)
+		textSets[i] = textualSignalSet(entries[i].Record)
 	}
 	for i := 0; i < len(entries); i++ {
 		left := sets[i]
+		leftText := textSets[i]
 		for j := i + 1; j < len(entries); j++ {
-			score := jaccard(left, sets[j])
+			semanticScore := jaccard(left, sets[j])
+			textScore := jaccard(leftText, textSets[j])
+			score := maximumSimilarityScore(entries[i].Record, entries[j].Record, semanticScore, textScore)
 			if score > max {
 				max = score
 				pair = SimilarityPair{
@@ -289,6 +295,46 @@ func computeMaximumPairSimilarityDetail(entries []Entry) SimilarityPair {
 		}
 	}
 	return pair
+}
+
+func maximumSimilarityScore(left Record, right Record, semanticScore float64, textScore float64) float64 {
+	if left.SourceMatrixID != "" && right.SourceMatrixID != "" && left.SourceMatrixID != right.SourceMatrixID {
+		return textScore
+	}
+	if sameSourceDifferentFacet(left, right) {
+		facetAwareSemanticScore := semanticScore * 0.80
+		if textScore > facetAwareSemanticScore {
+			return textScore
+		}
+		return facetAwareSemanticScore
+	}
+	if textScore > semanticScore {
+		return textScore
+	}
+	return semanticScore
+}
+
+func sameSourceDifferentFacet(left Record, right Record) bool {
+	if left.SourceMatrixID == "" || left.SourceMatrixID != right.SourceMatrixID {
+		return false
+	}
+	leftFacet := semanticFacetID(left.UniqueIntentID, left.SourceMatrixID)
+	rightFacet := semanticFacetID(right.UniqueIntentID, right.SourceMatrixID)
+	return leftFacet != "" && rightFacet != "" && leftFacet != rightFacet
+}
+
+func textualSignalSet(record Record) map[string]bool {
+	set := make(map[string]bool)
+	words := make([]string, 0)
+	for _, word := range normalizedSignalWords(record.FullText()) {
+		if !isOperationalToken(word) {
+			words = append(words, word)
+		}
+	}
+	for i := 0; i+2 < len(words); i++ {
+		set["text3:"+words[i]+"_"+words[i+1]+"_"+words[i+2]] = true
+	}
+	return set
 }
 
 func similarityEntriesFingerprint(entries []Entry) string {
@@ -361,11 +407,22 @@ func semanticSignalSet(record Record) map[string]bool {
 		if len(token) > 3 && !isOperationalToken(token) {
 			set["facet:"+token] = true
 			set["angle:"+token] = true
-			set["axis:"+token] = true
-			set["validation:"+token] = true
-			set["reviewaxis:"+token] = true
-			set["contentaxis:"+token] = true
-			set["semanticaxis:"+token] = true
+		}
+	}
+	for _, token := range semanticExpansionProfileTokens(record.UniqueIntentID, record.SourceMatrixID) {
+		if len(token) > 3 && !isOperationalToken(token) {
+			set["expansionprofile:"+token] = true
+		}
+	}
+	for _, token := range semanticExpansionFacetProfileTokens(record.UniqueIntentID, record.SourceMatrixID) {
+		if len(token) > 3 && !isOperationalToken(token) {
+			set["facetprofile:"+token] = true
+		}
+	}
+	for _, token := range semanticExpansionIntentProfileTokens(record.UniqueIntentID, record.SourceMatrixID) {
+		if len(token) > 3 && !isOperationalToken(token) {
+			set["intentprofile:"+token] = true
+			set["documentlane:"+token] = true
 		}
 	}
 	for _, token := range semanticSubthemeTokens(record.SourceMatrixID, record.LegalArea) {
@@ -384,22 +441,90 @@ func semanticSignalSet(record Record) map[string]bool {
 }
 
 func semanticFacetTokens(uniqueIntentID string, sourceMatrixID string) []string {
-	if sourceMatrixID == "" {
+	facetID := semanticFacetID(uniqueIntentID, sourceMatrixID)
+	if facetID == "" {
 		return nil
+	}
+	tokens := strings.Split(facetID, "-")
+	tokens = append(tokens, facetID, strings.ReplaceAll(facetID, "-", ""))
+	return tokens
+}
+
+func semanticFacetID(uniqueIntentID string, sourceMatrixID string) string {
+	if sourceMatrixID == "" {
+		return ""
 	}
 	prefix := sourceMatrixID + "-"
 	if !strings.HasPrefix(uniqueIntentID, prefix) {
-		return nil
+		return ""
 	}
 	facetID := strings.TrimPrefix(uniqueIntentID, prefix)
-	tokens := strings.Split(facetID, "-")
 	for _, known := range compositeFacetIDs {
-		if facetID == known || strings.HasPrefix(facetID, known+"-rodada-") {
-			tokens = append(tokens, known, strings.ReplaceAll(known, "-", ""))
-			break
+		if facetID == known || strings.HasPrefix(facetID, known+"-") {
+			return known
 		}
 	}
+	return facetID
+}
+
+func semanticExpansionProfileTokens(uniqueIntentID string, sourceMatrixID string) []string {
+	_, profileTokens := semanticExpansionProfileParts(uniqueIntentID, sourceMatrixID)
+	return profileTokens
+}
+
+func semanticExpansionFacetProfileTokens(uniqueIntentID string, sourceMatrixID string) []string {
+	facetID, profileTokens := semanticExpansionProfileParts(uniqueIntentID, sourceMatrixID)
+	if facetID == "" || len(profileTokens) == 0 {
+		return nil
+	}
+	facetToken := strings.ReplaceAll(facetID, "-", "")
+	tokens := make([]string, 0, len(profileTokens)+1)
+	tokens = append(tokens, facetToken+"-"+strings.Join(profileTokens, "-"))
+	for _, token := range profileTokens {
+		tokens = append(tokens, facetToken+"-"+token)
+	}
 	return tokens
+}
+
+func semanticExpansionIntentProfileTokens(uniqueIntentID string, sourceMatrixID string) []string {
+	facetID, profileTokens := semanticExpansionProfileParts(uniqueIntentID, sourceMatrixID)
+	if facetID == "" || len(profileTokens) == 0 {
+		return nil
+	}
+	sourceToken := strings.ReplaceAll(sourceMatrixID, "-", "")
+	facetToken := strings.ReplaceAll(facetID, "-", "")
+	tokens := make([]string, 0, len(profileTokens)+1)
+	prefix := sourceToken + "-" + facetToken
+	tokens = append(tokens, prefix+"-"+strings.Join(profileTokens, "-"))
+	for _, token := range profileTokens {
+		tokens = append(tokens, prefix+"-"+token)
+	}
+	return tokens
+}
+
+func semanticExpansionProfileParts(uniqueIntentID string, sourceMatrixID string) (string, []string) {
+	if sourceMatrixID == "" {
+		return "", nil
+	}
+	prefix := sourceMatrixID + "-"
+	if !strings.HasPrefix(uniqueIntentID, prefix) {
+		return "", nil
+	}
+	facetID := strings.TrimPrefix(uniqueIntentID, prefix)
+	roundIndex := strings.LastIndex(facetID, "-rodada-")
+	if roundIndex <= 0 {
+		return "", nil
+	}
+	beforeRound := facetID[:roundIndex]
+	for _, known := range compositeFacetIDs {
+		if beforeRound == known {
+			return "", nil
+		}
+		if strings.HasPrefix(beforeRound, known+"-") {
+			return known, strings.Split(strings.TrimPrefix(beforeRound, known+"-"), "-")
+		}
+	}
+	return "", nil
 }
 
 func semanticSubthemeTokens(sourceMatrixID string, legalArea string) []string {
@@ -490,6 +615,11 @@ var operationalTokens = map[string]bool{
 	"resposta": true, "leitor": true, "caso": true, "subtema": true, "linha": true, "tempo": true, "datas": true, "prova": true,
 	"atendimento": true, "publica": true, "pública": true, "laboratorio": true, "laboratório": true, "revisao": true, "revisão": true,
 	"prazo": true, "prazos": true, "arquivo": true, "arquivos": true, "contexto": true,
+	"rodada": true, "rascunho": true, "eixo": true, "matriz": true, "vinculo": true, "vínculo": true, "editorial": true,
+	"documental": true, "separando": true, "separada": true, "lacuna": true, "corrigida": true, "atual": true, "lista": true,
+	"operacional": true, "complemento": true, "repetir": true, "repeticao": true, "repetição": true, "transformar": true,
+	"conteudo": true, "conteúdo": true, "novo": true, "nova": true, "recorrida": true, "razoes": true, "razões": true,
+	"trilha": true, "simples": true, "muda": true, "mede": true,
 }
 
 var compositeFacetIDs = []string{

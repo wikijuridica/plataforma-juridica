@@ -356,6 +356,8 @@ func RefreshRecordAgainstIndex(record Record, index ExpansionIndex) Record {
 	record.PaidIntentBlockedIntentIDs = paidBlocked
 	record.KnownSourceBlockerIntentIDs = append([]string{}, index.SourceBlockersByBatch[record.BatchID]...)
 	record.CurrentCandidateCount = index.CurrentCandidateCountByBatch[record.BatchID]
+	record.ArchiveRecordsObserved = index.ArchiveCountByBatch[record.BatchID]
+	record.MaxSimilarityObserved = index.MaxSimilarity
 	record.ActionableBlockers = expectedActionableBlockers(len(paidMissing), len(paidBlocked), len(record.KnownSourceBlockerIntentIDs))
 	if len(paidMissing) > 0 {
 		record.ReadinessStatus = PaidGateMissingStatus

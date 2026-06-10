@@ -481,15 +481,15 @@ func finalPrevidenciarioOpening(candidate selectedCandidate) string {
 		term = "tema previdenciário"
 	}
 	baseTerm := cleanFinalTerm(term)
-	problem := firstSentence(candidate.Draft.ReaderProblem)
+	problem := polishFinalSnippet(firstSentence(candidate.Draft.ReaderProblem))
 	if problem == "" {
 		problem = "O caso precisa ser separado por benefício, fase administrativa, documento principal e resposta do INSS."
 	}
-	return "Análise previdenciária de " + baseTerm + " parte de " + focusLabel(candidate) + " antes de qualquer conclusão sobre benefício. " + problem + " Material informativo permanece bloqueado, sem promessa de concessão, revisão ou prazo."
+	return "Análise previdenciária de " + baseTerm + " parte de " + focusLabel(candidate) + " sem antecipar conclusão sobre benefício. " + problem + " Material informativo permanece bloqueado, sem promessa de concessão, revisão ou prazo."
 }
 
 func finalPrevidenciarioDocumentGuidance(candidate selectedCandidate) string {
-	documentFocus := firstSentence(candidate.Draft.DocumentContext)
+	documentFocus := polishFinalSnippet(firstSentence(candidate.Draft.DocumentContext))
 	if documentFocus == "" {
 		documentFocus = "Documento previdenciário útil precisa ligar decisão, CNIS, laudo, protocolo e fase do pedido."
 	}
@@ -497,15 +497,47 @@ func finalPrevidenciarioDocumentGuidance(candidate selectedCandidate) string {
 }
 
 func finalPrevidenciarioDigitalTriage(candidate selectedCandidate) string {
-	action := firstSentence(candidate.Draft.DigitalAction)
+	action := polishFinalSnippet(firstSentence(candidate.Draft.DigitalAction))
 	if action == "" {
 		action = "A triagem online organiza requerimento, recurso, exigência, perícia, CNIS e documento médico por data."
 	}
-	risk := firstSentence(candidate.Draft.RiskContext)
+	risk := polishFinalSnippet(firstSentence(candidate.Draft.RiskContext))
 	if risk == "" {
 		risk = "O risco principal é confundir dúvida administrativa, documento incompleto e tese jurídica madura."
 	}
 	return "Pelo canal digital, " + lowerFirst(trimSentenceEnd(action)) + ". Risco observado: " + lowerFirst(trimSentenceEnd(risk)) + ". Mensagem de WhatsApp leva origem, intenção, documentos e fase do pedido para consulta remota responsável, sem substituir canal público nem prometer resultado."
+}
+
+func polishFinalSnippet(value string) string {
+	value = strings.TrimSpace(value)
+	if value == "" {
+		return ""
+	}
+	replacer := strings.NewReplacer(
+		"Antes de qualquer CTA", "Antes do CTA",
+		"antes de qualquer CTA", "antes do CTA",
+		"Antes de qualquer avaliacao remota", "Antes da avaliação remota",
+		"antes de qualquer avaliacao remota", "antes da avaliação remota",
+		"Antes de qualquer avaliação remota", "Antes da avaliação remota",
+		"antes de qualquer avaliação remota", "antes da avaliação remota",
+		"Antes de qualquer roteiro juridico", "Antes do roteiro jurídico",
+		"antes de qualquer roteiro juridico", "antes do roteiro jurídico",
+		"Antes de qualquer roteiro jurídico", "Antes do roteiro jurídico",
+		"antes de qualquer roteiro jurídico", "antes do roteiro jurídico",
+		"antes de qualquer conclusão", "antes da conclusão",
+		"antes de qualquer publicacao", "antes da publicação",
+		"juridico", "jurídico",
+		"generico", "genérico",
+		"avaliacao", "avaliação",
+		"responsavel", "responsável",
+		"identificacao", "identificação",
+		"comunicacao", "comunicação",
+		"matricula", "matrícula",
+		"dividas", "dívidas",
+		"patrimonio", "patrimônio",
+		"Decisao", "Decisão",
+	)
+	return replacer.Replace(value)
 }
 
 func cleanFinalTerm(term string) string {

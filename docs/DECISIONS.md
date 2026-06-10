@@ -835,3 +835,42 @@ Motivos:
 - cinco famílias comerciais chegaram a 100/100 registros do archive, então fingir próximo crescimento sem novo archive seria pendência mascarada.
 
 Consequencia: `batch_final_authorial_drafts` passa a exigir variação semântica mínima em previdenciário e o pipeline reconstrói finais previdenciários legados usando problema do leitor, documentos, risco e ação digital do rascunho selecionado. `batch_candidate_gates` sobe para 590 candidatos internos bloqueados, com cadeia downstream em 590 e flags públicas falsas. `batch_expansion_strategy` ganha `batch_expansion_strategy_blocked_archive_growth_required` para famílias com current igual ao archive observado; o próximo ciclo deve gerar mais `batch_draft_expansion_archive` permanente, bloqueado, semântico e validado antes de novo avanço.
+
+## 2026-06-09 — Archive 780, anti-mascaramento e estratégia 770
+
+Decisao: expandir o arquivo permanente bloqueado para 780 rascunhos, 130 por família, usando perfis semânticos de expansão e similaridade profile-aware, e registrar anti-mascaramento como regra explícita do próximo agente.
+
+Motivos:
+- o ciclo anterior expôs cinco famílias comerciais no limite de 100/100 do archive; crescer sem novo archive seria pendência mascarada;
+- rascunho temporário de laboratório que passa nos gates e contém informação jurídica útil deve vir para o repositório como dado permanente bloqueado;
+- apenas trocar faceta ou palavra não basta para escala; cada rodada acima de 100 precisa de eixo semântico novo, documento, risco, fonte, problema do leitor e CTA contextual;
+- paid-intent não pode depender só do CTA; o corpo informativo precisa carregar sinal natural de contratação particular quando a família é comercial;
+- teste verde não substitui leitura técnica do contexto, do texto gerado, dos blockers, da fonte e da semântica jurídica.
+
+Consequencia: `cmd/generate-batch-drafts` ganha `--write-archive`; `internal/batchdraftgen` valida antes de escrever archive permanente; `internal/batchdrafts` passa a entender perfis de expansão na similaridade; `internal/batchcandidateexpansion` atualiza contadores reais de archive e similaridade; `data/editorial/batch_draft_expansion_archive.jsonl` fica com 780 registros; `batch_paid_intent_gates` cobre 770 alvos; `batch_paid_intent_refinements` registra 529 refinamentos; readiness e strategy ficam prontos para o próximo candidate gate. O estado público continua bloqueado: sem render, sitemap, publicação, `public_path` ou `index`.
+
+Regra operacional: quando houver bug de contrato, falso positivo, falso negativo, dado stale, métrica suspeita ou conteúdo que passe no script mas pareça raso, mecânico, sem contexto ou comercial demais, a correção correta é investigar, refinar algoritmo/teste/dado e revalidar. É proibido baixar limite, remover blocker, renomear status ou aceitar script isolado como verdade P0/P1. O próximo ciclo deve materializar o avanço explícito de 590 para 770 candidatos bloqueados, regenerar a cadeia downstream e validar sem publicar.
+
+## 2026-06-09 — Dados reais antes de inferência no algoritmo de conteúdo
+
+Decisao: nenhum ajuste de similaridade, n-grama, título, termo, paid-intent, CTA ou expansão de lote pode ser feito por inferência no escuro. O laboratório deve primeiro expor dados reais do erro e só então alterar gerador, comparador ou gate.
+
+Motivos:
+- o ciclo de archive 780 mostrou que similaridade alta podia vir de campos concretos repetidos, não de limite baixo;
+- título/termo repetido em várias seções gera n-grama mecânico e não pode ser tratado como diversidade semântica;
+- algoritmo de conteúdo precisa entender área jurídica e contexto, evitando confundir tema de família/pensão com trabalhista por token solto;
+- afrouxar limite ou filtrar token sem diagnóstico mascara spam, falso positivo ou falso negativo.
+
+Consequencia: testes e diagnósticos de lote devem mostrar par/registro que falhou, `legal_area`, `source_matrix_id`, `unique_intent_id`, campos textuais, blocker, score e código gerador antes de refinamento. Se faltar dado, o próximo passo é instrumentar diagnóstico ou teste. Se o teste estiver certo, corrigir geração/conteúdo; se for falso positivo, fortalecer o comparador sem reduzir limite e mantendo teste negativo.
+
+## 2026-06-09 — Lab aprovado vira repo permanente bloqueado
+
+Decisao: artefato aprovado no laboratório não pode ficar apenas em `/tmp` quando tem valor para páginas futuras. Antes do commit do ciclo, rascunho, métrica, fonte ou conteúdo de lote que passou com segurança deve ser trazido para camada versionada do repositório, sempre bloqueado para publicação.
+
+Motivos:
+- rascunhos aprovados contêm informação jurídica e contexto útil para expansão futura;
+- depender de `/tmp`, chat ou compactação desperdiça prova e quebra continuidade;
+- mover para repo não significa publicar, renderizar, indexar ou criar sitemap;
+- descarte de dado útil só é válido com prova e gate específico.
+
+Consequencia: o ciclo 50 materializou no repo `batch_draft_expansion_archive` com 780 registros, métricas em `batch_generation_metrics`, `batch_paid_intent_gates` com 770, `batch_paid_intent_refinements` com 529, readiness e strategy em 6 famílias. Tudo permanece em camadas editoriais bloqueadas, sem `content/pages.json`, sem `public_path`, sem render, sem sitemap, sem publicação e sem `index`.

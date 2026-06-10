@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"portaljuridico/internal/batchdraftgen"
+	"portaljuridico/internal/batchdrafts"
 	"portaljuridico/internal/batchsourcematrix"
 )
 
@@ -63,7 +64,8 @@ func TestBatchDraftGeneratorHandlesHundredsPerFamilyWithoutMechanicalSimilarity(
 
 	result, report := batchdraftgen.Generate(".", batchdraftgen.Options{SamplesPerBatch: 100, CheckedAt: "2026-06-09"})
 	if !report.Passed() {
-		t.Fatalf("hundreds-scale batch draft generation failed: %v", report.Messages())
+		pair := generatedDraftSimilarityPair(result.Drafts)
+		t.Fatalf("hundreds-scale batch draft generation failed: pair=%s/%s %.4f\n%s\ninvalid=%s\nissues=%v", pair.LeftID, pair.RightID, pair.Score, generatedDraftPairDiagnostic(result.Drafts, pair), generatedFirstInvalidDraftDiagnostic(result.Drafts), report.Messages())
 	}
 	if len(result.Drafts) < 600 {
 		t.Fatalf("generated drafts=%d, want at least 600", len(result.Drafts))
@@ -93,6 +95,66 @@ func TestBatchDraftGeneratorHandlesHundredsPerFamilyWithoutMechanicalSimilarity(
 			t.Fatalf("%s lab cpu units=%d, want >=1200 for hundreds-scale validation", metric.BatchID, metric.LabEstimatedCPUUnits)
 		}
 	}
+}
+
+func TestBatchDraftGeneratorExpandsArchiveBeyondOneHundredPerFamily(t *testing.T) {
+	result, report := batchdraftgen.Generate(".", batchdraftgen.Options{SamplesPerBatch: 130, CheckedAt: "2026-06-09"})
+	if !report.Passed() {
+		pair := generatedDraftSimilarityPair(result.Drafts)
+		t.Fatalf("expanded archive batch draft generation failed: pair=%s/%s %.4f\n%s\nissues=%v", pair.LeftID, pair.RightID, pair.Score, generatedDraftPairDiagnostic(result.Drafts, pair), report.Messages())
+	}
+	if len(result.Drafts) < 780 {
+		t.Fatalf("generated drafts=%d, want at least 780 for archive growth beyond 100 per family", len(result.Drafts))
+	}
+	if result.MaximumPairSimilarity() > 0.64 {
+		t.Fatalf("max expanded archive similarity=%.2f, want <=0.64", result.MaximumPairSimilarity())
+	}
+	for _, metric := range result.Metrics {
+		if metric.GeneratedSamples < 130 {
+			t.Fatalf("%s generated_samples=%d, want >=130", metric.BatchID, metric.GeneratedSamples)
+		}
+		if metric.StructuralPatternRisk > 0.35 {
+			t.Fatalf("%s structural risk=%.2f, want <=0.35", metric.BatchID, metric.StructuralPatternRisk)
+		}
+	}
+}
+
+func generatedDraftSimilarityPair(drafts []batchdrafts.Record) batchdrafts.SimilarityPair {
+	entries := make([]batchdrafts.Entry, 0, len(drafts))
+	for index, draft := range drafts {
+		entries = append(entries, batchdrafts.Entry{Line: index + 1, Record: draft})
+	}
+	return batchdrafts.MaximumPairSimilarityDetail(entries)
+}
+
+func generatedDraftPairDiagnostic(drafts []batchdrafts.Record, pair batchdrafts.SimilarityPair) string {
+	byID := make(map[string]batchdrafts.Record)
+	for _, draft := range drafts {
+		byID[draft.UniqueIntentID] = draft
+	}
+	left := byID[pair.LeftID]
+	right := byID[pair.RightID]
+	return "left=" + generatedDraftDiagnostic(left) + "\nright=" + generatedDraftDiagnostic(right)
+}
+
+func generatedFirstInvalidDraftDiagnostic(drafts []batchdrafts.Record) string {
+	for _, draft := range drafts {
+		if report := batchdrafts.ValidateRecord(draft); !report.Passed() {
+			return generatedDraftDiagnostic(draft) + " issues=" + report.Messages()[0]
+		}
+	}
+	return "none"
+}
+
+func generatedDraftDiagnostic(draft batchdrafts.Record) string {
+	return "source_matrix=" + draft.SourceMatrixID +
+		" area=" + draft.LegalArea +
+		" term=" + draft.Term +
+		" reader=" + draft.ReaderProblem +
+		" source=" + draft.SourceHook +
+		" document=" + draft.DocumentContext +
+		" risk=" + draft.RiskContext +
+		" action=" + draft.DigitalAction
 }
 
 func TestBatchSourceMatrixRejectsWeakOrPublicSourceRecord(t *testing.T) {
