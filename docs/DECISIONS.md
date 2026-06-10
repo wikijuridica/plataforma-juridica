@@ -911,3 +911,16 @@ Motivos:
 - `batch_candidate_gates` com 220 IDs por família ainda cabe em 32KB, mas a maior linha chegou a 22.173 bytes e confirma necessidade de particionamento antes de escala muito maior.
 
 Consequencia: `data/editorial/batch_draft_expansion_archive.jsonl`, `batch_paid_intent_gates`, `batch_candidate_reviews`, `batch_prepublication_gates`, `batch_source_specificity_resolutions`, `batch_public_manifest_gates` e `batch_final_authorial_drafts` ficam com 1.320 registros bloqueados; `batch_paid_intent_refinements` registra 969 refinamentos; `batch_expansion_strategy` volta para `batch_expansion_strategy_blocked_archive_growth_required` em todas as famílias porque current=archive=220. Contratos de agentes passam a proibir `git restore`, `git checkout`, `rm`, reset ou limpeza no workspace compartilhado sem autorização explícita do Codex principal. O próximo ciclo deve particionar `batch_candidate_gates` ou provar limite seguro antes de crescer muito acima de 220 por família.
+
+## 2026-06-10 — Candidate gates shardados, idempotentes e bloqueados
+
+Decisao: particionar `batch_candidate_gates` em shards físicos antes de novo crescimento, mantendo o contrato lógico por 6 famílias e 1.320 candidatos bloqueados agregados.
+
+Motivos:
+- a maior linha de `batch_candidate_gates` em 1.320 chegou a 22.173 bytes e não escalaria para 10k+ sem linha gigante;
+- baixar regra ou aceitar 32KB como solução permanente mascararia gargalo de storage;
+- normalização não idempotente poderia remover metadados de shard e duplicar `gate_id` em execução futura;
+- `WriteRecords` precisava validar o conjunto normalizado antes de substituir o JSONL, para não truncar arquivo em falha tardia;
+- reviews/prepublication carregam `gate_id` físico, então mudar shards exige regenerar downstream e validar paridade.
+
+Consequencia: `internal/batchcandidategates` passa a normalizar por `gate_group_id`, `shard_index`, `shard_count` e `selected_total`, com limite `MaxSelectedIntentIDsPerRecord=120`, validação global de `gate_id`, seleção duplicada, índice faltante/duplicado e total divergente. `WriteRecords` valida em memória e escreve via arquivo temporário/rename. `batch_candidate_gates.jsonl` passa de 6 para 12 linhas físicas, mantendo 1.320 candidatos lógicos bloqueados, maior linha 12.978 bytes e `record_max_bytes=16.384`. `batch_candidate_reviews` e `batch_prepublication_gates` foram regenerados para os `gate_id` shardados. O estado público continua bloqueado: sem render, sitemap, publicação, `public_path` ou `index`. O próximo ciclo deve crescer o archive acima de 220 por família, regenerar paid/refinement/readiness/strategy e avançar candidatos em shards sem ultrapassar orçamento leve.

@@ -70,10 +70,20 @@ func promoteFromReadiness(root string, targetFor func(batchcandidateexpansion.Re
 	for _, entry := range paidEntries {
 		paidByIntent[entry.Record.UniqueIntentID] = entry.Record
 	}
-
-	expanded := make([]batchcandidategates.Record, 0, len(entries))
+	templatesByBatch := make(map[string]batchcandidategates.Record)
+	batchIDs := make([]string, 0, len(entries))
 	for _, entry := range entries {
-		record := entry.Record
+		if _, ok := templatesByBatch[entry.Record.BatchID]; ok {
+			continue
+		}
+		templatesByBatch[entry.Record.BatchID] = entry.Record
+		batchIDs = append(batchIDs, entry.Record.BatchID)
+	}
+	sort.Strings(batchIDs)
+
+	expanded := make([]batchcandidategates.Record, 0, len(batchIDs))
+	for _, batchID := range batchIDs {
+		record := templatesByBatch[batchID]
 		readiness, ok := readinessByBatch[record.BatchID]
 		if !ok {
 			issues = append(issues, Issue{Code: "batch_candidate_missing_expansion_readiness", Message: record.BatchID})

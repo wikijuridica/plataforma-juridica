@@ -250,7 +250,7 @@
       "name": "batch_candidate_gates",
       "path": "data/editorial/batch_candidate_gates.jsonl",
       "record_type": "batch_candidate_gate_blocked",
-      "record_max_bytes": 32768,
+      "record_max_bytes": 16384,
       "public_indexable": false,
       "allows_raw_official_text": false,
       "allows_editorial_content": false,

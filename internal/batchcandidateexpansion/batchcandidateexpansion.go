@@ -166,7 +166,7 @@ func BuildExpansionIndex(root string) (ExpansionIndex, Report) {
 		index.PaidIntentByIntent[entry.Record.UniqueIntentID] = entry.Record
 	}
 	for _, entry := range candidateEntries {
-		index.CurrentCandidateCountByBatch[entry.Record.BatchID] = len(entry.Record.SelectedUniqueIntentIDs)
+		index.CurrentCandidateCountByBatch[entry.Record.BatchID] += len(entry.Record.SelectedUniqueIntentIDs)
 	}
 	for _, entry := range sourceEntries {
 		if entry.Record.SourceSpecificityStatus == batchsourcespecificity.BlockedStatus {

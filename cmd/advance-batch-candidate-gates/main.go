@@ -33,7 +33,11 @@ func main() {
 		os.Exit(1)
 	}
 	if currentTotalSelected(currentRecords) == *expectedTotal {
-		fmt.Printf("advance-batch-candidate-gates: already selected=%d\n", *expectedTotal)
+		if err := batchcandidategates.WriteRecords(root, recordsFromEntries(currentRecords)); err != nil {
+			fmt.Println("advance-batch-candidate-gates: " + err.Error())
+			os.Exit(1)
+		}
+		fmt.Printf("advance-batch-candidate-gates: already selected=%d normalized=true\n", *expectedTotal)
 		return
 	}
 
@@ -68,4 +72,12 @@ func currentTotalSelected(entries []batchcandidategates.Entry) int {
 		total += len(entry.Record.SelectedUniqueIntentIDs)
 	}
 	return total
+}
+
+func recordsFromEntries(entries []batchcandidategates.Entry) []batchcandidategates.Record {
+	records := make([]batchcandidategates.Record, 0, len(entries))
+	for _, entry := range entries {
+		records = append(records, entry.Record)
+	}
+	return records
 }

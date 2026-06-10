@@ -1,12 +1,14 @@
 package contract_test
 
 import (
+	"encoding/json"
 	"testing"
 
 	"portaljuridico/internal/batchcandidateexpansion"
 	"portaljuridico/internal/batchcandidategates"
 	"portaljuridico/internal/batchexpansionstrategy"
 	"portaljuridico/internal/paidintent"
+	"portaljuridico/internal/storage"
 )
 
 func TestBatchCandidateGatesSelectArchiveDraftsWithoutPublishing(t *testing.T) {
@@ -19,8 +21,25 @@ func TestBatchCandidateGatesSelectArchiveDraftsWithoutPublishing(t *testing.T) {
 	if !loadReport.Passed() {
 		t.Fatalf("could not load batch candidate gates: %v", loadReport.Messages())
 	}
-	if len(records) != 6 {
-		t.Fatalf("candidate gates=%d, want 6 batch families", len(records))
+	selectedByBatch := make(map[string][]string)
+	metadataByBatch := make(map[string]batchcandidategates.Record)
+	totalSelected := 0
+	for _, entry := range records {
+		record := entry.Record
+		selectedByBatch[record.BatchID] = append(selectedByBatch[record.BatchID], record.SelectedUniqueIntentIDs...)
+		if _, ok := metadataByBatch[record.BatchID]; !ok {
+			metadataByBatch[record.BatchID] = record
+		}
+		totalSelected += len(record.SelectedUniqueIntentIDs)
+		if record.RenderAllowed || record.SitemapAllowed || record.PublicationAllowed || record.PublicPath != "" {
+			t.Fatalf("%s escaped blocked gate: render=%t sitemap=%t publication=%t public_path=%q", record.BatchID, record.RenderAllowed, record.SitemapAllowed, record.PublicationAllowed, record.PublicPath)
+		}
+		if record.BaseURLMode != "official_configured" || !record.OfficialURLLocked {
+			t.Fatalf("%s must track locked official URL while preserving blocked publication, mode=%q locked=%t", record.BatchID, record.BaseURLMode, record.OfficialURLLocked)
+		}
+	}
+	if len(selectedByBatch) != 6 {
+		t.Fatalf("candidate gate batch families=%d, want 6", len(selectedByBatch))
 	}
 	readinessRecords, readinessReport := batchcandidateexpansion.LoadRecords(".")
 	if !readinessReport.Passed() {
@@ -47,10 +66,9 @@ func TestBatchCandidateGatesSelectArchiveDraftsWithoutPublishing(t *testing.T) {
 		strategyByBatch[entry.Record.BatchID] = entry.Record
 	}
 
-	totalSelected := 0
 	totalExpectedCurrent := 0
-	for _, entry := range records {
-		record := entry.Record
+	for batchID, selectedIntents := range selectedByBatch {
+		record := metadataByBatch[batchID]
 		readiness, ok := readinessByBatch[record.BatchID]
 		if !ok {
 			t.Fatalf("%s missing expansion readiness", record.BatchID)
@@ -69,28 +87,54 @@ func TestBatchCandidateGatesSelectArchiveDraftsWithoutPublishing(t *testing.T) {
 				break
 			}
 		}
-		if !sameStringSet(record.SelectedUniqueIntentIDs, expectedPaidPassed) {
-			t.Fatalf("%s selected intents do not match strategy current paid-passed candidates: selected=%d expected=%d", record.BatchID, len(record.SelectedUniqueIntentIDs), len(expectedPaidPassed))
+		if !sameStringSet(selectedIntents, expectedPaidPassed) {
+			t.Fatalf("%s selected intents do not match strategy current paid-passed candidates: selected=%d expected=%d", record.BatchID, len(selectedIntents), len(expectedPaidPassed))
 		}
-		if len(record.SelectedUniqueIntentIDs) < 18 {
-			t.Fatalf("%s selected intents=%d, want at least 18 paid-passed expansion candidates", record.BatchID, len(record.SelectedUniqueIntentIDs))
+		if len(selectedIntents) < 18 {
+			t.Fatalf("%s selected intents=%d, want at least 18 paid-passed expansion candidates", record.BatchID, len(selectedIntents))
 		}
-		if len(record.SelectedUniqueIntentIDs) != strategy.CurrentCandidateCount {
-			t.Fatalf("%s selected intents=%d, want materialized strategy current count=%d", record.BatchID, len(record.SelectedUniqueIntentIDs), strategy.CurrentCandidateCount)
+		if len(selectedIntents) != strategy.CurrentCandidateCount {
+			t.Fatalf("%s selected intents=%d, want materialized strategy current count=%d", record.BatchID, len(selectedIntents), strategy.CurrentCandidateCount)
 		}
 		if strategy.StrategyStatus == batchexpansionstrategy.ReadyNextCandidateGateStatus && strategy.NextCandidateTarget <= strategy.CurrentCandidateCount {
 			t.Fatalf("%s next target=%d, want growth beyond current=%d", record.BatchID, strategy.NextCandidateTarget, strategy.CurrentCandidateCount)
 		}
-		totalSelected += len(record.SelectedUniqueIntentIDs)
-		if record.RenderAllowed || record.SitemapAllowed || record.PublicationAllowed || record.PublicPath != "" {
-			t.Fatalf("%s escaped blocked gate: render=%t sitemap=%t publication=%t public_path=%q", record.BatchID, record.RenderAllowed, record.SitemapAllowed, record.PublicationAllowed, record.PublicPath)
-		}
-		if record.BaseURLMode != "official_configured" || !record.OfficialURLLocked {
-			t.Fatalf("%s must track locked official URL while preserving blocked publication, mode=%q locked=%t", record.BatchID, record.BaseURLMode, record.OfficialURLLocked)
-		}
 	}
 	if totalSelected != totalExpectedCurrent {
 		t.Fatalf("selected intents=%d, want materialized strategy current total=%d", totalSelected, totalExpectedCurrent)
+	}
+}
+
+func TestBatchCandidateGateRecordsStayWithinShardBudget(t *testing.T) {
+	contract, err := storage.LoadContract(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	layer, ok := contract.LayerByName("batch_candidate_gates")
+	if !ok {
+		t.Fatal("missing batch_candidate_gates storage layer")
+	}
+	records, loadReport := batchcandidategates.LoadRecords(".")
+	if !loadReport.Passed() {
+		t.Fatalf("could not load batch candidate gates: %v", loadReport.Messages())
+	}
+	for _, entry := range records {
+		record := entry.Record
+		if len(record.SelectedUniqueIntentIDs) > batchcandidategates.MaxSelectedIntentIDsPerRecord {
+			t.Fatalf("line %d %s selected intents=%d, want <=%d", entry.Line, record.GateID, len(record.SelectedUniqueIntentIDs), batchcandidategates.MaxSelectedIntentIDsPerRecord)
+		}
+		if record.ShardCount > 1 {
+			if record.GateGroupID == "" || record.ShardIndex <= 0 || record.SelectedTotal <= len(record.SelectedUniqueIntentIDs) {
+				t.Fatalf("line %d %s has invalid shard metadata: group=%q index=%d count=%d total=%d selected=%d", entry.Line, record.GateID, record.GateGroupID, record.ShardIndex, record.ShardCount, record.SelectedTotal, len(record.SelectedUniqueIntentIDs))
+			}
+		}
+		data, err := json.Marshal(record)
+		if err != nil {
+			t.Fatalf("could not marshal line %d %s: %v", entry.Line, record.GateID, err)
+		}
+		if len(data)+1 > layer.RecordMaxBytes {
+			t.Fatalf("line %d %s encoded bytes=%d, want <=%d", entry.Line, record.GateID, len(data)+1, layer.RecordMaxBytes)
+		}
 	}
 }
 
