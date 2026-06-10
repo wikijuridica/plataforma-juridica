@@ -924,3 +924,16 @@ Motivos:
 - reviews/prepublication carregam `gate_id` físico, então mudar shards exige regenerar downstream e validar paridade.
 
 Consequencia: `internal/batchcandidategates` passa a normalizar por `gate_group_id`, `shard_index`, `shard_count` e `selected_total`, com limite `MaxSelectedIntentIDsPerRecord=120`, validação global de `gate_id`, seleção duplicada, índice faltante/duplicado e total divergente. `WriteRecords` valida em memória e escreve via arquivo temporário/rename. `batch_candidate_gates.jsonl` passa de 6 para 12 linhas físicas, mantendo 1.320 candidatos lógicos bloqueados, maior linha 12.978 bytes e `record_max_bytes=16.384`. `batch_candidate_reviews` e `batch_prepublication_gates` foram regenerados para os `gate_id` shardados. O estado público continua bloqueado: sem render, sitemap, publicação, `public_path` ou `index`. O próximo ciclo deve crescer o archive acima de 220 por família, regenerar paid/refinement/readiness/strategy e avançar candidatos em shards sem ultrapassar orçamento leve.
+
+## 2026-06-10 — Expansao bloqueada para 1.500 candidatos e similaridade otimizada sem afrouxar gate
+
+Decisao: crescer o arquivo permanente bloqueado para 250 rascunhos por família, total 1.500, e avançar candidate gates para 1.500 em shards, mantendo publicação bloqueada e reduzindo custo de similaridade sem mudar o score aceito.
+
+Motivos:
+- o contrato de crescimento atual limita avanço a +30 por família, então 250 por família era o próximo degrau correto depois de 220;
+- rascunho aprovado em laboratório precisa ir para repo permanente quando tem valor futuro, portanto `batch_draft_expansion_archive` e métricas foram atualizados, não deixados em `/tmp`;
+- `refine-paid-intent-drafts` altera o archive, então paid gates precisam ser recalculados depois do refinamento;
+- readiness calculada antes do advance fica stale depois que candidate gates sobem de 220 para 250; por isso readiness e strategy devem ser rodadas novamente após `advance-batch-candidate-gates`;
+- `MaximumPairSimilarityDetail` era o gargalo dominante em 1.500 registros; pular Jaccard semântico apenas quando `source_matrix_id` difere é equivalente porque `maximumSimilarityScore` já retorna somente `textScore` nesse caso.
+
+Consequencia: `batch_draft_expansion_archive`, `batch_paid_intent_gates`, `batch_candidate_reviews`, `batch_prepublication_gates`, `batch_source_specificity_resolutions`, `batch_public_manifest_gates` e `batch_final_authorial_drafts` ficam com 1.500 registros bloqueados; `batch_candidate_gates` fica com 18 shards físicos; `batch_paid_intent_refinements` fica com 1.114 registros. `internal/batchdrafts` mantém threshold de similaridade, adiciona teste para a equivalência de matrizes diferentes, aumenta cache de fingerprints para 32 worksets e reduz o perfil de contratos para cerca de 29s. O estado público continua bloqueado: sem alteração em `content/pages.json`, sem diff público, sem `render_allowed=true`, `sitemap_allowed=true`, `publication_allowed=true` ou `public_path`. O próximo ciclo deve crescer para 280 por família, total 1.680, com a mesma ordem: dry-run, write archive/metrics, paid, refinement, paid, readiness, strategy, advance esperado, readiness/strategy pós-advance, pipeline downstream, checks e checkpoint.

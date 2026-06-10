@@ -62,6 +62,21 @@ func TestMaximumPairSimilarityDetailCachesByContentFingerprint(t *testing.T) {
 	}
 }
 
+func TestMaximumPairSimilarityCacheKeepsContractWorkingSets(t *testing.T) {
+	resetSimilarityCacheForTest()
+	for index := 0; index < 6; index++ {
+		entries := []Entry{
+			{Line: 1, Record: similarityTestRecord("consumidor-cartao-negativado-prova-digital-"+testSuffix(index), "Contrato do cartao e fatura mostram a cobranca contestada.")},
+			{Line: 2, Record: similarityTestRecord("familia-divorcio-consensual-prova-digital-"+testSuffix(index), "Documentos familiares e minuta mostram acordo em construcao.")},
+		}
+		_ = MaximumPairSimilarityDetail(entries)
+	}
+	stats := similarityCacheStatsForTest()
+	if stats.Entries < 6 {
+		t.Fatalf("cache entries=%d, want at least 6 working sets retained", stats.Entries)
+	}
+}
+
 func TestMaximumPairSimilarityDetailDoesNotHideDuplicateTextBehindExpansionProfiles(t *testing.T) {
 	left := similarityTestRecord(
 		"consumidor-financeiro-negativacao-divida-desconhecida-prova-digital-recurso-decisao-recorrida-prova-nova-rodada-02",
@@ -122,6 +137,39 @@ func TestMaximumPairSimilarityDetailIgnoresExpansionBoilerplateAcrossDifferentSo
 	})
 	if pair.Score > 0.64 {
 		t.Fatalf("expansion boilerplate dominated similarity: pair=%s/%s score=%.4f, want <=0.64", pair.LeftID, pair.RightID, pair.Score)
+	}
+}
+
+func TestSemanticSimilarityIsSkippedOnlyWhenSourceMatricesDiffer(t *testing.T) {
+	left := similarityTestRecord(
+		"familia-partilha-bens-conta-digital-negociacao-previa-recurso-decisao-recorrida-prova-nova-rodada-02",
+		"Historico de tentativa previa em familia trata recurso documentado com prova nova e fase atual.",
+	)
+	left.SourceMatrixID = "familia-partilha-bens-conta-digital"
+	right := left
+	right.UniqueIntentID = "familia-pensao-revisao-desemprego-negociacao-previa-recurso-decisao-recorrida-prova-nova-rodada-02"
+	right.SourceMatrixID = "familia-pensao-revisao-desemprego"
+	right.ReaderProblem = "Prova nova e recurso documentado em familia aparecem com fase atual e tentativa previa."
+	right.DocumentContext = "Notificacao, protocolo, fatura, contrato e comprovantes organizam a triagem."
+	right.RiskContext = "Valor envolvido, empresa e credito podem ser afetados pela negativacao indevida."
+	right.DigitalAction = "Antes do orcamento de honorarios, o atendimento online organiza documentos."
+
+	semanticScore := jaccard(semanticSignalSet(left), semanticSignalSet(right))
+	textScore := jaccard(textualSignalSet(left), textualSignalSet(right))
+	score := maximumSimilarityScore(left, right, semanticScore, textScore)
+	skippedScore := maximumSimilarityScore(left, right, 0, textScore)
+
+	if semanticScore <= textScore {
+		t.Fatalf("test setup semantic=%.4f text=%.4f, want semantic above text", semanticScore, textScore)
+	}
+	if score != skippedScore || score != textScore {
+		t.Fatalf("different source matrices changed score: semantic=%.4f text=%.4f score=%.4f skipped=%.4f", semanticScore, textScore, score, skippedScore)
+	}
+	if !semanticSimilarityCanAffectScore(left, left) {
+		t.Fatal("same source matrix must keep semantic similarity enabled")
+	}
+	if semanticSimilarityCanAffectScore(left, right) {
+		t.Fatal("different non-empty source matrices should skip semantic similarity")
 	}
 }
 

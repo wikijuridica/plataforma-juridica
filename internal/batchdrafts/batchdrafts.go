@@ -75,7 +75,7 @@ type similarityCacheEntry struct {
 	pair        SimilarityPair
 }
 
-const maximumSimilarityCacheLimit = 4
+const maximumSimilarityCacheLimit = 32
 
 var maximumSimilarityCache = struct {
 	sync.Mutex
@@ -316,8 +316,11 @@ func computeMaximumPairSimilarityDetail(entries []Entry) SimilarityPair {
 		left := sets[i]
 		leftText := textSets[i]
 		for j := i + 1; j < len(entries); j++ {
-			semanticScore := jaccard(left, sets[j])
 			textScore := jaccard(leftText, textSets[j])
+			semanticScore := 0.0
+			if semanticSimilarityCanAffectScore(entries[i].Record, entries[j].Record) {
+				semanticScore = jaccard(left, sets[j])
+			}
 			score := maximumSimilarityScore(entries[i].Record, entries[j].Record, semanticScore, textScore)
 			if score > max {
 				max = score
@@ -330,6 +333,10 @@ func computeMaximumPairSimilarityDetail(entries []Entry) SimilarityPair {
 		}
 	}
 	return pair
+}
+
+func semanticSimilarityCanAffectScore(left Record, right Record) bool {
+	return left.SourceMatrixID == "" || right.SourceMatrixID == "" || left.SourceMatrixID == right.SourceMatrixID
 }
 
 func maximumSimilarityScore(left Record, right Record, semanticScore float64, textScore float64) float64 {
