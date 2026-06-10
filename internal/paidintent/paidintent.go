@@ -75,6 +75,9 @@ type Report struct {
 }
 
 type readinessRecord struct {
+	BatchID                     string   `json:"batch_id"`
+	TargetCandidateCount        int      `json:"target_candidate_count"`
+	ExpansionCandidateSelector  string   `json:"expansion_candidate_selector"`
 	ExpansionCandidateIntentIDs []string `json:"expansion_candidate_intent_ids"`
 }
 
@@ -760,6 +763,14 @@ func loadExpansionReadinessTargets(root string) (map[string]bool, Report) {
 	if err != nil {
 		return nil, Report{Issues: []Issue{{Code: "project_root_not_found", Message: err.Error()}}}
 	}
+	archiveEntries, archiveReport := batchdraftarchive.LoadRecords(root)
+	if !archiveReport.Passed() {
+		return nil, Report{Issues: convertArchiveIssues(archiveReport)}
+	}
+	archiveIntentIDsByBatch := make(map[string][]string)
+	for _, entry := range archiveEntries {
+		archiveIntentIDsByBatch[entry.Record.BatchID] = append(archiveIntentIDsByBatch[entry.Record.BatchID], entry.Record.UniqueIntentID)
+	}
 	path := filepath.Join(projectRoot, "data", "editorial", "batch_candidate_expansion_readiness.jsonl")
 	file, err := os.Open(path)
 	if err != nil {
@@ -783,7 +794,11 @@ func loadExpansionReadinessTargets(root string) (map[string]bool, Report) {
 			issues = append(issues, Issue{Code: "paid_intent_expansion_readiness_invalid_json", Message: fmt.Sprintf("line=%d %s", lineNumber, err.Error())})
 			continue
 		}
-		for _, intentID := range record.ExpansionCandidateIntentIDs {
+		intentIDs := record.ExpansionCandidateIntentIDs
+		if record.ExpansionCandidateSelector == "archive_prefix_by_batch" || len(intentIDs) == 0 {
+			intentIDs = firstNStrings(archiveIntentIDsByBatch[record.BatchID], record.TargetCandidateCount)
+		}
+		for _, intentID := range intentIDs {
 			targets[intentID] = true
 		}
 	}
@@ -791,6 +806,16 @@ func loadExpansionReadinessTargets(root string) (map[string]bool, Report) {
 		issues = append(issues, Issue{Code: "paid_intent_expansion_readiness_scan_failed", Message: err.Error()})
 	}
 	return targets, Report{Issues: issues}
+}
+
+func firstNStrings(values []string, limit int) []string {
+	if limit <= 0 || len(values) == 0 {
+		return nil
+	}
+	if limit > len(values) {
+		limit = len(values)
+	}
+	return append([]string{}, values[:limit]...)
 }
 
 func findProjectRoot(start string) (string, error) {

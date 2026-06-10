@@ -23,44 +23,49 @@ const (
 	PaidGateBlockedStatus = "batch_candidate_expansion_blocked_paid_gate_failed"
 	ArchivePath           = "data/editorial/batch_draft_expansion_archive.jsonl"
 	PaidIntentGatePath    = "data/editorial/batch_paid_intent_gates.jsonl"
+
+	ExpansionCandidateSelectorArchivePrefix = "archive_prefix_by_batch"
+	MaxExpansionCandidateSampleIntentIDs    = 12
 )
 
 type Record struct {
-	ReadinessID                 string   `json:"readiness_id"`
-	BatchID                     string   `json:"batch_id"`
-	LegalArea                   string   `json:"legal_area"`
-	ReadinessStatus             string   `json:"readiness_status"`
-	TargetCandidateTier         string   `json:"target_candidate_tier"`
-	SourceArchivePath           string   `json:"source_archive_path"`
-	ArchiveRecordsRequired      int      `json:"archive_records_required"`
-	ArchiveRecordsObserved      int      `json:"archive_records_observed"`
-	CurrentCandidateCount       int      `json:"current_candidate_count"`
-	TargetCandidateCount        int      `json:"target_candidate_count"`
-	ExpansionCandidateIntentIDs []string `json:"expansion_candidate_intent_ids"`
-	KnownSourceBlockerIntentIDs []string `json:"known_source_blocker_intent_ids"`
-	PaidIntentGatePath          string   `json:"paid_intent_gate_path"`
-	PaidIntentPassedCount       int      `json:"paid_intent_passed_count"`
-	PaidIntentBlockedCount      int      `json:"paid_intent_blocked_count"`
-	PaidIntentMissingCount      int      `json:"paid_intent_missing_count"`
-	PaidIntentMissingIntentIDs  []string `json:"paid_intent_missing_intent_ids"`
-	PaidIntentBlockedIntentIDs  []string `json:"paid_intent_blocked_intent_ids"`
-	ActionableBlockers          []string `json:"actionable_blockers"`
-	MinimumHumanScore           int      `json:"minimum_human_score"`
-	MaxSimilarityAllowed        float64  `json:"max_similarity_allowed"`
-	MaxSimilarityObserved       float64  `json:"max_similarity_observed"`
-	CTAContextRequired          bool     `json:"cta_context_required"`
-	SourceURLAuditRequired      bool     `json:"source_url_audit_required"`
-	SourceSpecificityRequired   bool     `json:"source_specificity_required"`
-	PaidIntentRequired          bool     `json:"paid_intent_required"`
-	NextGate                    string   `json:"next_gate"`
-	PublicationBlockReason      string   `json:"publication_block_reason"`
-	IndexPolicy                 string   `json:"index_policy"`
-	ManifestAllowed             bool     `json:"manifest_allowed"`
-	RenderAllowed               bool     `json:"render_allowed"`
-	SitemapAllowed              bool     `json:"sitemap_allowed"`
-	PublicationAllowed          bool     `json:"publication_allowed"`
-	PublicPath                  string   `json:"public_path"`
-	CheckedAt                   string   `json:"checked_at"`
+	ReadinessID                       string   `json:"readiness_id"`
+	BatchID                           string   `json:"batch_id"`
+	LegalArea                         string   `json:"legal_area"`
+	ReadinessStatus                   string   `json:"readiness_status"`
+	TargetCandidateTier               string   `json:"target_candidate_tier"`
+	SourceArchivePath                 string   `json:"source_archive_path"`
+	ArchiveRecordsRequired            int      `json:"archive_records_required"`
+	ArchiveRecordsObserved            int      `json:"archive_records_observed"`
+	CurrentCandidateCount             int      `json:"current_candidate_count"`
+	TargetCandidateCount              int      `json:"target_candidate_count"`
+	ExpansionCandidateSelector        string   `json:"expansion_candidate_selector,omitempty"`
+	ExpansionCandidateSampleIntentIDs []string `json:"expansion_candidate_sample_intent_ids,omitempty"`
+	ExpansionCandidateIntentIDs       []string `json:"expansion_candidate_intent_ids,omitempty"`
+	KnownSourceBlockerIntentIDs       []string `json:"known_source_blocker_intent_ids"`
+	PaidIntentGatePath                string   `json:"paid_intent_gate_path"`
+	PaidIntentPassedCount             int      `json:"paid_intent_passed_count"`
+	PaidIntentBlockedCount            int      `json:"paid_intent_blocked_count"`
+	PaidIntentMissingCount            int      `json:"paid_intent_missing_count"`
+	PaidIntentMissingIntentIDs        []string `json:"paid_intent_missing_intent_ids"`
+	PaidIntentBlockedIntentIDs        []string `json:"paid_intent_blocked_intent_ids"`
+	ActionableBlockers                []string `json:"actionable_blockers"`
+	MinimumHumanScore                 int      `json:"minimum_human_score"`
+	MaxSimilarityAllowed              float64  `json:"max_similarity_allowed"`
+	MaxSimilarityObserved             float64  `json:"max_similarity_observed"`
+	CTAContextRequired                bool     `json:"cta_context_required"`
+	SourceURLAuditRequired            bool     `json:"source_url_audit_required"`
+	SourceSpecificityRequired         bool     `json:"source_specificity_required"`
+	PaidIntentRequired                bool     `json:"paid_intent_required"`
+	NextGate                          string   `json:"next_gate"`
+	PublicationBlockReason            string   `json:"publication_block_reason"`
+	IndexPolicy                       string   `json:"index_policy"`
+	ManifestAllowed                   bool     `json:"manifest_allowed"`
+	RenderAllowed                     bool     `json:"render_allowed"`
+	SitemapAllowed                    bool     `json:"sitemap_allowed"`
+	PublicationAllowed                bool     `json:"publication_allowed"`
+	PublicPath                        string   `json:"public_path"`
+	CheckedAt                         string   `json:"checked_at"`
 }
 
 type Entry struct {
@@ -214,12 +219,31 @@ func ValidateRecordAgainstIndex(record Record, index ExpansionIndex) Report {
 	if record.TargetCandidateCount < 30 {
 		issues = append(issues, Issue{Code: "batch_candidate_expansion_target_too_low", Message: fmt.Sprintf("%d", record.TargetCandidateCount)})
 	}
-	if len(record.ExpansionCandidateIntentIDs) < record.TargetCandidateCount {
-		issues = append(issues, Issue{Code: "batch_candidate_expansion_too_few_intents", Message: fmt.Sprintf("selected=%d target=%d", len(record.ExpansionCandidateIntentIDs), record.TargetCandidateCount)})
+	candidateIntentIDs := CandidateIntentIDs(record, index)
+	if record.ExpansionCandidateSelector != "" && record.ExpansionCandidateSelector != ExpansionCandidateSelectorArchivePrefix {
+		issues = append(issues, Issue{Code: "batch_candidate_expansion_selector_invalid", Message: record.ExpansionCandidateSelector})
 	}
-	paidPassed, paidBlocked, paidMissing := classifyPaidIntent(record.ExpansionCandidateIntentIDs, index.PaidIntentByIntent)
+	if record.ExpansionCandidateSelector == "" && len(record.ExpansionCandidateIntentIDs) == 0 {
+		issues = append(issues, Issue{Code: "batch_candidate_expansion_selector_missing", Message: record.BatchID})
+	}
+	if len(record.ExpansionCandidateIntentIDs) > MaxExpansionCandidateSampleIntentIDs {
+		issues = append(issues, Issue{Code: "batch_candidate_expansion_stores_full_intent_list", Message: fmt.Sprintf("stored=%d max_sample=%d", len(record.ExpansionCandidateIntentIDs), MaxExpansionCandidateSampleIntentIDs)})
+	}
+	if len(record.ExpansionCandidateSampleIntentIDs) > MaxExpansionCandidateSampleIntentIDs {
+		issues = append(issues, Issue{Code: "batch_candidate_expansion_sample_too_large", Message: fmt.Sprintf("sample=%d max=%d", len(record.ExpansionCandidateSampleIntentIDs), MaxExpansionCandidateSampleIntentIDs)})
+	}
+	if record.ExpansionCandidateSelector == ExpansionCandidateSelectorArchivePrefix {
+		expectedSample := sampleCandidateIntentIDs(candidateIntentIDs)
+		if !sameStringSlice(record.ExpansionCandidateSampleIntentIDs, expectedSample) {
+			issues = append(issues, Issue{Code: "batch_candidate_expansion_sample_mismatch", Message: fmt.Sprintf("sample=%d expected=%d", len(record.ExpansionCandidateSampleIntentIDs), len(expectedSample))})
+		}
+	}
+	if len(candidateIntentIDs) < record.TargetCandidateCount {
+		issues = append(issues, Issue{Code: "batch_candidate_expansion_too_few_intents", Message: fmt.Sprintf("selected=%d target=%d", len(candidateIntentIDs), record.TargetCandidateCount)})
+	}
+	paidPassed, paidBlocked, paidMissing := classifyPaidIntent(candidateIntentIDs, index.PaidIntentByIntent)
 	seenIntents := make(map[string]bool)
-	for _, intentID := range record.ExpansionCandidateIntentIDs {
+	for _, intentID := range candidateIntentIDs {
 		if !idPattern.MatchString(intentID) {
 			issues = append(issues, Issue{Code: "batch_candidate_expansion_invalid_intent_id", Message: intentID})
 		}
@@ -357,11 +381,12 @@ func RefreshRecordAgainstIndex(record Record, index ExpansionIndex) Record {
 	if target > 0 {
 		record.TargetCandidateCount = target
 		record.TargetCandidateTier = targetTier(target)
-		if intentIDs := firstN(index.ArchiveIntentIDsByBatch[record.BatchID], target); len(intentIDs) > 0 {
-			record.ExpansionCandidateIntentIDs = intentIDs
-		}
 	}
-	paidPassed, paidBlocked, paidMissing := classifyPaidIntent(record.ExpansionCandidateIntentIDs, index.PaidIntentByIntent)
+	record.ExpansionCandidateSelector = ExpansionCandidateSelectorArchivePrefix
+	candidateIntentIDs := CandidateIntentIDs(record, index)
+	record.ExpansionCandidateSampleIntentIDs = sampleCandidateIntentIDs(candidateIntentIDs)
+	record.ExpansionCandidateIntentIDs = nil
+	paidPassed, paidBlocked, paidMissing := classifyPaidIntent(candidateIntentIDs, index.PaidIntentByIntent)
 	record.PaidIntentPassedCount = len(paidPassed)
 	record.PaidIntentBlockedCount = len(paidBlocked)
 	record.PaidIntentMissingCount = len(paidMissing)
@@ -380,6 +405,17 @@ func RefreshRecordAgainstIndex(record Record, index ExpansionIndex) Record {
 		record.ReadinessStatus = ReadyBlockedStatus
 	}
 	return record
+}
+
+func CandidateIntentIDs(record Record, index ExpansionIndex) []string {
+	if record.ExpansionCandidateSelector == ExpansionCandidateSelectorArchivePrefix || len(record.ExpansionCandidateIntentIDs) == 0 {
+		return firstN(index.ArchiveIntentIDsByBatch[record.BatchID], record.TargetCandidateCount)
+	}
+	return append([]string{}, record.ExpansionCandidateIntentIDs...)
+}
+
+func sampleCandidateIntentIDs(intentIDs []string) []string {
+	return firstN(intentIDs, MaxExpansionCandidateSampleIntentIDs)
 }
 
 func nextTargetCandidateCount(current int, archiveCount int) int {
@@ -409,6 +445,18 @@ func firstN(values []string, count int) []string {
 	}
 	copyValues := append([]string{}, values[:count]...)
 	return copyValues
+}
+
+func sameStringSlice(left []string, right []string) bool {
+	if len(left) != len(right) {
+		return false
+	}
+	for index := range left {
+		if left[index] != right[index] {
+			return false
+		}
+	}
+	return true
 }
 
 func LoadRecords(root string) ([]Entry, Report) {

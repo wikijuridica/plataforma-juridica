@@ -47,10 +47,12 @@ func ValidateTotalSelected(records []batchcandidategates.Record, expected int) R
 func promoteFromReadiness(root string, targetFor func(batchcandidateexpansion.Record, batchexpansionstrategy.Record) int) ([]batchcandidategates.Record, Report) {
 	entries, loadReport := batchcandidategates.LoadRecords(root)
 	archiveIndex, archiveReport := batchcandidategates.BuildArchiveIndex(root)
+	expansionIndex, expansionIndexReport := batchcandidateexpansion.BuildExpansionIndex(root)
 	readinessEntries, readinessReport := batchcandidateexpansion.LoadRecords(root)
 	paidEntries, paidReport := paidintent.LoadRecords(root)
 	strategyEntries, strategyReport := batchexpansionstrategy.LoadRecords(root)
 	issues := append(convertGateIssues(loadReport), convertGateIssues(archiveReport)...)
+	issues = append(issues, convertReadinessIssues(expansionIndexReport)...)
 	issues = append(issues, convertReadinessIssues(readinessReport)...)
 	issues = append(issues, convertPaidIssues(paidReport)...)
 	issues = append(issues, convertStrategyIssues(strategyReport)...)
@@ -94,8 +96,9 @@ func promoteFromReadiness(root string, targetFor func(batchcandidateexpansion.Re
 			issues = append(issues, Issue{Code: "batch_candidate_missing_expansion_strategy", Message: record.BatchID})
 			continue
 		}
-		selected := make([]string, 0, len(readiness.ExpansionCandidateIntentIDs))
-		for _, intentID := range readiness.ExpansionCandidateIntentIDs {
+		candidateIntentIDs := batchcandidateexpansion.CandidateIntentIDs(readiness, expansionIndex)
+		selected := make([]string, 0, len(candidateIntentIDs))
+		for _, intentID := range candidateIntentIDs {
 			if !paidintent.AllowsExpansion(paidByIntent[intentID]) {
 				continue
 			}

@@ -6,6 +6,7 @@ import (
 
 	"portaljuridico/internal/batchcandidateexpansion"
 	"portaljuridico/internal/batchcandidategates"
+	"portaljuridico/internal/batchcandidatepromotion"
 	"portaljuridico/internal/batchexpansionstrategy"
 	"portaljuridico/internal/paidintent"
 	"portaljuridico/internal/storage"
@@ -45,6 +46,10 @@ func TestBatchCandidateGatesSelectArchiveDraftsWithoutPublishing(t *testing.T) {
 	if !readinessReport.Passed() {
 		t.Fatalf("could not load expansion readiness: %v", readinessReport.Messages())
 	}
+	expansionIndex, expansionIndexReport := batchcandidateexpansion.BuildExpansionIndex(".")
+	if !expansionIndexReport.Passed() {
+		t.Fatalf("could not build expansion index: %v", expansionIndexReport.Messages())
+	}
 	readinessByBatch := make(map[string]batchcandidateexpansion.Record)
 	for _, entry := range readinessRecords {
 		readinessByBatch[entry.Record.BatchID] = entry.Record
@@ -79,7 +84,7 @@ func TestBatchCandidateGatesSelectArchiveDraftsWithoutPublishing(t *testing.T) {
 		}
 		totalExpectedCurrent += strategy.CurrentCandidateCount
 		expectedPaidPassed := make([]string, 0)
-		for _, intentID := range readiness.ExpansionCandidateIntentIDs {
+		for _, intentID := range batchcandidateexpansion.CandidateIntentIDs(readiness, expansionIndex) {
 			if paidintent.AllowsExpansion(paidByIntent[intentID]) {
 				expectedPaidPassed = append(expectedPaidPassed, intentID)
 			}
@@ -135,6 +140,34 @@ func TestBatchCandidateGateRecordsStayWithinShardBudget(t *testing.T) {
 		if len(data)+1 > layer.RecordMaxBytes {
 			t.Fatalf("line %d %s encoded bytes=%d, want <=%d", entry.Line, record.GateID, len(data)+1, layer.RecordMaxBytes)
 		}
+	}
+}
+
+func TestBatchCandidatePromotionUsesDerivedReadinessTargets(t *testing.T) {
+	records, report := batchcandidatepromotion.AdvanceToNextTargets(".")
+	if !report.Passed() {
+		t.Fatalf("promotion from derived readiness failed: %v", report.Messages())
+	}
+	totalSelected := 0
+	for _, record := range records {
+		totalSelected += len(record.SelectedUniqueIntentIDs)
+		if len(record.SelectedUniqueIntentIDs) == 0 {
+			t.Fatalf("%s selected no intents from derived readiness", record.BatchID)
+		}
+		if record.RenderAllowed || record.SitemapAllowed || record.PublicationAllowed || record.PublicPath != "" {
+			t.Fatalf("%s promotion escaped blocked publication", record.BatchID)
+		}
+	}
+	strategyRecords, strategyReport := batchexpansionstrategy.LoadRecords(".")
+	if !strategyReport.Passed() {
+		t.Fatalf("could not load expansion strategy: %v", strategyReport.Messages())
+	}
+	expected := 0
+	for _, entry := range strategyRecords {
+		expected += entry.Record.CurrentCandidateCount
+	}
+	if totalSelected != expected {
+		t.Fatalf("promotion selected=%d, want current strategy total=%d", totalSelected, expected)
 	}
 }
 

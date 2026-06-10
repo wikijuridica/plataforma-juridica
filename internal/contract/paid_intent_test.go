@@ -150,9 +150,13 @@ func TestPaidIntentCoversExpansionReadinessTargetsWithoutPublishing(t *testing.T
 	if !readinessReport.Passed() {
 		t.Fatalf("could not load expansion readiness records: %v", readinessReport.Messages())
 	}
+	expansionIndex, expansionIndexReport := batchcandidateexpansion.BuildExpansionIndex(".")
+	if !expansionIndexReport.Passed() {
+		t.Fatalf("could not build expansion index: %v", expansionIndexReport.Messages())
+	}
 	targets := make(map[string]bool)
 	for _, entry := range readinessRecords {
-		for _, intentID := range entry.Record.ExpansionCandidateIntentIDs {
+		for _, intentID := range batchcandidateexpansion.CandidateIntentIDs(entry.Record, expansionIndex) {
 			targets[intentID] = true
 		}
 	}

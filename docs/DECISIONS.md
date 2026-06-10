@@ -949,3 +949,16 @@ Motivos:
 - combinar pista do facet com pista da rodada no início de `DocumentContext`, `RiskContext` e `DigitalAction` aumenta diversidade sem remover n-grama, sem reduzir score e sem publicar nada.
 
 Consequencia: `internal/batchdraftgen` passa a misturar pista primária e secundária em perfis de rodada; `internal/contract` ganha teste para geração diversa em 280 por família. O dry-run de 280 passou com `generated_drafts=1680`, `rewritten=1680` e `max_similarity=0.61`; o archive permanente, paid gates, candidate gates, reviews, prepublication, source-specificity, manifest e final drafts ficam em 1.680 registros bloqueados. `batch_candidate_gates` continua em shards físicos dentro do orçamento leve. O estado público continua bloqueado: sem alteração em `content/pages.json`, sem diff público e sem flags públicas verdadeiras. O próximo ciclo deve crescer para 310 por família, total 1.860, mantendo teste de diversidade, paid/refinement/readiness/strategy, advance esperado, refresh pós-advance, pipeline e checks completos.
+
+## 2026-06-10 — Expansao bloqueada para 1.860 e readiness leve derivado do archive
+
+Decisao: crescer para 310 rascunhos por família, total 1.860, e corrigir `batch_candidate_expansion_readiness` para não armazenar a lista completa de intenções por família.
+
+Motivos:
+- o dry-run e a escrita permanente de 310 por família passaram com `generated_drafts=1860`, `rewritten=1860` e `max_similarity=0.61`;
+- rascunho aprovado em laboratório deve ir para o repo permanente bloqueado, portanto archive e métricas foram materializados antes do commit;
+- `check-storage-contract` reprovou corretamente `batch_candidate_expansion_readiness:1` por linha JSONL acima de 32KB, mostrando que guardar 310 IDs completos no readiness era bug de escala;
+- aumentar orçamento ou ignorar storage mascararia o problema e voltaria em 2.040/10k+;
+- a lista completa já existe no archive permanente e pode ser derivada por `batch_id` + `target_candidate_count` sem perder validação.
+
+Consequencia: `batch_draft_expansion_archive`, paid gates, candidate gates, reviews, prepublication, source-specificity, public manifest e final drafts ficam com 1.860 registros bloqueados. `batch_candidate_expansion_readiness` passa a gravar `expansion_candidate_selector=archive_prefix_by_batch` e amostra curta, enquanto `batchcandidateexpansion.CandidateIntentIDs`, `batchcandidatepromotion` e `paidintent` derivam os alvos completos do archive. Testes novos impedem readiness pesado e provam promoção por alvos derivados. O estado público continua bloqueado: sem alteração em `content/pages.json`, sem diff público, sem `render_allowed=true`, `sitemap_allowed=true`, `publication_allowed=true` ou `public_path`. O próximo ciclo deve crescer para 340 por família, total 2.040, mantendo storage leve, diversidade, paid/refinement/readiness/strategy, advance esperado, refresh pós-advance, pipeline, checks completos e otimização do gargalo de similaridade/readiness.
