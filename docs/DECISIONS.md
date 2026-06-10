@@ -898,3 +898,16 @@ Motivos:
 - paid-intent stale depois de refinamento é bug de ordem, não blocker a mascarar; a cadeia deve ser regenerada até ficar idempotente antes de qualquer advance.
 
 Consequencia: `internal/batchdrafts.ValidateSourceMatrixDiversity` passa a reprovar dominância de 4-grama e baixa diversidade por campo dentro de cada `source_matrix_id`; `internal/batchdraftgen` gera cues discriminativos por campo e acrescenta reparo de especificidade por área apenas quando o score acusa `low_specificity`; `data/editorial/batch_draft_expansion_archive.jsonl` fica com 1.140 registros; `batch_generation_metrics` registra 190 por família; `batch_paid_intent_gates` cobre 1.140; `batch_paid_intent_refinements` registra 827 e fica idempotente após regeneração; `batch_candidate_gates` avança para 1.140 com cadeia downstream completa em 1.140. O orçamento leve de `batch_candidate_gates` sobe para 32KB porque 190 IDs por família passam de 16KB, mas isso não é solução de escala infinita: antes de crescimento muito maior, o gate deve ser particionado por shard/tier ou registro candidato. O estado público continua bloqueado: sem render, sitemap, publicação, `public_path` ou `index`. O próximo ciclo deve gerar novo archive semântico acima de 190 por família, revalidar diversidade intra-matriz, regenerar paid/readiness/strategy e só então avançar além de 1.140.
+
+## 2026-06-09 — Archive 1.320, concorrência de agentes e avanço 1.320
+
+Decisao: expandir o arquivo permanente bloqueado para 1.320 rascunhos, 220 por família, e avançar `batch_candidate_gates` para 1.320 somente depois de dry-run limpo, persistência explícita, paid gates em 1.320, refinamento idempotente, readiness/strategy verdes e cadeia downstream bloqueada em 1.320.
+
+Motivos:
+- dry-run 220 isolado comprovou 1.320 rascunhos com similaridade máxima 0.60 sem alterar o repo;
+- artefato aprovado em laboratório deve ser persistido no repo, não ficar apenas em `/tmp`;
+- refinamento de paid-intent alterou o archive e exigiu regenerar paid gates antes de aceitar readiness;
+- um subagente executou `git restore` e `rm` no workspace compartilhado sem autorização do Codex principal, apagando uma tentativa local de expansão; isso é falha operacional P0 de concorrência e não pode se repetir;
+- `batch_candidate_gates` com 220 IDs por família ainda cabe em 32KB, mas a maior linha chegou a 22.173 bytes e confirma necessidade de particionamento antes de escala muito maior.
+
+Consequencia: `data/editorial/batch_draft_expansion_archive.jsonl`, `batch_paid_intent_gates`, `batch_candidate_reviews`, `batch_prepublication_gates`, `batch_source_specificity_resolutions`, `batch_public_manifest_gates` e `batch_final_authorial_drafts` ficam com 1.320 registros bloqueados; `batch_paid_intent_refinements` registra 969 refinamentos; `batch_expansion_strategy` volta para `batch_expansion_strategy_blocked_archive_growth_required` em todas as famílias porque current=archive=220. Contratos de agentes passam a proibir `git restore`, `git checkout`, `rm`, reset ou limpeza no workspace compartilhado sem autorização explícita do Codex principal. O próximo ciclo deve particionar `batch_candidate_gates` ou provar limite seguro antes de crescer muito acima de 220 por família.
