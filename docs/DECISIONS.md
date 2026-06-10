@@ -279,6 +279,17 @@ Motivos:
 
 Consequencia: a primeira linha de `AGENTS.md` e `GOAL.md` explicita a proibicao operacional. `internal/contract/continuity_test.go` reprova se a regra sumir dos contratos. O agente deve deixar o goal ativo, registrar o proximo ciclo e continuar trabalhando enquanto nao houver bloqueio P0 real comprovado.
 
+## 2026-06-09 — Continuidade preserva o objetivo completo apos compactacao
+
+Decisao: quando houver `codex_internal_context`, resumo de retomada, compactação ou subobjetivo, o Codex deve preservar o objetivo completo e nao pode reduzir o objetivo total ao recorte do ciclo atual.
+
+Motivos:
+- compactação pode mostrar apenas um subobjetivo e ocultar parte do contexto operacional;
+- resposta final no thread é relatório de checkpoint, não é decisão de conclusão;
+- checkpoint, commit, teste verde e retomada de ciclo sao rastreabilidade, nao aceite final.
+
+Consequencia: e proibido chamar update_goal status=complete por engano por causa de `codex_internal_context`, compactação, subobjetivo, resposta final, checkpoint ou commit. `AGENTS.md`, `GOAL.md` e `internal/contract/continuity_test.go` devem manter essa regra literal enquanto a meta minima de 10 mil paginas publicas juridicas aprovadas nao estiver comprovada.
+
 ## 2026-06-09 — Draft editorial persistido ainda nao e publicacao
 
 Decisao: rascunho validado pode ser persistido em `data/editorial/drafts.jsonl`, mas continua `draft/noindex`, sem rota publica, sem sitemap e sem CTA.

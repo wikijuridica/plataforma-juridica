@@ -10,15 +10,27 @@ import (
 	"portaljuridico/internal/scale"
 )
 
-func TestAgentsFirstLineForGoalModeDoesNotAllowStopping(t *testing.T) {
-	text := readRootFile(t, "AGENTS.md")
-	firstLine := strings.SplitN(text, "\n", 2)[0]
-	want := "SE o Codex estiver em modo /goal, não é para parar enquanto tem trabalho."
-	if !strings.Contains(firstLine, want) {
-		t.Fatalf("AGENTS.md first line = %q, want it to contain %q", firstLine, want)
-	}
-	if !strings.Contains(firstLine, "proibido chamar update_goal status=complete") {
-		t.Fatalf("AGENTS.md first line must explicitly ban update_goal complete before the public target, got %q", firstLine)
+func TestGoalContractsFirstLineForGoalModeDoesNotAllowStopping(t *testing.T) {
+	for _, path := range []string{"AGENTS.md", "GOAL.md"} {
+		text := readRootFile(t, path)
+		firstLine := strings.SplitN(text, "\n", 2)[0]
+		want := "SE o Codex estiver em modo /goal, não é para parar enquanto tem trabalho."
+		if !strings.Contains(firstLine, want) {
+			t.Fatalf("%s first line = %q, want it to contain %q", path, firstLine, want)
+		}
+		for _, fragment := range []string{
+			"checkpoint",
+			"commit",
+			"laboratório verde",
+			"resposta no thread",
+			"update_goal status=complete",
+			"10 mil páginas públicas",
+			"evidência atual",
+		} {
+			if !strings.Contains(firstLine, fragment) {
+				t.Fatalf("%s first line must contain %q, got %q", path, fragment, firstLine)
+			}
+		}
 	}
 }
 
@@ -78,6 +90,20 @@ func TestContractsRequireContinuationBeyondCheckpoints(t *testing.T) {
 	}
 }
 
+func TestContractsRejectGoalCompletionFromContinuationOrFinalAnswer(t *testing.T) {
+	for _, path := range []string{"AGENTS.md", "GOAL.md", "docs/DECISIONS.md"} {
+		text := readRootFile(t, path)
+		requireContains(t, text, "codex_internal_context")
+		requireContains(t, text, "preservar o objetivo completo")
+		requireContains(t, text, "resposta final no thread é relatório de checkpoint")
+		requireContains(t, text, "não é decisão de conclusão")
+		requireContains(t, text, "compactação")
+		requireContains(t, text, "subobjetivo")
+		requireContains(t, text, "objetivo total")
+		requireContains(t, text, "update_goal status=complete por engano")
+	}
+}
+
 func TestContractsKeepPrevidenciarioFlexibleForQualifiedCuriosity(t *testing.T) {
 	for _, path := range []string{"AGENTS.md", "GOAL.md", "docs/CONTENT_QUALITY.md", "docs/LAB_VALIDATION.md"} {
 		text := readRootFile(t, path)
@@ -114,14 +140,14 @@ func TestContractsDoNotTreatDigitalLegalServiceAsPromise(t *testing.T) {
 }
 
 func TestCheckpointCarriesNextExecutionPlanInsteadOfStopping(t *testing.T) {
-	text := readRootFile(t, "CHECKPOINT.md")
+	text := latestCheckpointSection(readRootFile(t, "CHECKPOINT.md"))
 
-	requireContains(t, text, "nao e ordem de parada")
+	requireContains(t, text, "não é ordem de parada")
 	requireContains(t, text, "plano de continuidade")
 	requireContains(t, text, "continuar P0")
-	requireContains(t, text, "nao publicar 10 mil paginas")
-	requireContains(t, text, "laboratorio")
-	requireContains(t, text, "validar novamente")
+	requireContains(t, text, "não conclui `/goal`")
+	requireContains(t, text, "não autoriza parar")
+	requireContains(t, text, "update_goal status=complete")
 }
 
 func TestP0ScalePlanTargetsAtLeastTenThousandPagesWithoutPublishingThem(t *testing.T) {
@@ -183,6 +209,13 @@ func readRootFile(t *testing.T, path string) string {
 		t.Fatal(err)
 	}
 	return string(data)
+}
+
+func latestCheckpointSection(text string) string {
+	if idx := strings.LastIndex(text, "\n## "); idx >= 0 {
+		return text[idx+1:]
+	}
+	return text
 }
 
 func findRoot(t *testing.T) string {
