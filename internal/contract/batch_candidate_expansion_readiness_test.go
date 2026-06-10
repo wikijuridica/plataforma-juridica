@@ -1,6 +1,7 @@
 package contract_test
 
 import (
+	"fmt"
 	"testing"
 
 	"portaljuridico/internal/batchcandidateexpansion"
@@ -184,6 +185,59 @@ func TestBatchCandidateExpansionRefreshUsesCurrentArchiveCounts(t *testing.T) {
 	}
 	if refreshed.MaxSimilarityObserved != 0.60 {
 		t.Fatalf("max_similarity_observed=%.2f, want current archive similarity 0.60", refreshed.MaxSimilarityObserved)
+	}
+}
+
+func TestBatchCandidateExpansionRefreshRecomputesTargetsWhenArchiveGrows(t *testing.T) {
+	intentIDs := make([]string, 0, 160)
+	for index := 1; index <= 160; index++ {
+		intentIDs = append(intentIDs, fmt.Sprintf("familia-intencao-%03d", index))
+	}
+	record := batchcandidateexpansion.Record{
+		ReadinessID:                 "candidate-expansion-familia",
+		BatchID:                     "batch-familia-digital",
+		LegalArea:                   "familia",
+		ReadinessStatus:             batchcandidateexpansion.ReadyBlockedStatus,
+		SourceArchivePath:           batchcandidateexpansion.ArchivePath,
+		ArchiveRecordsRequired:      100,
+		ArchiveRecordsObserved:      130,
+		CurrentCandidateCount:       130,
+		TargetCandidateCount:        130,
+		TargetCandidateTier:         "target_130",
+		ExpansionCandidateIntentIDs: intentIDs[:130],
+		PaidIntentGatePath:          batchcandidateexpansion.PaidIntentGatePath,
+		MinimumHumanScore:           88,
+		MaxSimilarityAllowed:        0.64,
+		MaxSimilarityObserved:       0.60,
+		CTAContextRequired:          true,
+		SourceURLAuditRequired:      true,
+		SourceSpecificityRequired:   true,
+		PaidIntentRequired:          true,
+		ActionableBlockers:          []string{"batch_candidate_gate_pending"},
+		NextGate:                    "batch_candidate_gates",
+		PublicationBlockReason:      "bloqueado",
+		IndexPolicy:                 "noindex",
+		CheckedAt:                   "2026-06-09",
+	}
+	index := batchcandidateexpansion.ExpansionIndex{
+		ArchiveCountByBatch:          map[string]int{"batch-familia-digital": 160},
+		ArchiveIntentIDsByBatch:      map[string][]string{"batch-familia-digital": intentIDs},
+		CurrentCandidateCountByBatch: map[string]int{"batch-familia-digital": 130},
+		MaxSimilarity:                0.59,
+	}
+
+	refreshed := batchcandidateexpansion.RefreshRecordAgainstIndex(record, index)
+	if refreshed.TargetCandidateCount != 160 {
+		t.Fatalf("target_candidate_count=%d, want 160 from archive growth and max step", refreshed.TargetCandidateCount)
+	}
+	if refreshed.TargetCandidateTier != "target_160" {
+		t.Fatalf("target_candidate_tier=%q, want target_160", refreshed.TargetCandidateTier)
+	}
+	if len(refreshed.ExpansionCandidateIntentIDs) != 160 {
+		t.Fatalf("expansion intents=%d, want 160 after archive growth", len(refreshed.ExpansionCandidateIntentIDs))
+	}
+	if refreshed.ExpansionCandidateIntentIDs[159] != "familia-intencao-160" {
+		t.Fatalf("last expansion intent=%q", refreshed.ExpansionCandidateIntentIDs[159])
 	}
 }
 

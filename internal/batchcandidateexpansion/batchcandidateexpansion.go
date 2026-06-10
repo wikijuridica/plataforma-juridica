@@ -82,6 +82,7 @@ type ArchiveDraft struct {
 
 type ExpansionIndex struct {
 	ArchiveByIntent              map[string]ArchiveDraft
+	ArchiveIntentIDsByBatch      map[string][]string
 	PaidIntentByIntent           map[string]paidintent.Record
 	ArchiveCountByBatch          map[string]int
 	CurrentCandidateCountByBatch map[string]int
@@ -137,6 +138,7 @@ func BuildExpansionIndex(root string) (ExpansionIndex, Report) {
 
 	index := ExpansionIndex{
 		ArchiveByIntent:              make(map[string]ArchiveDraft),
+		ArchiveIntentIDsByBatch:      make(map[string][]string),
 		PaidIntentByIntent:           make(map[string]paidintent.Record),
 		ArchiveCountByBatch:          make(map[string]int),
 		CurrentCandidateCountByBatch: make(map[string]int),
@@ -158,6 +160,7 @@ func BuildExpansionIndex(root string) (ExpansionIndex, Report) {
 			PublicPath:         record.PublicPath,
 		}
 		index.ArchiveCountByBatch[record.BatchID]++
+		index.ArchiveIntentIDsByBatch[record.BatchID] = append(index.ArchiveIntentIDsByBatch[record.BatchID], record.UniqueIntentID)
 	}
 	for _, entry := range paidEntries {
 		index.PaidIntentByIntent[entry.Record.UniqueIntentID] = entry.Record
@@ -190,8 +193,8 @@ func ValidateRecordAgainstIndex(record Record, index ExpansionIndex) Report {
 	if record.ReadinessStatus != ReadyBlockedStatus && record.ReadinessStatus != PaidGateMissingStatus && record.ReadinessStatus != PaidGateBlockedStatus {
 		issues = append(issues, Issue{Code: "batch_candidate_expansion_status_not_blocked", Message: record.ReadinessStatus})
 	}
-	if record.TargetCandidateTier != "target_30" && record.TargetCandidateTier != "target_60" && record.TargetCandidateTier != "target_100" {
-		issues = append(issues, Issue{Code: "batch_candidate_expansion_target_tier_invalid", Message: record.TargetCandidateTier})
+	if expected := targetTier(record.TargetCandidateCount); record.TargetCandidateTier != expected {
+		issues = append(issues, Issue{Code: "batch_candidate_expansion_target_tier_invalid", Message: fmt.Sprintf("record=%s expected=%s", record.TargetCandidateTier, expected)})
 	}
 	if record.SourceArchivePath != ArchivePath {
 		issues = append(issues, Issue{Code: "batch_candidate_expansion_wrong_archive_path", Message: record.SourceArchivePath})
@@ -348,6 +351,16 @@ func RefreshRecords(root string) ([]Record, Report) {
 }
 
 func RefreshRecordAgainstIndex(record Record, index ExpansionIndex) Record {
+	current := index.CurrentCandidateCountByBatch[record.BatchID]
+	archiveCount := index.ArchiveCountByBatch[record.BatchID]
+	target := nextTargetCandidateCount(current, archiveCount)
+	if target > 0 {
+		record.TargetCandidateCount = target
+		record.TargetCandidateTier = targetTier(target)
+		if intentIDs := firstN(index.ArchiveIntentIDsByBatch[record.BatchID], target); len(intentIDs) > 0 {
+			record.ExpansionCandidateIntentIDs = intentIDs
+		}
+	}
 	paidPassed, paidBlocked, paidMissing := classifyPaidIntent(record.ExpansionCandidateIntentIDs, index.PaidIntentByIntent)
 	record.PaidIntentPassedCount = len(paidPassed)
 	record.PaidIntentBlockedCount = len(paidBlocked)
@@ -355,8 +368,8 @@ func RefreshRecordAgainstIndex(record Record, index ExpansionIndex) Record {
 	record.PaidIntentMissingIntentIDs = paidMissing
 	record.PaidIntentBlockedIntentIDs = paidBlocked
 	record.KnownSourceBlockerIntentIDs = append([]string{}, index.SourceBlockersByBatch[record.BatchID]...)
-	record.CurrentCandidateCount = index.CurrentCandidateCountByBatch[record.BatchID]
-	record.ArchiveRecordsObserved = index.ArchiveCountByBatch[record.BatchID]
+	record.CurrentCandidateCount = current
+	record.ArchiveRecordsObserved = archiveCount
 	record.MaxSimilarityObserved = index.MaxSimilarity
 	record.ActionableBlockers = expectedActionableBlockers(len(paidMissing), len(paidBlocked), len(record.KnownSourceBlockerIntentIDs))
 	if len(paidMissing) > 0 {
@@ -367,6 +380,35 @@ func RefreshRecordAgainstIndex(record Record, index ExpansionIndex) Record {
 		record.ReadinessStatus = ReadyBlockedStatus
 	}
 	return record
+}
+
+func nextTargetCandidateCount(current int, archiveCount int) int {
+	if archiveCount <= 0 {
+		return current
+	}
+	target := current + 30
+	if target < 30 {
+		target = 30
+	}
+	if target > archiveCount {
+		target = archiveCount
+	}
+	return target
+}
+
+func targetTier(target int) string {
+	return fmt.Sprintf("target_%d", target)
+}
+
+func firstN(values []string, count int) []string {
+	if count <= 0 || len(values) == 0 {
+		return nil
+	}
+	if count > len(values) {
+		count = len(values)
+	}
+	copyValues := append([]string{}, values[:count]...)
+	return copyValues
 }
 
 func LoadRecords(root string) ([]Entry, Report) {

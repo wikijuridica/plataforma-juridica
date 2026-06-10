@@ -22,6 +22,7 @@ func TestBatchExpansionStrategyPlansNextScaleWithoutPublishing(t *testing.T) {
 
 	readyFamilies := 0
 	paidBlockedFamilies := 0
+	archiveGrowthFamilies := 0
 	totalCurrent := 0
 	totalNext := 0
 	for _, entry := range records {
@@ -46,12 +47,16 @@ func TestBatchExpansionStrategyPlansNextScaleWithoutPublishing(t *testing.T) {
 				t.Fatalf("line=%d paid blocked family should already have archive headroom, archive=%d current=%d", entry.Line, record.ArchiveRecordsObserved, record.CurrentCandidateCount)
 			}
 		}
-		if record.BatchID == "batch-previdenciario-digital" {
-			if record.StrategyStatus != batchexpansionstrategy.ReadyNextCandidateGateStatus {
-				t.Fatalf("previdenciario status=%q, want informational flexible growth", record.StrategyStatus)
+		if record.StrategyStatus == batchexpansionstrategy.ArchiveGrowthRequiredStatus {
+			archiveGrowthFamilies++
+			if record.ArchiveRecordsObserved != record.CurrentCandidateCount {
+				t.Fatalf("line=%d archive growth status requires current at archive limit, archive=%d current=%d", entry.Line, record.ArchiveRecordsObserved, record.CurrentCandidateCount)
 			}
-			if record.NextCandidateTarget <= record.CurrentCandidateCount {
-				t.Fatalf("previdenciario next target=%d, want growth beyond current=%d", record.NextCandidateTarget, record.CurrentCandidateCount)
+			if record.NextCandidateTarget != record.CurrentCandidateCount {
+				t.Fatalf("line=%d archive growth target=%d, want current=%d until archive expands", entry.Line, record.NextCandidateTarget, record.CurrentCandidateCount)
+			}
+			if record.NextAction == "" {
+				t.Fatalf("line=%d archive growth status needs next archive action", entry.Line)
 			}
 		}
 		if !record.RequiresVerifiedSource || !record.RequiresPaidIntent || !record.RequiresContextualCTA || !record.RequiresHumanScore || !record.RequiresSemanticDiversity {
@@ -64,11 +69,14 @@ func TestBatchExpansionStrategyPlansNextScaleWithoutPublishing(t *testing.T) {
 			t.Fatalf("line=%d strategy escaped blocked contract", entry.Line)
 		}
 	}
-	if readyFamilies < 1 {
-		t.Fatalf("ready families=%d, want at least previdenciario ready for next expansion", readyFamilies)
+	if readyFamilies+archiveGrowthFamilies < 1 {
+		t.Fatalf("strategy did not plan candidate growth or archive growth")
 	}
-	if totalNext <= totalCurrent {
-		t.Fatalf("strategy did not plan growth: current=%d next=%d", totalCurrent, totalNext)
+	if readyFamilies > 0 && totalNext <= totalCurrent {
+		t.Fatalf("strategy did not plan candidate growth: current=%d next=%d", totalCurrent, totalNext)
+	}
+	if readyFamilies == 0 && archiveGrowthFamilies != len(records) {
+		t.Fatalf("ready families=%d archive growth families=%d records=%d", readyFamilies, archiveGrowthFamilies, len(records))
 	}
 }
 
