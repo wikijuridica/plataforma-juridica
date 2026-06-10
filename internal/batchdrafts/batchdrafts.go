@@ -122,6 +122,8 @@ func Validate(root string) Report {
 	if max := MaximumPairSimilarity(entries); max > 0.64 {
 		issues = append(issues, Issue{Code: "batch_draft_similarity_too_high", Message: fmt.Sprintf("max=%.2f", max)})
 	}
+	matrixReport := ValidateSourceMatrixDiversity(entries)
+	issues = append(issues, matrixReport.Issues...)
 	return Report{Issues: issues}
 }
 
@@ -239,6 +241,39 @@ func MaximumPairSimilarity(entries []Entry) float64 {
 	return MaximumPairSimilarityDetail(entries).Score
 }
 
+func ValidateSourceMatrixDiversity(entries []Entry) Report {
+	byMatrix := make(map[string][]Record)
+	for _, entry := range entries {
+		matrixID := strings.TrimSpace(entry.Record.SourceMatrixID)
+		if matrixID == "" {
+			continue
+		}
+		byMatrix[matrixID] = append(byMatrix[matrixID], entry.Record)
+	}
+	issues := make([]Issue, 0)
+	for matrixID, records := range byMatrix {
+		if len(records) < 24 {
+			continue
+		}
+		if dominance, ngram := maxMatrixNGramDominance(records); dominance > 0.70 {
+			issues = append(issues, Issue{Code: "batch_draft_matrix_ngram_dominance", Message: fmt.Sprintf("%s %.2f %s", matrixID, dominance, ngram)})
+		}
+		if diversity := fieldSignatureDiversity(records, func(record Record) string { return record.ReaderProblem }); diversity < 0.45 {
+			issues = append(issues, Issue{Code: "batch_draft_matrix_reader_diversity_low", Message: fmt.Sprintf("%s %.2f", matrixID, diversity)})
+		}
+		if diversity := fieldSignatureDiversity(records, func(record Record) string { return record.DocumentContext }); diversity < 0.40 {
+			issues = append(issues, Issue{Code: "batch_draft_matrix_document_diversity_low", Message: fmt.Sprintf("%s %.2f", matrixID, diversity)})
+		}
+		if diversity := fieldSignatureDiversity(records, func(record Record) string { return record.RiskContext }); diversity < 0.40 {
+			issues = append(issues, Issue{Code: "batch_draft_matrix_risk_diversity_low", Message: fmt.Sprintf("%s %.2f", matrixID, diversity)})
+		}
+		if diversity := fieldSignatureDiversity(records, func(record Record) string { return record.DigitalAction }); diversity < 0.40 {
+			issues = append(issues, Issue{Code: "batch_draft_matrix_digital_action_diversity_low", Message: fmt.Sprintf("%s %.2f", matrixID, diversity)})
+		}
+	}
+	return Report{Issues: issues}
+}
+
 func MaximumPairSimilarityDetail(entries []Entry) SimilarityPair {
 	fingerprint := similarityEntriesFingerprint(entries)
 	maximumSimilarityCache.Lock()
@@ -335,6 +370,70 @@ func textualSignalSet(record Record) map[string]bool {
 		set["text3:"+words[i]+"_"+words[i+1]+"_"+words[i+2]] = true
 	}
 	return set
+}
+
+func maxMatrixNGramDominance(records []Record) (float64, string) {
+	counts := make(map[string]int)
+	for _, record := range records {
+		seen := signalNGramSet(record.FullText(), 4)
+		for ngram := range seen {
+			counts[ngram]++
+		}
+	}
+	maxCount := 0
+	maxNGram := ""
+	for ngram, count := range counts {
+		if count > maxCount || (count == maxCount && ngram < maxNGram) {
+			maxCount = count
+			maxNGram = ngram
+		}
+	}
+	if len(records) == 0 {
+		return 0, ""
+	}
+	return float64(maxCount) / float64(len(records)), maxNGram
+}
+
+func signalNGramSet(value string, size int) map[string]bool {
+	words := make([]string, 0)
+	for _, word := range normalizedSignalWords(value) {
+		if !isOperationalToken(word) {
+			words = append(words, word)
+		}
+	}
+	ngrams := make(map[string]bool)
+	for index := 0; index+size <= len(words); index++ {
+		ngrams[strings.Join(words[index:index+size], " ")] = true
+	}
+	return ngrams
+}
+
+func fieldSignatureDiversity(records []Record, field func(Record) string) float64 {
+	if len(records) == 0 {
+		return 0
+	}
+	signatures := make(map[string]bool)
+	for _, record := range records {
+		signatures[fieldSignature(field(record))] = true
+	}
+	return float64(len(signatures)) / float64(len(records))
+}
+
+func fieldSignature(value string) string {
+	words := make([]string, 0, 4)
+	for _, word := range normalizedSignalWords(value) {
+		if isOperationalToken(word) {
+			continue
+		}
+		words = append(words, word)
+		if len(words) == 4 {
+			break
+		}
+	}
+	if len(words) == 0 {
+		return "empty"
+	}
+	return strings.Join(words, "-")
 }
 
 func similarityEntriesFingerprint(entries []Entry) string {

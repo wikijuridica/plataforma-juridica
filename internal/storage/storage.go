@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+const validationScannerMaxBytes = 1024 * 1024
+
 type Contract struct {
 	Format                             string  `json:"format"`
 	DependencyPolicy                   string  `json:"dependency_policy"`
@@ -368,7 +370,11 @@ func validateJSONLFile(path string, layer Layer) []Issue {
 
 	issues := make([]Issue, 0)
 	scanner := bufio.NewScanner(file)
-	scanner.Buffer(make([]byte, 0, 4096), layer.RecordMaxBytes+1)
+	scannerMaxBytes := layer.RecordMaxBytes + 1
+	if scannerMaxBytes < validationScannerMaxBytes {
+		scannerMaxBytes = validationScannerMaxBytes
+	}
+	scanner.Buffer(make([]byte, 0, 4096), scannerMaxBytes)
 	lineNumber := 0
 	for scanner.Scan() {
 		lineNumber++

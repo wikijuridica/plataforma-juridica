@@ -885,3 +885,16 @@ Motivos:
 - descarte de dado útil só é válido com prova e gate específico.
 
 Consequencia: o ciclo 50 materializou no repo `batch_draft_expansion_archive` com 780 registros, métricas em `batch_generation_metrics`, `batch_paid_intent_gates` com 770, `batch_paid_intent_refinements` com 529, readiness e strategy em 6 famílias. Tudo permanece em camadas editoriais bloqueadas, sem `content/pages.json`, sem `public_path`, sem render, sem sitemap, sem publicação e sem `index`.
+
+## 2026-06-09 — Archive 1.140 com diversidade de matriz e avanço 1.140
+
+Decisao: expandir o arquivo permanente bloqueado para 1.140 rascunhos, 190 por família, somente depois de novo gate de diversidade por `source_matrix_id`, reparo de especificidade documental e validação do gerador acima de 160 por família.
+
+Motivos:
+- o archive de 960 ainda repetia 4-gramas dentro das mesmas matrizes de fonte, mesmo com intenção única;
+- reduzir cue sem diagnóstico enfraquecia especificidade e criava risco de texto raso;
+- a correção correta era fazer o gerador usar sinais reais do caso matriz, documento, fonte, risco e ação digital, sem baixar limite de similaridade;
+- artefato validado no laboratório não pode ficar apenas em `/tmp` quando contém dado jurídico útil para páginas futuras;
+- paid-intent stale depois de refinamento é bug de ordem, não blocker a mascarar; a cadeia deve ser regenerada até ficar idempotente antes de qualquer advance.
+
+Consequencia: `internal/batchdrafts.ValidateSourceMatrixDiversity` passa a reprovar dominância de 4-grama e baixa diversidade por campo dentro de cada `source_matrix_id`; `internal/batchdraftgen` gera cues discriminativos por campo e acrescenta reparo de especificidade por área apenas quando o score acusa `low_specificity`; `data/editorial/batch_draft_expansion_archive.jsonl` fica com 1.140 registros; `batch_generation_metrics` registra 190 por família; `batch_paid_intent_gates` cobre 1.140; `batch_paid_intent_refinements` registra 827 e fica idempotente após regeneração; `batch_candidate_gates` avança para 1.140 com cadeia downstream completa em 1.140. O orçamento leve de `batch_candidate_gates` sobe para 32KB porque 190 IDs por família passam de 16KB, mas isso não é solução de escala infinita: antes de crescimento muito maior, o gate deve ser particionado por shard/tier ou registro candidato. O estado público continua bloqueado: sem render, sitemap, publicação, `public_path` ou `index`. O próximo ciclo deve gerar novo archive semântico acima de 190 por família, revalidar diversidade intra-matriz, regenerar paid/readiness/strategy e só então avançar além de 1.140.

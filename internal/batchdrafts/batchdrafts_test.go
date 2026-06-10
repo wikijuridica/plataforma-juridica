@@ -2,6 +2,35 @@ package batchdrafts
 
 import "testing"
 
+func TestValidateSourceMatrixDiversityRejectsMechanicalMatrix(t *testing.T) {
+	entries := make([]Entry, 0, 30)
+	for index := 0; index < 30; index++ {
+		record := similarityTestRecord(
+			"consumidor-financeiro-cartao-cobranca-nao-reconhecida-variante-"+testSuffix(index),
+			"O consumidor recebeu cobrança no cartão e reuniu contrato, fatura, protocolo, contestação e resposta do banco para triagem jurídica online.",
+		)
+		record.SourceMatrixID = "consumidor-financeiro-cartao-cobranca-nao-reconhecida"
+		record.DocumentContext = "Contrato, fatura, protocolo, contestação e resposta do banco aparecem em todos os registros sem mudar o eixo documental."
+		record.RiskContext = "O risco financeiro é repetido sem nova circunstância, valor, etapa ou prova que diferencie a intenção."
+		record.DigitalAction = "Atendimento online organiza os mesmos documentos e a mesma pergunta para o WhatsApp contextual."
+		entries = append(entries, Entry{Line: index + 1, Record: record})
+	}
+
+	report := ValidateSourceMatrixDiversity(entries)
+	if report.Passed() {
+		t.Fatal("mechanical source matrix passed diversity gate")
+	}
+	for _, code := range []string{
+		"batch_draft_matrix_ngram_dominance",
+		"batch_draft_matrix_reader_diversity_low",
+		"batch_draft_matrix_digital_action_diversity_low",
+	} {
+		if !report.HasIssue(code) {
+			t.Fatalf("missing issue %q in %v", code, report.Codes())
+		}
+	}
+}
+
 func TestMaximumPairSimilarityDetailCachesByContentFingerprint(t *testing.T) {
 	resetSimilarityCacheForTest()
 	entries := []Entry{
@@ -94,6 +123,13 @@ func TestMaximumPairSimilarityDetailIgnoresExpansionBoilerplateAcrossDifferentSo
 	if pair.Score > 0.64 {
 		t.Fatalf("expansion boilerplate dominated similarity: pair=%s/%s score=%.4f, want <=0.64", pair.LeftID, pair.RightID, pair.Score)
 	}
+}
+
+func testSuffix(index int) string {
+	const alphabet = "abcdefghijklmnopqrstuvwxyz"
+	left := alphabet[index/len(alphabet)]
+	right := alphabet[index%len(alphabet)]
+	return string([]byte{left, right})
 }
 
 func similarityTestRecord(intentID string, readerProblem string) Record {

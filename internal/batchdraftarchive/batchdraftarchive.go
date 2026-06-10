@@ -57,6 +57,10 @@ func Validate(root string) Report {
 	if max := batchdrafts.MaximumPairSimilarity(entries); max > 0.64 {
 		issues = append(issues, Issue{Code: "batch_draft_archive_similarity_too_high", Message: fmt.Sprintf("max=%.4f", max)})
 	}
+	matrixReport := batchdrafts.ValidateSourceMatrixDiversity(entries)
+	for _, issue := range matrixReport.Issues {
+		issues = append(issues, Issue{Code: "batch_draft_archive_" + issue.Code, Message: issue.Message})
+	}
 	return Report{Issues: issues}
 }
 

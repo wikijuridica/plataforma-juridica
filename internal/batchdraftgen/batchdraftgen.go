@@ -182,6 +182,14 @@ func validateResult(result Result, matrixEntries []batchsourcematrix.Entry) Repo
 	if structuralRisk > 0.35 {
 		issues = append(issues, Issue{Code: "generation_structural_pattern_risk_too_high", Message: fmt.Sprintf("risk=%.2f", structuralRisk)})
 	}
+	matrixEntriesForDiversity := make([]batchdrafts.Entry, 0, len(result.Drafts))
+	for index, draft := range result.Drafts {
+		matrixEntriesForDiversity = append(matrixEntriesForDiversity, batchdrafts.Entry{Line: index + 1, Record: draft})
+	}
+	matrixReport := batchdrafts.ValidateSourceMatrixDiversity(matrixEntriesForDiversity)
+	for _, issue := range matrixReport.Issues {
+		issues = append(issues, Issue{Code: "generation_" + issue.Code, Message: issue.Message})
+	}
 	if len(matrixEntries) > 0 {
 		coverage := batchsourcematrix.ValidateDraftCoverage(matrixEntries, result.Drafts)
 		for _, issue := range coverage.Issues {
@@ -543,6 +551,10 @@ func validateArchiveDrafts(drafts []batchdrafts.Record) error {
 	if pair := batchdrafts.MaximumPairSimilarityDetail(entries); pair.Score > 0.64 {
 		return fmt.Errorf("archive_drafts_similarity_too_high=%.4f left=%s right=%s", pair.Score, pair.LeftID, pair.RightID)
 	}
+	matrixReport := batchdrafts.ValidateSourceMatrixDiversity(entries)
+	if !matrixReport.Passed() {
+		return fmt.Errorf("archive_drafts_source_matrix_diversity_failed=%s", strings.Join(matrixReport.Messages(), " | "))
+	}
 	return nil
 }
 
@@ -605,6 +617,7 @@ func buildDraft(batch scalablebatches.Record, scenario scenario, checkedAt strin
 		CheckedAt:          checkedAt,
 	}
 	record.DigitalAction = addEditorialDepth(record.DigitalAction, scenario, record.LegalArea)
+	record.DigitalAction = addSpecificityRepairIfNeeded(record, scenario)
 	sourceFamily := ""
 	if len(batch.SourceFamilies) > 0 {
 		sourceFamily = batch.SourceFamilies[0]
@@ -617,21 +630,50 @@ func buildDraft(batch scalablebatches.Record, scenario scenario, checkedAt strin
 	return record
 }
 
+func addSpecificityRepairIfNeeded(record batchdrafts.Record, scenario scenario) string {
+	score := humanscore.ScoreText(record.FullText())
+	if !score.HasIssue("low_specificity") {
+		return record.DigitalAction
+	}
+	cue := contextCueFrom(scenario.DocumentContext+" "+scenario.SourceHook+" "+scenario.ReaderProblem, 10, scenarioTemplateIndex(scenario.IntentID)+29)
+	return record.DigitalAction + " Complemento de especificidade: antes de escalar o lote, a pauta confere " + cue + " e exige " + areaSpecificityEvidence(record.LegalArea) + ", sem publicar suposicao."
+}
+
+func areaSpecificityEvidence(area string) string {
+	switch area {
+	case "consumidor-financeiro":
+		return "contrato, extratos, protocolo, resposta do banco, comprovante e prazo de contestacao"
+	case "familia":
+		return "sentenca ou acordo, certidao, renda, despesas, mensagens, calendario e documentos familiares"
+	case "previdenciario":
+		return "CNIS, comunicado de decisao, laudos, atestados, protocolo, recurso e requerimento"
+	case "saude-suplementar":
+		return "relatorio medico, negativa, contrato, carteirinha, protocolo, prazo da ANS e exames"
+	case "sucessorio":
+		return "certidao de obito, herdeiros, matricula, extratos, dividas, imposto e testamento quando houver"
+	case "trabalhista":
+		return "contrato, holerites, ponto, escala, mensagens, TRCT, FGTS e comprovante de pagamento"
+	default:
+		return "contrato, protocolo, resposta formal, comprovante, prazo e documento principal"
+	}
+}
+
 func addEditorialDepth(current string, scenario scenario, area string) string {
 	facetID := scenarioFacetID(scenario.IntentID)
 	lead := readerLead(facetID)
 	template := (scenarioTemplateIndex(scenario.IntentID) + scenarioTemplateIndex(facetID)) % 5
+	cue := contextCueFrom(scenario.Term+" "+scenario.ReaderProblem+" "+scenario.DocumentContext+" "+scenario.RiskContext, 5, template+17)
 	switch template {
 	case 0:
-		return current + " Revisao informativa de " + lead + " separa fato, prova e duvida juridica para consulta online, sem promessa de resultado."
+		return current + " Revisao informativa de " + lead + " sobre " + cue + " separa fato, prova e duvida juridica para consulta online, sem promessa de resultado."
 	case 1:
-		return current + " Contexto editorial de " + lead + ": documentos, fonte e risco economico precisam conversar antes de contratar atendimento digital para " + areaContext(area) + "."
+		return current + " Contexto editorial de " + lead + " ligado a " + cue + ": documentos, fonte e risco economico precisam conversar antes de contratar atendimento digital para " + areaContext(area) + "."
 	case 2:
-		return current + " Filtro juridico de " + lead + ": o leitor entende limite da fonte, utilidade dos arquivos e diferenca entre orientacao geral e consulta particular."
+		return current + " Filtro juridico de " + lead + " com " + cue + ": o leitor entende limite da fonte, utilidade dos arquivos e diferenca entre orientacao geral e consulta particular."
 	case 3:
-		return current + " Validacao de " + lead + ": o texto bloqueado cruza relato, documento e fonte antes de rota publica, mantendo CTA apenas como triagem contextual."
+		return current + " Validacao de " + lead + " em " + cue + ": o texto bloqueado cruza relato, documento e fonte antes de rota publica, mantendo CTA apenas como triagem contextual."
 	default:
-		return current + " Utilidade de " + lead + ": a pauta organiza documentos, fase do problema e pergunta juridica para conversa objetiva com advogado."
+		return current + " Utilidade de " + lead + " para " + cue + ": a pauta organiza documentos, fase do problema e pergunta juridica para conversa objetiva com advogado."
 	}
 }
 
@@ -913,6 +955,14 @@ func contextCueFrom(value string, limit int, offset int) string {
 	return strings.Join(words, " ")
 }
 
+func matrixFieldCue(base scenario, facetID string, profile cycleProfile, limit int, salt int, fieldParts ...string) string {
+	if len(fieldParts) == 0 {
+		fieldParts = []string{base.ReaderProblem, base.SourceHook, base.DocumentContext, base.RiskContext, base.DigitalAction}
+	}
+	seed := scenarioTemplateIndex(base.IntentID + "-" + facetID + "-" + profile.ID)
+	return contextCueFrom(strings.Join(fieldParts, " "), limit, seed+salt)
+}
+
 func joinDistinctContext(parts ...string) string {
 	accepted := make([]string, 0, len(parts))
 	for _, part := range parts {
@@ -992,9 +1042,9 @@ func variantReaderProblem(template int, facetID string, area string, readerFocus
 	context := areaContext(area)
 	facetOffset := scenarioTemplateIndex(facetID)
 	style := (template + facetOffset) % 5
-	baseProblem := contextCueFrom(base.ReaderProblem, 8, template+facetOffset)
+	baseProblem := matrixFieldCue(base, facetID, profile, 5, template+facetOffset, base.ReaderProblem)
 	if profile.ID != "" {
-		cue := contextCueFrom(base.ReaderProblem, 8, template+facetOffset)
+		cue := matrixFieldCue(base, facetID, profile, 5, template+facetOffset, base.ReaderProblem)
 		switch style {
 		case 0:
 			return lead + " em " + context + " trata " + readerFocus + ". A rodada nova muda o eixo para " + profile.TermContext + " e preserva pista concreta: " + cue + "."
@@ -1026,7 +1076,7 @@ func variantSourceHook(template int, facetID string, sourceFocus string, base sc
 	facetOffset := scenarioTemplateIndex(facetID)
 	style := (template + facetOffset) % 5
 	if profile.ID != "" {
-		cue := contextCueFrom(base.SourceHook, 7, template+facetOffset)
+		cue := matrixFieldCue(base, facetID, profile, 5, template+facetOffset+11, base.SourceHook)
 		switch style {
 		case 0:
 			return sourceFocus + " Fonte do subtema: " + cue + "."
@@ -1042,24 +1092,24 @@ func variantSourceHook(template int, facetID string, sourceFocus string, base sc
 	}
 	switch style {
 	case 0:
-		return sourceFocus + " Referencia bloqueada: " + contextCueFrom(base.SourceHook, 5, template+facetOffset) + "."
+		return sourceFocus + " Referencia bloqueada: " + matrixFieldCue(base, facetID, profile, 5, template+facetOffset+11, base.SourceHook) + "."
 	case 1:
-		return "Autoridade do rascunho: " + sourceFocus + " Pista: " + contextCueFrom(base.SourceHook, 5, template+facetOffset) + "."
+		return "Autoridade do rascunho: " + sourceFocus + " Pista: " + matrixFieldCue(base, facetID, profile, 5, template+facetOffset+11, base.SourceHook) + "."
 	case 2:
-		return sourceFocus + " Uso editorial proprio, sem espelhar fonte. Pista: " + contextCueFrom(base.SourceHook, 5, template+facetOffset) + "."
+		return sourceFocus + " Uso editorial proprio, sem espelhar fonte. Pista: " + matrixFieldCue(base, facetID, profile, 5, template+facetOffset+11, base.SourceHook) + "."
 	case 3:
-		return sourceFocus + " Auditoria bloqueada com pista: " + contextCueFrom(base.SourceHook, 5, template+facetOffset) + "."
+		return sourceFocus + " Auditoria bloqueada com pista: " + matrixFieldCue(base, facetID, profile, 5, template+facetOffset+11, base.SourceHook) + "."
 	default:
-		return sourceFocus + " Rascunho proprio noindex; pista: " + contextCueFrom(base.SourceHook, 5, template+facetOffset) + "."
+		return sourceFocus + " Rascunho proprio noindex; pista: " + matrixFieldCue(base, facetID, profile, 5, template+facetOffset+11, base.SourceHook) + "."
 	}
 }
 
 func variantDocumentContext(template int, facetID string, documentFocus string, base scenario, profile cycleProfile) string {
 	facetOffset := scenarioTemplateIndex(facetID)
 	style := (template + facetOffset) % 5
-	baseDocument := contextCueFrom(base.DocumentContext, 8, template+facetOffset+1)
+	baseDocument := matrixFieldCue(base, facetID, profile, 5, template+facetOffset+23, base.DocumentContext)
 	if profile.ID != "" {
-		cue := contextCueFrom(base.DocumentContext, 8, template+facetOffset+1)
+		cue := matrixFieldCue(base, facetID, profile, 5, template+facetOffset+23, base.DocumentContext)
 		switch style {
 		case 0:
 			return documentFocus + " Pista documental propria: " + cue + "."
@@ -1093,9 +1143,9 @@ func variantDocumentContext(template int, facetID string, documentFocus string, 
 func variantRiskContext(template int, facetID string, riskFocus string, base scenario, profile cycleProfile) string {
 	facetOffset := scenarioTemplateIndex(facetID)
 	style := (template + facetOffset) % 5
-	baseRisk := contextCueFrom(base.RiskContext, 8, template+facetOffset+2)
+	baseRisk := matrixFieldCue(base, facetID, profile, 5, template+facetOffset+37, base.RiskContext)
 	if profile.ID != "" {
-		cue := contextCueFrom(base.RiskContext, 8, template+facetOffset+2)
+		cue := matrixFieldCue(base, facetID, profile, 5, template+facetOffset+37, base.RiskContext)
 		switch style {
 		case 0:
 			return riskFocus + " Pista concreta: " + cue + "."
@@ -1127,7 +1177,7 @@ func variantDigitalAction(template int, facetID string, digitalFocus string, bas
 	facetOffset := scenarioTemplateIndex(facetID)
 	style := (template + facetOffset) % 5
 	if profile.ID != "" {
-		cue := contextCueFrom(base.DigitalAction, 7, template+facetOffset+3)
+		cue := matrixFieldCue(base, facetID, profile, 5, template+facetOffset+51, base.DigitalAction)
 		switch style {
 		case 0:
 			return digitalFocus + " WhatsApp contextual: " + cue + "."
@@ -1143,15 +1193,15 @@ func variantDigitalAction(template int, facetID string, digitalFocus string, bas
 	}
 	switch style {
 	case 0:
-		return digitalFocus + " WhatsApp contextual: " + contextCueFrom(base.DigitalAction, 5, template+facetOffset+3) + "."
+		return digitalFocus + " WhatsApp contextual: " + matrixFieldCue(base, facetID, profile, 5, template+facetOffset+51, base.DigitalAction) + "."
 	case 1:
-		return digitalFocus + " Atendimento remoto recebe: " + contextCueFrom(base.DigitalAction, 5, template+facetOffset+3) + "."
+		return digitalFocus + " Atendimento remoto recebe: " + matrixFieldCue(base, facetID, profile, 5, template+facetOffset+51, base.DigitalAction) + "."
 	case 2:
-		return digitalFocus + " CTA separado com pista: " + contextCueFrom(base.DigitalAction, 5, template+facetOffset+3) + "."
+		return digitalFocus + " CTA separado com pista: " + matrixFieldCue(base, facetID, profile, 5, template+facetOffset+51, base.DigitalAction) + "."
 	case 3:
-		return digitalFocus + " Triagem digital usa: " + contextCueFrom(base.DigitalAction, 5, template+facetOffset+3) + "."
+		return digitalFocus + " Triagem digital usa: " + matrixFieldCue(base, facetID, profile, 5, template+facetOffset+51, base.DigitalAction) + "."
 	default:
-		return digitalFocus + " Origem rastreavel: " + contextCueFrom(base.DigitalAction, 5, template+facetOffset+3) + "."
+		return digitalFocus + " Origem rastreavel: " + matrixFieldCue(base, facetID, profile, 5, template+facetOffset+51, base.DigitalAction) + "."
 	}
 }
 

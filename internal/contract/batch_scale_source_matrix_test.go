@@ -119,6 +119,24 @@ func TestBatchDraftGeneratorExpandsArchiveBeyondOneHundredPerFamily(t *testing.T
 	}
 }
 
+func TestBatchDraftGeneratorKeepsSourceMatrixDiversityBeyondOneHundredSixtyPerFamily(t *testing.T) {
+	result, report := batchdraftgen.Generate(".", batchdraftgen.Options{SamplesPerBatch: 190, CheckedAt: "2026-06-09"})
+	if !report.Passed() {
+		pair := generatedDraftSimilarityPair(result.Drafts)
+		t.Fatalf("source-matrix diverse generation beyond 160 failed: pair=%s/%s %.4f\n%s\nissues=%v", pair.LeftID, pair.RightID, pair.Score, generatedDraftPairDiagnostic(result.Drafts, pair), report.Messages())
+	}
+	if len(result.Drafts) < 1140 {
+		t.Fatalf("generated drafts=%d, want at least 1140 for archive growth beyond 160 per family", len(result.Drafts))
+	}
+	entries := make([]batchdrafts.Entry, 0, len(result.Drafts))
+	for index, draft := range result.Drafts {
+		entries = append(entries, batchdrafts.Entry{Line: index + 1, Record: draft})
+	}
+	if diversity := batchdrafts.ValidateSourceMatrixDiversity(entries); !diversity.Passed() {
+		t.Fatalf("source-matrix diversity failed after generation: %v", diversity.Messages())
+	}
+}
+
 func generatedDraftSimilarityPair(drafts []batchdrafts.Record) batchdrafts.SimilarityPair {
 	entries := make([]batchdrafts.Entry, 0, len(drafts))
 	for index, draft := range drafts {
