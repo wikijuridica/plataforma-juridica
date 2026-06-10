@@ -937,3 +937,15 @@ Motivos:
 - `MaximumPairSimilarityDetail` era o gargalo dominante em 1.500 registros; pular Jaccard semântico apenas quando `source_matrix_id` difere é equivalente porque `maximumSimilarityScore` já retorna somente `textScore` nesse caso.
 
 Consequencia: `batch_draft_expansion_archive`, `batch_paid_intent_gates`, `batch_candidate_reviews`, `batch_prepublication_gates`, `batch_source_specificity_resolutions`, `batch_public_manifest_gates` e `batch_final_authorial_drafts` ficam com 1.500 registros bloqueados; `batch_candidate_gates` fica com 18 shards físicos; `batch_paid_intent_refinements` fica com 1.114 registros. `internal/batchdrafts` mantém threshold de similaridade, adiciona teste para a equivalência de matrizes diferentes, aumenta cache de fingerprints para 32 worksets e reduz o perfil de contratos para cerca de 29s. O estado público continua bloqueado: sem alteração em `content/pages.json`, sem diff público, sem `render_allowed=true`, `sitemap_allowed=true`, `publication_allowed=true` ou `public_path`. O próximo ciclo deve crescer para 280 por família, total 1.680, com a mesma ordem: dry-run, write archive/metrics, paid, refinement, paid, readiness, strategy, advance esperado, readiness/strategy pós-advance, pipeline downstream, checks e checkpoint.
+
+## 2026-06-10 — Expansao bloqueada para 1.680 com diversidade por rodada
+
+Decisao: crescer para 280 rascunhos por família, total 1.680, somente depois de corrigir o gerador para variar documento, risco e ação digital por facet e perfil de rodada.
+
+Motivos:
+- o dry-run inicial de 280 reprovou corretamente por `generation_batch_draft_matrix_document_diversity_low` e `generation_batch_draft_matrix_risk_diversity_low`, com várias matrizes em 0.38/0.39;
+- baixar threshold de diversidade mascararia conteúdo mecânico, então a correção precisava melhorar o algoritmo;
+- o limite real era a assinatura inicial dos campos, ainda dominada pelo facet, enquanto o perfil de rodada aparecia tarde demais;
+- combinar pista do facet com pista da rodada no início de `DocumentContext`, `RiskContext` e `DigitalAction` aumenta diversidade sem remover n-grama, sem reduzir score e sem publicar nada.
+
+Consequencia: `internal/batchdraftgen` passa a misturar pista primária e secundária em perfis de rodada; `internal/contract` ganha teste para geração diversa em 280 por família. O dry-run de 280 passou com `generated_drafts=1680`, `rewritten=1680` e `max_similarity=0.61`; o archive permanente, paid gates, candidate gates, reviews, prepublication, source-specificity, manifest e final drafts ficam em 1.680 registros bloqueados. `batch_candidate_gates` continua em shards físicos dentro do orçamento leve. O estado público continua bloqueado: sem alteração em `content/pages.json`, sem diff público e sem flags públicas verdadeiras. O próximo ciclo deve crescer para 310 por família, total 1.860, mantendo teste de diversidade, paid/refinement/readiness/strategy, advance esperado, refresh pós-advance, pipeline e checks completos.

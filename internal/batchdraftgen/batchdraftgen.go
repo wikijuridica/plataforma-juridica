@@ -865,15 +865,15 @@ func scenarioVariant(area string, base scenario, variant int, ordinal int) scena
 	}
 	documentFocus := facet.DocumentFocus
 	if profile.DocumentFocus != "" {
-		documentFocus = joinDistinctContext(documentFocus, profile.DocumentFocus)
+		documentFocus = uppercaseFirst(profileBlendPrefix(facet.DocumentFocus, profile.DocumentFocus, template+ordinal)) + ". " + joinDistinctContext(documentFocus, profile.DocumentFocus)
 	}
 	riskFocus := facet.RiskFocus
 	if profile.RiskFocus != "" {
-		riskFocus = riskFocus + " " + profile.RiskFocus
+		riskFocus = uppercaseFirst(profileBlendPrefix(facet.RiskFocus, profile.RiskFocus, template+ordinal+7)) + ". " + riskFocus + " " + profile.RiskFocus
 	}
 	digitalFocus := facet.DigitalFocus
 	if profile.DigitalFocus != "" {
-		digitalFocus = digitalFocus + " " + profile.DigitalFocus
+		digitalFocus = uppercaseFirst(profileBlendPrefix(facet.DigitalFocus, profile.DigitalFocus, template+ordinal+13)) + ". " + digitalFocus + " " + profile.DigitalFocus
 	}
 	return scenario{
 		IntentID:        base.IntentID + "-" + facetID,
@@ -903,6 +903,12 @@ func variantTerm(template int, baseTerm string, facet semanticFacet, profile cyc
 	default:
 		return "Documentos e risco em " + baseTerm + " com " + focus
 	}
+}
+
+func profileBlendPrefix(primary string, secondary string, offset int) string {
+	primaryCue := contextCueFrom(primary, 2, offset)
+	secondaryCue := contextCueFrom(secondary, 2, offset+3)
+	return primaryCue + " com " + secondaryCue
 }
 
 func subthemeCue(term string) string {
